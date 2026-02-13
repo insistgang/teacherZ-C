@@ -15,7 +15,22 @@
       "Bash(pdfinfo:*)",
       "Bash(dir \"C:\\\\Users\\\\Administrator\\\\.claude\\\\teams\\\\learning-analysis\\\\inboxes\")",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh auth status:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(ssh:*)",
+      "Bash(GIT_SSH_COMMAND=\"ssh -v\" git push:*)",
+      "Bash(git remote set-url:*)",
+      "Skill(claude-hud:setup)",
+      "Bash(\"/c/Program Files/nodejs/node\" \"$USERPROFILE/.claude/plugins/marketplaces/claude-hud/dist/index.js\")",
+      "Bash(bash:*)",
+      "Bash(powershell.exe -Command \"& {& ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' \\(Join-Path \\(Get-ChildItem $env:USERPROFILE\\\\.claude\\\\plugins\\\\marketplaces\\\\claude-hud | Sort-Object LastWriteTime -Descending | Select-Object -First 1\\).FullName ''dist\\\\index.js''\\)}\")",
+      "Bash(node:*)",
+      "Bash(npx chrome-devtools-mcp@latest --version:*)",
+      "Bash(npx chrome-devtools-mcp@latest:*)"
     ]
   }
 }
