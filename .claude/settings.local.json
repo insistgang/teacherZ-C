@@ -30,7 +30,8 @@
       "Bash(powershell.exe -Command \"& {& ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' \\(Join-Path \\(Get-ChildItem $env:USERPROFILE\\\\.claude\\\\plugins\\\\marketplaces\\\\claude-hud | Sort-Object LastWriteTime -Descending | Select-Object -First 1\\).FullName ''dist\\\\index.js''\\)}\")",
       "Bash(node:*)",
       "Bash(npx chrome-devtools-mcp@latest --version:*)",
-      "Bash(npx chrome-devtools-mcp@latest:*)"
+      "Bash(npx chrome-devtools-mcp@latest:*)",
+      "Bash(claude mcp list:*)"
     ]
   }
 }
