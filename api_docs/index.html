@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XCAI - API 文档</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h1>XCAI</h1>
+            <p class="version">版本 0.1.0</p>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜索 API...">
+                <div id="search-results"></div>
+            </div>
+            
+            <nav>
+                <h3>开始</h3>
+                <ul>
+                    <li><a href="index.html" class="active">概述</a></li>
+                    <li><a href="examples/basic_usage.html">快速开始</a></li>
+                    <li><a href="examples/advanced_usage.html">高级用法</a></li>
+                </ul>
+                
+                <h3>模块</h3>
+                <ul>
+                    <li><a href="modules/denoising.html">xcrai.denoising</a></li>
+                    <li><a href="modules/segmentation.html">xcrai.segmentation</a></li>
+                    <li><a href="modules/tensor.html">xcrai.tensor</a></li>
+                    <li><a href="modules/pointcloud.html">xcrai.pointcloud</a></li>
+                    <li><a href="modules/peft.html">xcrai.peft</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="page-header">
+                <h1>XCAI API 文档</h1>
+                <p class="breadcrumb">
+                    <a href="index.html">Home</a>
+                </p>
+            </header>
+            
+            <section class="section">
+                <h2>简介</h2>
+                <p>XCAI (eXplainable Computational Artificial Intelligence) 是一个用于图像处理、张量分解和深度学习的高性能计算库。该库提供了多种图像去噪、分割、张量运算和参数高效微调 (PEFT) 的工具。</p>
+                
+                <div class="note">
+                    <h5>安装</h5>
+                    <pre><code>pip install xcai</code></pre>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>模块概览</h2>
+                
+                <div class="index-cards">
+                    <a href="modules/denoising.html" class="index-card">
+                        <div class="card-icon">🖼️</div>
+                        <h3>xcrai.denoising</h3>
+                        <p>图像去噪模块，提供 ROF、TV-L1、NLM 等多种去噪算法</p>
+                    </a>
+                    
+                    <a href="modules/segmentation.html" class="index-card">
+                        <div class="card-icon">✂️</div>
+                        <h3>xcrai.segmentation</h3>
+                        <p>图像分割模块，包含光谱-空间潜在分割、图割分割等方法</p>
+                    </a>
+                    
+                    <a href="modules/tensor.html" class="index-card">
+                        <div class="card-icon">📊</div>
+                        <h3>xcrai.tensor</h3>
+                        <p>张量分解模块，支持 Tucker、CP 分解及张量运算</p>
+                    </a>
+                    
+                    <a href="modules/pointcloud.html" class="index-card">
+                        <div class="card-icon">☁️</div>
+                        <h3>xcrai.pointcloud</h3>
+                        <p>点云处理模块，提供点云采样、特征提取、配准等功能</p>
+                    </a>
+                    
+                    <a href="modules/peft.html" class="index-card">
+                        <div class="card-icon">🔧</div>
+                        <h3>xcrai.peft</h3>
+                        <p>参数高效微调模块，实现 LoRA、Adapter 等微调技术</p>
+                    </a>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>快速示例</h2>
+                
+                <div class="example-box">
+                    <pre>
+<span class="comment"># 图像去噪</span>
+<span class="keyword">from</span> xcai.denoising <span class="keyword">import</span> ROFDenoiser
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+denoiser = <span class="function">ROFDenoiser</span>(lambda_param=<span class="string">0.1</span>)
+clean_image = denoiser.<span class="function">denoise</span>(noisy_image)
+
+<span class="comment"># 图像分割</span>
+<span class="keyword">from</span> xcai.segmentation <span class="keyword">import</span> SLatSegmenter
+
+segmenter = <span class="function">SLatSegmenter</span>(n_clusters=<span class="string">5</span>)
+segmenter.<span class="function">fit</span>(image)
+labels = segmenter.<span class="function">predict</span>(image)
+
+<span class="comment"># 张量分解</span>
+<span class="keyword">from</span> xcai.tensor <span class="keyword">import</span> TuckerDecomposer
+
+decomposer = <span class="function">TuckerDecomposer</span>(rank=[<span class="string">10</span>, <span class="string">10</span>, <span class="string">5</span>])
+core, factors = decomposer.<span class="function">decompose</span>(tensor)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>核心特性</h2>
+                
+                <h3>🚀 高性能</h3>
+                <p>基于 NumPy 和 PyTorch 实现，支持 GPU 加速和并行计算。</p>
+                
+                <h3>🔬 可解释性</h3>
+                <p>提供详细的算法解释和可视化工具，帮助理解模型行为。</p>
+                
+                <h3>🧩 模块化设计</h3>
+                <p>各模块独立，可灵活组合使用，易于扩展。</p>
+                
+                <h3>📖 完整文档</h3>
+                <p>每个类和方法都有详细的文档字符串和使用示例。</p>
+            </section>
+            
+            <footer class="footer">
+                <p>© 2024 XCAI Team. 基于 Sphinx 风格构建。</p>
+            </footer>
+        </main>
+    </div>
+    
+    <script src="js/search.js"></script>
+</body>
+</html>

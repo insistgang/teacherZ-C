@@ -1,0 +1,20 @@
+Method,Supervised,Unsupervised,End-to-End,Lightweight,High Accuracy
+ROF,0,1,1,1,0
+SLaT,0,1,1,1,0
+Varifold,0,1,0,0,1
+U-Net,1,0,1,1,1
+DeepLab,1,0,1,0,1
+PointNet,1,0,1,1,0
+PointNet++,1,0,1,0,1
+V-Net,1,0,1,0,1
+3D U-Net,1,0,1,0,1
+DGCNN,1,0,1,0,1
+Mumford-Shah,0,1,1,1,0
+Chan-Vese,0,1,1,1,0
+Level Set,0,1,1,0,0
+Graph Cut,0,1,0,1,0
+CRF,1,1,0,0,1
+GAN,1,1,1,0,1
+VAE,1,1,1,0,0
+Transformer,1,0,1,0,1
+Diffusion,1,0,1,0,1

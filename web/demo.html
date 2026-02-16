@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLaT Demo - Xiaohao Cai Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">XC</div>
+        <span>Research</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="papers.html">Papers</a>
+        <a href="network.html">Network</a>
+        <a href="methods.html">Methods</a>
+        <a href="demo.html" class="active">Demo</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <div class="container">
+      <h1>SLaT Segmentation Demo</h1>
+      <p>Interactive demonstration of the Three-Stage Segmentation algorithm</p>
+    </div>
+  </header>
+
+  <main class="container demo-section">
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 style="margin-bottom: 15px;">About SLaT</h3>
+      <p style="color: var(--text-light); font-size: 0.9rem; line-height: 1.7;">
+        <strong>SLaT</strong> (Smoothing, Lifting, and Thresholding) is a three-stage image segmentation framework:
+      </p>
+      <ol style="margin-top: 12px; padding-left: 20px; color: var(--text-light); font-size: 0.9rem;">
+        <li style="margin-bottom: 8px;"><strong>Stage 1 - Smoothing:</strong> Apply ROF (Rudin-Osher-Fatemi) variational denoising to each RGB channel</li>
+        <li style="margin-bottom: 8px;"><strong>Stage 2 - Lifting:</strong> Convert RGB to Lab color space, creating a 6-dimensional feature vector (RGB+Lab)</li>
+        <li style="margin-bottom: 8px;"><strong>Stage 3 - Thresholding:</strong> Apply K-means clustering in the lifted 6D space</li>
+      </ol>
+      <p style="color: var(--text-light); font-size: 0.85rem; margin-top: 12px;">
+        Reference: Cai, Chan, Nikolova, Zeng. "A Three-Stage Approach for Segmenting Degraded Color Images: Smoothing, Lifting and Thresholding." IEEE TIP 2015.
+      </p>
+    </div>
+
+    <div class="demo-container">
+      <div class="canvas-wrapper">
+        <canvas id="demo-canvas"></canvas>
+      </div>
+      <div class="controls">
+        <h3>Parameters</h3>
+        
+        <div class="control-group">
+          <label>Lambda (Smoothing Strength)</label>
+          <input type="range" id="lambda-slider" min="0.5" max="5" step="0.1" value="2.0">
+          <div class="control-value" id="lambda-value">2.0</div>
+        </div>
+
+        <div class="control-group">
+          <label>ROF Iterations</label>
+          <input type="range" id="iter-slider" min="10" max="100" step="5" value="50">
+          <div class="control-value" id="iter-value">50</div>
+        </div>
+
+        <div class="control-group">
+          <label>Number of Segments (K)</label>
+          <input type="range" id="k-slider" min="2" max="8" step="1" value="4">
+          <div class="control-value" id="k-value">4</div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btn-run">Run SLaT</button>
+          <button class="btn btn-secondary" id="btn-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 30px;">
+      <h3 style="margin-bottom: 20px;">Algorithm Details</h3>
+      <div class="grid grid-3">
+        <div style="padding: 16px; background: var(--light); border-radius: 8px;">
+          <h4 style="margin-bottom: 8px; color: #4CAF50;">Stage 1: ROF Denoising</h4>
+          <p style="font-size: 0.85rem; color: var(--text-light);">
+            Solves: min<sub>u</sub> λ/2||f-u||² + ||∇u||<sub>TV</sub><br>
+            Uses Chambolle's projection algorithm for efficient computation.
+          </p>
+        </div>
+        <div style="padding: 16px; background: var(--light); border-radius: 8px;">
+          <h4 style="margin-bottom: 8px; color: #2196F3;">Stage 2: Color Lifting</h4>
+          <p style="font-size: 0.85rem; color: var(--text-light);">
+            RGB → Lab conversion provides perceptually uniform color space.<br>
+            6D features: [R, G, B, L, a, b] improve separability.
+          </p>
+        </div>
+        <div style="padding: 16px; background: var(--light); border-radius: 8px;">
+          <h4 style="margin-bottom: 8px; color: #9C27B0;">Stage 3: K-means</h4>
+          <p style="font-size: 0.85rem; color: var(--text-light);">
+            Clusters pixels in 6D feature space.<br>
+            Key advantage: changing K doesn't require re-running Stages 1-2.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+      <h3 style="margin-bottom: 15px;">Key Advantages</h3>
+      <ul style="padding-left: 20px; color: var(--text-light);">
+        <li style="margin-bottom: 8px;">Fast: Each stage can be computed independently</li>
+        <li style="margin-bottom: 8px;">Flexible: Adjust K (number of segments) without re-running denoising</li>
+        <li style="margin-bottom: 8px;">Robust: Lab color space improves segmentation on noisy/color-shifted images</li>
+        <li style="margin-bottom: 8px;">Theoretical: Strong mathematical foundation from variational methods</li>
+      </ul>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>Xiaohao Cai Research Portfolio | University of Southampton</p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

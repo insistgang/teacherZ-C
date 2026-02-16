@@ -1,0 +1,1931 @@
+arXiv:2301.11598v1  [math.NA]  27 Jan 2023
+Practical Sketching Algorithms for Low-Rank
+Tucker Approximation of Large Tensors
+Wandi Dong1, Gaohang Yu1*, Liqun Qi2,1,3 and Xiaohao Cai4
+1Department of Mathematics, Hangzhou Dianzi University,
+Hangzhou, 310018, China.
+2Huawei Theory Research Lab, Hong Kong, China.
+3Department of Applied Mathematics, Hongkong Polytechnic
+University, Hong Kong, China.
+4School of Electronics and Computer Science, University of
+Southampton, Southampton, SO17 1BJ, UK.
+*Corresponding author(s). E-mail(s): maghyu@163.com;
+Contributing authors: 15560159213@163.com;
+liqun.qi@polyu.edu.hk; x.cai@soton.ac.uk;
+Abstract
+Low-rank approximation of tensors has been widely used in high-
+dimensional data analysis. It usually involves singular value decom-
+position (SVD) of large-scale matrices with high computational com-
+plexity. Sketching is an eﬀective data compression and dimension-
+ality reduction technique applied to the low-rank approximation of
+large matrices. This paper presents two practical randomized algo-
+rithms for low-rank Tucker approximation of large tensors based
+on sketching and power scheme, with a rigorous error-bound analy-
+sis. Numerical experiments on synthetic and real-world tensor data
+demonstrate the competitive performance of the proposed algorithms.
+Keywords: tensor sketching, randomized algorithm, Tucker decomposition,
+subspace power iteration, high-dimensional data
+MSC Classiﬁcation: 68W20 , 15A18 , 15A69
+1
+2
+Sketching Algorithms for Low-Rank Tucker Approximation
+1 Introduction
+In practical applications, high-dimensional data, such as color images, hyper-
+spectral images and videos, often exhibit a low-rank structure. Low-rank
+approximation of tensors has become a general tool for compressing and
+approximating high-dimensional data and has been widely used in scientiﬁc
+computing, machine learning, signal/image processing, data mining, and many
+other ﬁelds [1]. The classical low-rank tensor factorization models include,
+e.g., Canonical Polyadic decomposition (CP) [2, 3], Tucker decomposition [4–
+6], Hierarchical Tucker (HT) [7, 8], and Tensor Train decomposition (TT)
+[9]. This paper focuses on low-rank Tucker decomposition, also known as
+the low multilinear rank approximation of tensors. When the target rank
+of Tucker decomposition is much smaller than the original dimensions, it
+will have good compression performance. For a given Nth-order tensor X ∈
+RI1×I2×...×IN , the low-rank Tucker decomposition can be formulated as the
+following optimization problem, i.e.,
+min
+Y ∥X −Y∥2
+F ,
+(1)
+where Y ∈RI1×I2×...×IN , with rank(Y(n)) ≤rn for n = 1, 2, . . ., N, Y(n) is the
+mode-n unfolding matrix of Y, and rn is the rank of the mode-n unfolding
+matrix of X.
+For the Tucker approximation of higher-order tensors, the most fre-
+quently used non-iterative algorithms are the improved algorithms for the
+higher-order singular value decomposition (HOSVD) [5], the truncated higher-
+order SVD (THOSVD) [10] and the sequentially truncated higher-order SVD
+(STHOSVD) [11]. Although the results of THOSVD and STHOSVD are usu-
+ally sub-optimal, they can use as reasonable initial solutions for iterative
+methods such as higher-order orthogonal iteration (HOOI) [10]. However, both
+algorithms rely directly on SVD when computing the singular vectors of inter-
+mediate matrices, requiring large memory and high computational complexity
+when the size of tensors is large.
+Strikingly, randomized algorithms can reduce the communication among
+diﬀerent levels of memories and are parallelizable. In recent years, many schol-
+ars have become increasingly interested in randomized algorithms for ﬁnding
+approximation Tucker decomposition of large-scale data tensors [12–17, 19, 20].
+For example, Zhou et al. [12] proposed a randomized version of the HOOI
+algorithm for Tucker decomposition. Che and Wei [13] proposed an adaptive
+randomized algorithm to solve the multilinear rank of tensors. Minster et al.
+[14] designed randomized versions of the THOSVD and STHOSVD algorithms,
+i.e., R-STHOSVD. Sun et al. [17] presented a single-pass randomized algorithm
+to compute the low-rank Tucker approximation of tensors based on a practical
+matrix sketching algorithm for streaming data, see also [18] for more details.
+Regarding more randomized algorithms proposed for Tucker decomposition,
+please refer to [15, 16, 19, 20] for a detailed review of randomized algorithms
+Sketching Algorithms for Low-Rank Tucker Approximation
+3
+for solving Tucker decomposition of tensors in recent years involving, e.g., ran-
+dom projection, sampling, count-sketch, random least-squares, single-pass, and
+multi-pass algorithms.
+This paper presents two eﬃcient randomized algorithms for ﬁnding the
+low-rank Tucker approximation of tensors, i.e., Sketch-STHOSVD and sub-
+Sketch-STHOSVD summarized in Algorithms 6 and 8, respectively. The main
+contributions of this paper are threefold. Firstly, we propose a new one-pass
+sketching algorithm (i.e., Algorithm 6) for low-rank Tucker approximation,
+which can signiﬁcantly improve the computational eﬃciency of STHOSVD.
+Secondly, we present a new matrix sketching algorithm (i.e., Algorithm 7) by
+combining the two-sided sketching algorithm proposed by Tropp et al. [18]
+with subspace power iteration. Algorithm 7 can accurately and eﬃciently com-
+pute the low-rank approximation of large-scale matrices. Thirdly, the proposed
+Algorithm 8 can deliver a more accurate Tucker approximation than sim-
+pler randomized algorithms by combining the subspace power iteration. More
+importantly, sub-Sketch-STHOSVD can converge quickly for any data tensors
+and independently of singular value gaps.
+The rest of this paper is organized as follows. Section 2 brieﬂy introduces
+some basic notations, deﬁnitions, and tensor-matrix operations used in this
+paper and recalls some classical algorithms, including THOSVD, STHOSVD,
+and R-STHOSVD, for low-rank Tucker approximation. Our proposed two-
+sided sketching algorithm for STHOSVD is given in Section 3. In Section 4,
+we present an improved algorithm with subspace power iteration. The eﬀec-
+tiveness of the proposed algorithms is validated thoroughly in Section 5 by
+numerical experiments on synthetic and real-world data tensors. We conclude
+in Section 6.
+2 Preliminary
+2.1 Notations and basic operations
+Some common symbols used in this paper are shown in the following Table 1.
+Table 1 Common symbols used in this paper.
+Symbols
+Notations
+a
+scalar
+A
+matrix
+X
+tensor
+X(n)
+mode-n unfolding matrix of X
+×n
+mode-n product of tensor and matrix
+In
+identity matrix with size n × n
+σi(A)
+the ith largest singular value of A
+A⊤
+transpose of A
+A†
+pseudo-inverse of A
+4
+Sketching Algorithms for Low-Rank Tucker Approximation
+We denote an Nth-order tensor X ∈RI1×I2×...×IN with entries given by
+xi1,i2,...,iN, 1 ≤in ≤In, n = 1, 2, ..., N. The Frobenius norm of X is deﬁned as
+∥X∥F =
+v
+u
+u
+t
+I1,I2,...,IN
+X
+i1,i2,...,iN
+x2
+i1,i2,...,iN .
+The mode-n tensor-matrix multiplication is a frequently encountered operation
+in tensor computation. The mode-n product of a tensor X ∈RI1×I2×...×IN
+by a matrix A ∈RK×In (with entries ak,in) is denoted as Y = X ×n A ∈
+RI1×...×In−1×K×In+1×...×IN, with entries
+yi1,...,in−1,k,in+1,...,iN =
+In
+X
+in=1
+xi1,...,in−1,in,in+1,...,iNak,in.
+The mode-n matricization of higher-order tensors is the reordering of ten-
+sor elements into a matrix. The columns of mode-n unfolding matrix X(n) ∈
+RIn×(Q
+N̸=n IN ) are the mode-n ﬁbers of X. More speciﬁcally, a element
+(i1, i2, ..., iN) of X is maps on a element (in, j) of X(n), where
+j = 1 +
+N
+X
+k=1,k̸=n
+[(ik −1)
+k−1
+Y
+m=1,m̸=n
+Im].
+Let the rank of mode-n unfolding matrix X(n) is rn, the integer array
+(r1, r2, ..., rN) is Tucker-rank of Nth-order tensor X, also known as the mul-
+tilinear rank. The Tucker decomposition of X with rank (r1, r2, ..., rN) is
+expressed as
+X = G ×1 U (1) ×2 U (2) . . . ×N U (N),
+(2)
+where G ∈Rr1×r2×...×rN is the core tensor, and {U (n)}N
+n=1 with U (n) ∈RIn×rn
+is the mode-n factor matrices. The graphical illustration of Tucker decom-
+position for a third-order tensor shows in Figure 1. We denote an optimal
+rank-(r1, r2, ..., rN) approximation of a tensor X as ˆ
+Xopt, which is the optimal
+Tucker approximation by solving the minimization problem in (1). Below we
+Fig. 1 Tucker decomposition of a third-order tensor.
+present the deﬁnitions of some concepts used in this paper.
+Sketching Algorithms for Low-Rank Tucker Approximation
+5
+Deﬁnition 1 (Kronecker products) The Kronecker product of matrices A ∈Rm×n
+and B ∈Rk×l is deﬁned as
+A ⊗B =
+
+
+a11B
+a12B
+... a1nB
+a21B
+a22B
+... a2nB
+:
+:
+...
+:
+am1B am2B ... amnB
+
+∈Rmk×nl.
+The Kronecker product helps express Tucker decomposition. The Tucker
+decomposition in (2) implies
+X(n) = U (n)G(n)(U (N) ⊗... ⊗U (n+1) ⊗U (n−1) ⊗... ⊗U (1))⊤.
+Deﬁnition 2 (Standard normal matrix) The elements of a standard normal matrix
+follow the real standard normal distribution (i.e., Gaussian with mean zero and
+variance one) form an independent family of standard normal random variables.
+Deﬁnition 3 (Standard Gaussian tensor) The elements of a standard Gaussian
+tensor follow the standard Gaussian distribution.
+Deﬁnition 4 (Tail energy) The jth tail energy of a matrix X is deﬁned as
+τ 2
+j (X) :=
+min
+rank(Y )<j ∥X −Y ∥2
+F =
+X
+i≥j
+σ2
+i (X).
+2.2 Truncated higher-order SVD
+Since the actual Tucker rank of large-scale higher-order tensor is hard to com-
+pute, the truncated Tucker decomposition with a pre-determined truncation
+(r1, r2, ..., rN) is widely used in practice. THOSVD is a popular approach to
+computing the truncated Tucker approximation, also known as the best low
+multilinear rank-(r1, r2, ..., rN) approximation, which reads
+min
+G; U(1),U(2),··· ,U(N) ∥X −G ×1 U (1) ×2 U (2) · · · ×N U (N)∥2
+F
+s.t.
+U (n)⊤U (n) = Irn, n ∈{1, 2, ..., N}.
+Algorithm 1 THOSVD
+Require: tensor X ∈RI1×I2×...×IN and target rank (r1, r2, . . . , rN)
+Ensure: Tucker approximation ˆ
+X = G ×1 U (1) ×1 U (2) · · · ×N U (N)
+1: for n = 1, 2, . . ., N do
+2:
+(U (n), ∼, ∼) ←truncatedSVD(X(n), rn)
+3: end for
+4: G ←X×1U (1)⊤×2 U (2)⊤· · · ×N U (N)⊤
+6
+Sketching Algorithms for Low-Rank Tucker Approximation
+Algorithm 1 summarizes the THOSVD approach. Each mode is processed
+individually in Algorithm 1. The low-rank factor matrices of mode-n unfolding
+matrix X(n) are computed through the truncated SVD, i.e.,
+X(n) =
+h
+U (n)
+˜
+U (n)
+i S(n)
+˜
+S(n)
+ V (n)⊤
+˜
+V (n)⊤
+
+∼= U (n)S(n)V (n)⊤,
+where U (n)S(n)V (n)⊤is a rank-rn approximation of X(n), the orthogonal
+matrix U (n) ∈RIn×rn is the mode-n factor matrix of X in Tucker decomposi-
+tion, S(n) ∈Rrn×rn and V (n) ∈RI1...In−1In+1...IN×rn. Once all factor matrices
+have been computed, the core tensor G can be computed as
+G = X×1U (1)⊤×2 U (2)⊤· · · ×N U (N)⊤∈Rr1×r2×...×rN.
+Then, the Tucker approximation ˆ
+X of X can be computed as
+ˆ
+X = G ×1 U (1) ×2 U (2) · · · ×N U (N)
+= X ×1 (U (1)U (1)⊤) ×2 (U (2)U (2)⊤) · · · ×N (U (N)U (N)⊤).
+With the notation ∆2
+n(X) ≜PIn
+i=rn+1 σ2
+i (X(n)) and ∆2
+n(X) ≤∥X −ˆ
+Xopt∥2
+F
+[14], the error-bound for Algorithm 1 can be stated in the following Theorem 1.
+Theorem 1 ([11], Theorem 5.1) Let ˆ
+X = G ×1 U(1) ×2 U(2) · · · ×N U(N) be the
+low multilinear rank-(r1, r2, ..., rN) approximation of a tensor X ∈RI1×I2×...×IN by
+THOSVD. Then
+∥X −ˆ
+X ∥2
+F ≤
+N
+X
+n=1
+∥X ×n (IIn −U(n)U(n)⊤)∥2
+F =
+N
+X
+n=1
+In
+X
+i=rn+1
+σ2
+i (X(n))
+=
+N
+X
+n=1
+∆2
+n(X ) ≤N∥X −ˆ
+Xopt∥2
+F .
+2.3 Sequentially truncated higher-order SVD
+Vannieuwenhoven et al.[11] proposed one more eﬃcient and less computation-
+ally complex approach for computing approximate Tucker decomposition of
+tensors, called STHOSVD. Unlike THOSVD algorithm, STHOSVD updates
+the core tensor simultaneously whenever a factor matrix has computed.
+Given the target rank (r1, r2, . . . , rN) and a processing order sp
+:
+{1, 2, ..., N}, the minimization problem (1) can be formulated as the following
+Sketching Algorithms for Low-Rank Tucker Approximation
+7
+optimization problem
+min
+U(1),··· ,U(N) ∥X −X ×1 (U (1)U (1)⊤) ×2 (U (2)U (2)⊤) · · · ×N (U (N)U (N)⊤)∥2
+F
+=
+min
+U(1),··· ,U(N)(∥X ×1 (I1 −U (1)U (1)⊤)∥2
+F + ∥ˆ
+X (1) ×2 (I2 −U (2)U (2)⊤)∥2
+F +
+· · · + ∥ˆ
+X (N−1) ×N (IN −U (N)U (N)⊤)∥2
+F )
+= min
+U(1)(∥X ×1 (I1 −U (1)U (1)⊤)∥2
+F + min
+U(2)(∥ˆ
+X (1) ×2 (I2 −U (2)U (2)⊤)∥2
+F +
+min
+U(3)(· · · + min
+U(N) ∥ˆ
+X (N−1) ×N (IN −U (N)U (N)⊤)∥2
+F ))),
+(3)
+where
+ˆ
+X (n) = X ×1 (U (1)U (1)⊤) ×2 (U (2)U (2)⊤) · · · ×n (U (n)U (n)⊤), n =
+1, 2, ..., N −1, denote the intermediate approximation tensors.
+Algorithm 2 STHOSVD
+Require: tensor X ∈RI1×I2×...×IN , target rank (r1, r2, . . . , rN), and process-
+ing order sp : {i1, i2, . . . , iN}
+Ensure: Tucker approximation ˆ
+X = G ×1 U (1) ×2 U (2) . . . ×N U (N)
+1: G ←X
+2: for n = i1, i2, . . . , iN do
+3:
+(U (n), S(n), V (n)⊤) ←truncatedSVD(G(n), rn)
+4:
+G ←foldn(S(n)V (n)⊤) (% forming the updated tensor from its mode-n
+unfolding)
+5: end for
+In Algorithm 2, the solution U (n) of problem (3) can be obtained via
+truncatedSVD(G(n), rn), where G(n) is mode-n unfolding matrix of the (n−1)-
+th intermediate core tensor G = X ×n−1
+i=1 U (i)⊤∈Rr1×r2×...×rn−1×In×...×IN,
+i.e.,
+G(n) =
+h
+U (n)
+˜
+U (n)
+i S(n)
+˜
+S(n)
+ V (n)⊤
+˜
+V (n)⊤
+
+∼= U (n)S(n)V (n)⊤,
+where the orthogonal matrix U (n)
+is the mode-n factor matrix, and
+S(n)V (n)⊤∈Rrn×r1...rn−1In+1...IN is used to update the n-th intermediate core
+tensor G. Function foldn(S(n)V (n)⊤) tensorizes matrix S(n)V (n)⊤into ten-
+sor G ∈Rr1×r2×...×rn×In+1×...×IN. When the target rank rn is much smaller
+than In, the size of the updated intermediate core tensor G is much smaller
+than original tensor. This method can signiﬁcantly improve computational
+performance. STHOSVD algorithm possesses the following error-bound.
+Theorem 2 ([11], Theorem 6.5) Let ˆ
+X = G ×1 U(1) ×2 U(2) . . . ×N U(N) be the
+low multilinear rank-(r1, r2, ..., rN) approximation of a tensor X ∈RI1×I2×...×IN by
+8
+Sketching Algorithms for Low-Rank Tucker Approximation
+STHOSVD with processsing order sp : {1, 2, . . . , N}. Then
+∥X −ˆ
+X ∥2
+F =
+N
+X
+n=1
+∥ˆ
+X (n−1) −ˆ
+X (n)∥2
+F ≤
+N
+X
+n=1
+∥X ×n (IIn −U(n)U(n)⊤)∥2
+F
+=
+N
+X
+n=1
+∆2
+n(X ) ≤N∥X −ˆ
+Xopt∥2
+F .
+Although STHOSVD has the same error-bound as THOSVD, it is less com-
+putationally complex and requires less storage. As shown in Section 5 for the
+numerical experiment, the running (CPU) time of the STHOSVD algorithm
+is signiﬁcantly reduced, and the approximation error has slightly better than
+that of THOSVD in some cases.
+2.4 Randomized STHOSVD
+When the dimensions of data tensors are enormous, the computational cost
+of the classical deterministic algorithm TSVD for ﬁnding a low-rank approx-
+imation of mode-n unfolding matrix can be expensive. Randomized low-rank
+matrix algorithms replace original large-scale matrix with a new one through
+a preprocessing step. The new matrix contains as much information as possi-
+ble about the rows or columns of original data matrix. Its size is smaller than
+original matrix, allowing the data matrix to be processed eﬃciently and thus
+reducing the memory requirements for solving low-rank approximation of large
+matrix.
+Algorithm 3 R-SVD
+Require: matrix A ∈Rm×n, target rank r, and oversampling parameter p ≥0
+Ensure: low-rank approximation matrix ˆA = ˆU ˆS ˆV ⊤of A
+1: Ω←randn(n, r + p)
+2: Y ←AΩ
+3: (Q, ∼) ←thinQR(Y )
+4: B ←Q⊤A
+5: (U, S, V ⊤) ←thinSVD(B)
+6: ˆU ←QU(:, 1 : r)
+7: ˆS ←S(1 : r, 1 : r), ˆV ←V (:, 1 : r)
+N. Halko et al. [21] proposed a randomized SVD (R-SVD) for matrices. The
+preprocessing stage of the algorithm is performed by right multiplying original
+data matrix A ∈Rm×n with a random Gaussian matrix Ω∈Rn×r. Each
+column of the resulting new matrix Y = AΩ∈Rm×r is a linear combination
+of the columns of original data matrix. When r < n, the size of matrix Y
+is smaller than A. The oversampling technique can improve the accuracy of
+solutions. Subsequent computations are summarised in Algorithm 3, where
+Sketching Algorithms for Low-Rank Tucker Approximation
+9
+randn generates a Gaussian random matrix, thinQR produces an economy-size
+of the QR decomposition, and thinSVD is the thin SVD decomposition. When
+A is dense, the arithmetic cost of Algorithm 3 is O(2(r + p)mn + r2(m + n))
+ﬂops, where p > 0 is the oversampling parameter satisfying r+p ≤min{m, n}.
+Algorithm 3 is an eﬃcient randomized algorithm for computing rank-r
+approximations to matrices. Minster et al. [14] applied Algorithm 3 directly
+to the STHOSVD algorithm and then presented a randomized version of
+STHOSVD (i.e., R-STHOSVD), see Algorithm 4.
+Algorithm 4 R-STHOSVD
+Require: tensor X ∈RI1×I2×...×IN , targer rank (r1, r2, . . . , rN), processing
+order sp : {i1, i2, . . . , iN}, and oversampling parameter p ≥0
+Ensure: Tucker approximation ˆ
+X = G ×1 U (1) ×2 U (2) . . . ×N U (N)
+1: G ←X
+2: for n = i1, i2, . . . , iN do
+3:
+( ˆU, ˆS, ˆV ⊤) ←R-SVD(G(n), rn, p) (cf. Algorithm 3)
+4:
+U (n) ←ˆU
+5:
+G ←foldn( ˆS ˆV ⊤)
+6: end for
+3 Sketching algorithm for STHOSVD
+A drawback of R-SVD algorithm is that when both dimensions of the inter-
+mediate matrices are enormous, the computational cost can still be high. To
+resolve this problem, we could resort to the two-sided sketching algorithm for
+low-rank matrix approximation proposed by Joel A. Tropp et al. [22]. The
+preprocessing of sketching algorithm needs two sketch matrices to contain
+information regarding the rows and columns of input matrix A ∈Rm×n. Thus
+we should choose two sketch size parameters k and l, s.t. , r ≤k ≤min{l, n},
+0 < l ≤m. The random matrices Ω∈Rn×k and Ψ ∈Rl×m are ﬁxed indepen-
+dent standard normal matrices. Then we can multiply matrix A left and right
+respectively to obtain random sketch matrices Y ∈
+Rm×k and W ∈Rl×n,
+which collect suﬃcient data about the input matrix to compute the low-rank
+approximation. The dimensionality and distribution of the random sketch
+matrices determine the approximation’s potential accuracy, with larger values
+of k and l resulting in better approximations but also requiring more storage
+and computational cost.
+The sketching algorithm for low-rank approximation is given in Algorithm
+5. Function orth(A) in Step 2 produces an orthonormal basis of A. Using
+orthogonalization matrices will achieve smaller errors and better numerical
+stability than directly using the randomly generated Gaussian matrices. In
+particular, when A is dense, the arithmetic cost of Algorithm 5 is O((k +
+l)mn + kl(m + n)) ﬂops. Algorithm 5 is simple, practical, and possesses the
+sub-optimal error-bound as stated in the following Theorem 3. In Theorem 3,
+10
+Sketching Algorithms for Low-Rank Tucker Approximation
+Algorithm 5 Sketch for low-rank approximation
+Require: matrix A ∈Rm×n, and sketch size parameters k, l
+Ensure: rank-k approximation ˆA = QX of A
+1: Ω←randn(n, k), Ψ ←randn(l, m)
+2: Ω←orth(Ω), Ψ⊤←orth(Ψ⊤)
+3: Y ←AΩ
+4: W ←ΨA
+5: (Q, ∼) ←thinQR(Y )
+6: X ←(ΨQ)†W
+function f(s, t) := s/(t −s −1)(t > s + 1 > 1). The minimum in Theorem
+3 reveals that the low rank approximation of given matrix A automatically
+exploits the decay of tail energy.
+Theorem 3 ([22], Theorem 4.3) Assume that the sketch size parameters satisfy
+l > k + 1, and draw random test matrices Ω∈Rn×k and Ψ∈Rl×m independently
+forming the standard normal distribution. Then the rank-k approximation ˆA obtained
+from Algorithm 5 satisﬁes
+E ∥A −ˆA ∥2
+F ≤(1 + f(k, l)) · min
+̺<k−1(1 + f(̺, k)) · τ 2
+̺+1(A)
+=
+k
+l −k −1 · min
+̺<k−1
+k
+k −̺ −1 · τ 2
+̺+1(A).
+Using the two-sided sketching algorithm to leverage STHOSVD algorithm,
+we propose a practical sketching algorithm for STHOSVD named Sketch-
+STHOSVD. We summarize the procedures of Sketch-STHOSVD algorithm in
+Algorithm 6, with its error analysis stated in Theorem 4.
+Algorithm 6 Sketch-STHOSVD
+Require: tensor X ∈RI1×I2×...×IN , targer rank (r1, r2, . . . , rN), processing
+order sp : {i1, i2, . . . , iN}, and sketch size parameters {l1, l2, ..., lN}
+Ensure: Tucker approximation ˆ
+X = G ×1 U (1) ×2 U (2) . . . ×N U (N)
+1: G ←X
+2: for n = i1, i2, . . . , iN do
+3:
+(Q, X) ←Sketch(G(n), rn, ln) (cf. Algorithm 5)
+4:
+U (n) ←Q
+5:
+G ←foldn(X)
+6: end for
+Theorem 4 Let ˆ
+X = G ×1 U(1) ×2 U(2) . . . ×N U(N) be the Tucker approximation
+of a tensor X ∈RI1×I2×...×IN by the Sketch-STHOSVD algorithm (i.e., Algorithm
+6) with target rank rn < In, n = 1, 2, ..., N, sketch size parameters {l1, l2, ..., lN} and
+Sketching Algorithms for Low-Rank Tucker Approximation
+11
+processing order sp : {1, 2, . . . , N}. Then
+E{Ωj}N
+j=1∥X −b
+X ∥2
+F ≤
+N
+X
+n=1
+rn
+ln −rn −1
+min
+̺n<rn−1
+rn
+rn −̺n −1∆2
+n(X )
+≤
+N
+X
+n=1
+rn
+ln −rn −1
+min
+̺n<rn−1
+rn
+rn −̺n −1∥X −ˆ
+Xopt∥2
+F .
+Proof Combining Theorem 2 and Theorem 3, we have
+E{Ωj}N
+j=1∥X −b
+X ∥2
+F
+=
+N
+X
+n=1
+E{Ωj}N
+j=1∥ˆ
+X (n−1) −ˆ
+X (n)∥2
+F
+=
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+n
+EΩn∥ˆ
+X (n−1) −ˆ
+X (n)∥2
+F
+o
+=
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+n
+EΩn∥G(n−1) ×n−1
+i=1 U(i)×n(I −U(n)U(n)⊤)∥2
+F
+o
+≤
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+n
+EΩn∥(I −U(n)U(n)⊤)Gn−1
+n
+)∥2
+F
+o
+≤
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+rn
+ln −rn −1
+min
+̺n<rn−1
+rn
+rn −̺n −1
+In
+X
+i=rn+1
+σ2
+i (G(n−1)
+(n)
+)
+≤
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+rn
+ln −rn −1
+min
+̺n<rn−1
+rn
+rn −̺n −1∆2
+n(X )
+=
+N
+X
+n=1
+rn
+ln −rn −1
+min
+̺n<rn−1
+rn
+rn −̺n −1∆2
+n(X )
+≤
+N
+X
+n=1
+rn
+ln −rn −1
+min
+̺n<rn−1
+rn
+rn −̺n −1∥X −ˆ
+Xopt∥2
+F .
+□
+We assume the processing order for STHOSVD, R-STHOSVD, and Sketch-
+STHOSVD algorithms is sp : {1, 2, ..., N}. Table 2 summarises the arithmetic
+cost of diﬀerent algorithms for the cases related to the general higher-order
+tensor X ∈RI1×I2×...×IN with target rank (r1, r2, . . . , rN) and the special
+cubic tensor X ∈RI×I×...×I with target rank (r, r, ..., r). Here the tensors are
+dense and the target ranks rj ≪Ij, j = 1, 2, . . ., N.
+12
+Sketching Algorithms for Low-Rank Tucker Approximation
+Table 2 Arithmetic cost for the algorithms THOSVD, STHOSVD, R-STHOSVD, and
+the proposed Sketch-STHOSVD.
+Algorithm
+X ∈RI1×I2×...×IN
+X ∈RI×I×...×I
+THOSVD
+O(
+N
+P
+j=1
+Ij I1:N + PN
+j=1 r1:j Ij:N )
+O(NIN+1 +
+N
+P
+j=1
+rj IN−j+1)
+STHOSVD
+O(
+N
+P
+j=1
+Ij r1:j−1Ij:N +
+N
+P
+j=1
+r1:j Ij+1:N )
+O(
+N
+P
+j=1
+rj−1IN−j+2 + rj IN−j)
+R-STHOSVD
+O(
+N
+P
+j=1
+r1:jIj:N +
+N
+P
+j=1
+r1:j Ij+1:N )
+O(
+N
+P
+j=1
+rj IN−j+1 + rj IN−j )
+Sketch-STHOSVD
+O(
+N
+P
+j=1
+rj lj(Ij + r1:j−1Ij+1:N ) +
+N
+P
+j=1
+r1:j Ij+1:N )
+O(
+N
+P
+j=1
+rl(I + rj−1IN−j ) + rj IN−j )
+4 Sketching algorithm with subspace power
+iteration
+When the size of original matrix is very large or the singular spectrum of
+original matrix decays slowly, Algorithm 5 may produce a poor basis in many
+applications. Inspired by [23], we suggest using the power iteration technique
+to enhance the sketching algorithm by replacing A with (AA⊤)qA, where q
+is a positive integer. According to the SVD decomposition of matrix A, i.e.,
+A = USV ⊤, we know that (AA⊤)qA = US2q+1V ⊤. It can see that A and
+(AA⊤)qA have the same left and right singular vectors, but the latter has a
+faster decay rate of singular values, making its tail energy much smaller.
+Algorithm 7 Sketching algorithm with subspace power iteration (sub-
+Sketch)
+Require: matrix A ∈Rm×n, sketch size parameters k, l, and integer q > 0
+Ensure: rank-k approximation ˆA = QX of A
+1: Ω←randn(n, k), Ψ ←randn(l, m)
+2: Ω←orth(Ω), Ψ⊤←orth(Ψ⊤)
+3: Y = AΩ, W = ΨA
+4: Q0 ←thinQR(Y )
+5: for j = 1, . . . , q do
+6:
+ˆYj = A⊤Qj−1
+7:
+( ˆQj, ∼) ←thinQR( ˆYj)
+8:
+Yj = A ˆQj
+9:
+(Qj, ∼) ←thinQR(Yj)
+10: end for
+11: Q = Qq
+12: X ←(ΨQ)†W
+Although power iteration can improve the accuracy of Algorithm 5 to some
+extent, it still suﬀers from a problem, i.e., during the execution with power
+iteration, the rounding errors will eliminate all information about the singular
+modes associated with the singular values. To address this issue, we propose an
+Sketching Algorithms for Low-Rank Tucker Approximation
+13
+improved sketching algorithm by orthonormalizing the columns of the sample
+matrix between each application of A and A⊤, see Algorithm 7. When A is
+dense, the arithmetic cost of Algorithm 7 is O((q + 1)(k + l)mn + kl(m + n))
+ﬂops. Numerical experiments show that a good approximation can achieve
+with a choice of 1 or 2 for subspace power iteration parameter [21].
+Algorithm 8 sub-Sketch-STHOSVD
+Require: tensor X ∈RI1×I2×...×IN , targer rank (r1, r2, . . . , rN), processing
+order sp : {i1, i2, . . . , iN}, sketch size parameters {l1, l2, ..., lN}, and integer
+q > 0
+Ensure: Tucker approximation ˆ
+X = G ×1 U (1) ×2 U (2) . . . ×N U (N)
+1: G ←X
+2: for n = i1, i2, . . . , iN do
+3:
+(Q, X) ←sub-Sketch(G(n), rn, ln, q) (cf. Algorithm 7)
+4:
+U (n) ←Q
+5:
+G ←foldn(X)
+6: end for
+Using Algorithm 7 to compute the low-rank approximations of intermedi-
+ate matrices, we can obtain an improved sketching algorithm for STHOSVD,
+called sub-Sketch-STHOSVD, see Algorithm 8. The error-bound for Algorithm
+8 states in the following Theorem 5. Its proof is deferred in Appendix.
+Theorem 5 Let ˆ
+X = G ×1 U(1) ×2 U(2) . . . ×N U(N) be the Tucker approximation
+of a tensor X ∈RI1×I2×...×IN obtained by the sub-Sketch-STHOSVD algorithm
+(i.e., Algorithm 8) with target rank rn < In, n = 1, 2, ..., N, sketch size parameters
+{l1, l2, ..., lN} and processing order p : {1, 2, . . . , N}. Let ̟k ≡
+σk+1
+σk
+denote the
+singular value gap, then
+E{Ωj}N
+j=1∥X −b
+X ∥2
+F ≤
+N
+X
+n=1
+(1 + f(rn, ln)) ·
+min
+̺n<rn−1(1 + f(̺n, rn)̟r4q) · τ 2
+̺+1(X(n))
+≤
+N
+X
+n=1
+(1 + f(rn, ln)) ·
+min
+̺n<rn−1(1 + f(̺n, rn)̟r4q)∥X −ˆ
+Xopt∥2
+F .
+Proof See Appendix.
+□
+5 Numerical experiments
+This section conducts numerical experiments with synthetic data and
+real-world data, including comparisons between the traditional THOSVD,
+STHOSVD algorithms, the R-STHOSVD algorithm proposed in [14], and our
+14
+Sketching Algorithms for Low-Rank Tucker Approximation
+proposed algorithms Sketch-STHOSVD and sub-Sketch-STHOSVD. Regard-
+ing the numerical settings, the oversampling parameter p = 5 is used in
+Algorithm 3, the sketch parameters ln = rn + 2, n = 1, 2, . . ., N, are used
+in Algorithms 6 and 8, and the power iteration parameter q = 1 is used in
+Algorithm 8.
+5.1 Hilbert tensor
+Hilbert tensor is a synthetic and supersymmetric tensor, with each entry
+deﬁned as
+Xi1i2...in =
+1
+i1 + i2 + ... + in
+, 1 ≤in ≤In, n = 1, 2, ..., N.
+In the ﬁrst experiment, we set N = 5 and In = 25, n = 1, 2, . . . , N. The target
+rank is chosen as (r, r, r, r, r), where r ∈[1, 25]. Due to the supersymmetry of
+the Hilbert tensor, the processing order in the algorithms does not aﬀect the
+ﬁnal experimental results, and thus the processing order can be directly chosen
+as sp : {1, 2, 3, 4, 5}.
+0
+5
+10
+15
+20
+25
+Target rank
+10-15
+10-10
+10-5
+100
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+0
+5
+10
+15
+20
+25
+Target rank
+10-1
+100
+101
+102
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+Fig. 2 Results comparison on the Hilbert tensor with a size of 25 × 25 × 25 × 25 × 25 in
+terms of numerical error (left) and CPU time (right).
+The results of diﬀerent algorithms are given in Figure 2. It shows that our
+proposed algorithms (i.e., Sketch-STHOSVD and sub-Sketch-STHOSVD) and
+algorithm R-STHOSVD outperform the algorithms THOSVD and STHOSVD.
+In particular, the error of the proposed algorithms Sketch-STHOSVD and sub-
+Sketch-STHOSVD is comparable to R-STHOSVD (see the left plot in Figure
+2), while they both use less CPU time than R-STHOSVD (see the right plot in
+Figure 2). This result demonstrates the excellent performance of the proposed
+Sketching Algorithms for Low-Rank Tucker Approximation
+15
+algorithms and indicates that the two-sided sketching method and the subspace
+power iteration used in our algorithms can indeed improve the performance of
+STHOSVD algorithm.
+For a large-scale test, we use a Hilbert tensor with a size of 500×500×500
+and conduct experiments using ten diﬀerent approximate multilinear ranks. We
+perform the tests ten times and report the algorithms’ average running time
+and relative error in Table 3 and Table 4, respectively. The results show that
+the randomized algorithms can achieve higher accuracy than the deterministic
+algorithms. The proposed Sketch-STHOSVD algorithm is the fastest, and the
+sub-Sketch-STHOSVD algorithm achieves the highest accuracy eﬃciently.
+Table 3 Results comparison in terms of the CPU time (in second) on the Hilbert tensor
+with a size of 500 × 500 × 500 as the target rank increases.
+Target rank
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(10,10,10)
+17.18
+7.49
+0.92
+0.86
+0.98
+(20,20,20)
+23.13
+8.87
+1.25
+1.05
+1.48
+(30,30,30)
+24.91
+9.35
+1.66
+1.53
+2.16
+(40,40,40)
+28.05
+10.41
+1.94
+1.44
+2.11
+(50,50,50)
+29.44
+11.39
+2.07
+1.67
+2.43
+(60,60,60)
+30.14
+11.07
+2.37
+1.90
+2.77
+(70,70,70)
+29.44
+11.18
+2.57
+2.10
+3.02
+(80,80,80)
+29.65
+12.30
+3.05
+2.54
+3.75
+(90,90,90)
+31.11
+12.80
+3.80
+2.80
+4.33
+(100,100,100)
+32.22
+13.51
+4.04
+3.07
+4.61
+Table 4 Results comparison in terms of the relative error on the Hilbert tensor with a
+size of 500 × 500 × 500 as the target rank increases.
+Target rank
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(10,10,10)
+2.7354e-06
+2.7347e-06
+2.7347e-06
+1.1178e-05
+2.7568e-06
+(20,20,20)
+1.1794e-12
+1.1793e-12
+1.1794e-12
+7.1408e-12
+1.2677e-12
+(30,30,30)
+4.6574e-15
+3.2739e-15
+3.2201e-15
+4.0641e-15
+2.0182e-15
+(40,40,40)
+4.4282e-15
+3.4249e-15
+2.8212e-15
+2.1562e-15
+1.7860e-15
+(50,50,50)
+4.1628e-15
+3.2342e-15
+2.6823e-15
+2.3205e-15
+1.8625e-15
+(60,60,60)
+4.1214e-15
+3.1271e-15
+2.3652e-15
+2.2920e-15
+1.7472e-15
+(70,70,70)
+4.1085e-15
+3.0000e-15
+2.1761e-15
+2.0499e-15
+1.6370e-15
+(80,80,80)
+4.0956e-15
+3.1350e-15
+1.8382e-15
+1.8209e-15
+1.6424e-15
+(90,90,90)
+4.0792e-15
+3.3742e-15
+1.8102e-15
+1.7193e-15
+1.5264e-15
+(100,100,100)
+4.0390e-15
+3.0571e-15
+1.7323e-15
+1.6304e-15
+1.4957e-15
+5.2 Sparse tensor
+In this experiment, we test the performance of diﬀerent algorithms on a sparse
+tensor X ∈R200×200×200, i.e.,
+X =
+10
+X
+i=1
+γ
+i2 xi ◦yi ◦zi +
+200
+X
+i=11
+1
+i2 xi ◦yi ◦zi.
+Where xi, yi, zi ∈Rn are sparse vectors all generated using the sprand com-
+mand in MATLAB with 5% nonzeros each, and γ is a user-deﬁned parameter
+16
+Sketching Algorithms for Low-Rank Tucker Approximation
+20
+40
+60
+80
+100
+Target rank
+10-3
+10-2
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-4
+10-3
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-6
+10-5
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-1
+100
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-1
+100
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-1
+100
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+Fig. 3 Results comparison on a sparse tensor with a size of 200 × 200 × 200 in terms of
+numerical error (ﬁrst row) and CPU time (second row).
+which determines the strength of the gap between the ﬁrst ten terms and the
+rest terms. The target rank is chosen as (r, r, r), where r ∈[20, 100]. The exper-
+imental results show in Figure 3, in which three diﬀerent values γ = 2, 10, 200
+are tested. The increase of gap means that the tail energy will be reduced, and
+the accuracy of the algorithms will be improved. Our numerical experiments
+also veriﬁed this result.
+Figure 3 demonstrates the superiority of the proposed sketching algo-
+rithms. In particular, we see that the proposed Sketch-STHOSVD is the fastest
+algorithm, with a comparable error against R-STHOSVD; the proposed sub-
+Sketch-STHOSVD can reach the same accuracy as the STHOSVD algorithm
+but in much less CPU time; and the proposed sub-Sketch-STHOSVD achieves
+much better low-rank approximation than R-STHOSVD with similar CPU
+time.
+Now we consider the inﬂuence of noise on algorithms’ performance. Specif-
+ically, the sparse tensor X with noise is designed in the same manner as in
+Sketching Algorithms for Low-Rank Tucker Approximation
+17
+20
+40
+60
+80
+100
+Target rank
+0.19
+0.195
+0.2
+0.205
+0.21
+0.215
+0.22
+0.225
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+0.045
+0.05
+0.055
+0.06
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+1.45
+1.5
+1.55
+1.6
+1.65
+1.7
+1.75
+1.8
+1.85
+1.9
+1.95
+Relative Error
+10-3
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-1
+100
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-1
+100
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+20
+40
+60
+80
+100
+Target rank
+10-1
+100
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+Fig. 4 Results comparison on a 200×200×200 sparse tensor with noise in terms of numerical
+error (ﬁrst row) and CPU time (second row).
+[24], i.e.,
+ˆ
+X = X + δK,
+where K is a standard Gaussian tensor and δ is used to control the noise
+level. Let δ = 10−3 and keep the rest parameters the same as the settings
+in the previous experiment. The relative error and running time of diﬀerent
+algorithms are shown in Figure 4. In Figure 4, we see that noise indeed aﬀects
+the accuracy of the low-rank approximation, especially when the gap is small.
+However, the inﬂuence of noise does not change the conclusion obtained on
+the case without noise. The accuracy of our sub-Sketch-STHOSVD algorithm
+is the highest among the randomized algorithms. As γ increases, sub-Sketch-
+STHOSVD can achieve almost the same accuracy as that of THOSVD and
+STHOSVD in a comparable CPU time against R-STHOSVD.
+18
+Sketching Algorithms for Low-Rank Tucker Approximation
+5.3 Real-world data tensor
+In this experiment, we test the performance of diﬀerent algorithms on a colour
+image, called HDU picture1, with a size of 1200 × 1800 × 3. We also evaluate
+the proposed sketching algorithms on the widely used YUV Video Sequences2.
+Taking the ‘hall monitor’ video as an example and using the ﬁrst 30 frames, a
+three order tensor with a size of 144 × 176 × 30 is then formed for this test.
+Firstly, we conduct an experiment on the HDU picture with target rank
+(500, 500, 3), and compare the PSNR and CPU time of diﬀerent algorithms.
+The experimental result is shown in Figure 5, which shows that the PSNR
+of sub-Sketch-STHOSVD, THOSVD and STHOSVD is very similar (i.e.,
+∼40) and that sub-Sketch-STHOSVD is more eﬃcient in terms of CPU
+time. R-STHOSVD and Sketch-STHOSVD are also very eﬃcient compared to
+sub-Sketch-STHOSVD; however, the PSNR they achieve is 5 dB less than sub-
+Sketch-STHOSVD. Then we conduct separate numerical experiments on the
+HDU picture and the ‘hall monitor’ video clip as the target rank increases, and
+compare these algorithms in terms of the relative error, CPU time and PSNR,
+see Figure 6 and Figure 7. These experimental results again demonstrate
+the superiority (i.e., low error and good approximation with high eﬃciency)
+of the proposed sub-Sketch-STHOSVD algorithm in computing the Tucker
+decomposition approximation.
+Original
+THOSVD (2.62; 40.61)
+STHOSVD (1.89; 40.65)
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(0.61; 34.72)
+(0.55; 34.63)
+(0.84; 39.97)
+Fig. 5 Results comparison on a HDU picture with a size of 1200 × 1800 × 3 in terms of
+PSNR (i.e., peak signal-to-noise ratio) and CPU time. The target rank is (500,500,3). The
+two values in e.g. (2.62; 40.61) represent the CPU time and the PSNR, respectively.
+In the last experiment, a larger-scale real-world tensor data is used. We
+choose a color image (called the LONDON picture) with a size of 4775×7155×3
+as the test image and consider the inﬂuence of noise. The LONDON picture
+1https://www.hdu.edu.cn/landscape
+2http://trace.eas.asu.edu/yuv/index.html
+Sketching Algorithms for Low-Rank Tucker Approximation
+19
+0
+200
+400
+600
+800
+1000
+Target rank
+-11
+-10
+-9
+-8
+-7
+-6
+-5
+-4
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+0
+200
+400
+600
+800
+1000
+Target rank
+0.5
+1
+1.5
+2
+2.5
+3
+3.5
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+0
+200
+400
+600
+800
+1000
+Target rank
+20
+25
+30
+35
+40
+45
+50
+55
+PSNR
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+Fig. 6 Results comparison on a HDU picture with size of 1200 × 1800 × 3 in terms of
+numerical error (left), CPU time (middle) and PSNR (right). The HDU picture is with target
+rank (r, r, 3), r ∈[50, 1000].
+0
+20
+40
+60
+80
+100
+Target rank
+-9
+-8
+-7
+-6
+-5
+-4
+-3
+Relative Error
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+0
+20
+40
+60
+80
+100
+Target rank
+0.005
+0.01
+0.015
+0.02
+0.025
+0.03
+0.035
+0.04
+0.045
+0.05
+0.055
+Running Time
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+0
+20
+40
+60
+80
+100
+Target rank
+10
+15
+20
+25
+30
+35
+PSNR
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+Fig. 7 Results comparison on the ‘hall monitor’ grey video with size of 144 × 176 × 30 in
+terms of numerical error (left), CPU time (middle) and PSNR (right). The ‘hall monitor’
+grey video is with target rank (r, r, 10), r ∈[5, 100].
+with white Gaussian noise is generated using the awgn(X,SNR) built-in function
+in MATLAB. We set the target rank as (50,50,3) and SNR to 20. The results
+comparisons without and with white Gaussian noise are respectively shown in
+Figure 8 and Figure 9 in terms of the CPU time and PSNR. Moreover, we also
+test the algorithms on the LONDON picture as the target rank increases. The
+results regarding the relative error, the CPU time and the PSNR are reported
+in Tables 5, 6 and 7, respectively. On the whole, the results again show the
+consistent performance of the proposed methods.
+20
+Sketching Algorithms for Low-Rank Tucker Approximation
+Original
+THOSVD (154.95; 24.07)
+STHOSVD (49.34; 24.09)
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(1.29; 21.27)
+(1.17; 21.09)
+(1.29; 23.65)
+Fig. 8 Results comparison on LONDON picture with a size of 4775 × 7155 × 3 in terms of
+CPU time and PSNR. The target rank is (50,50,3).
+Noisy picture(PSNR=16.92)
+THOSVD (160.59; 20.54)
+STHOSVD (50.16; 20.54)
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(1,25; 19.37)
+(1.15; 19.25)
+(1.45; 20.45)
+Fig. 9 Results comparison on LONDON picture with a size of 4775 × 7155 × 3 and white
+Gaussian noise in terms of CPU time and PSNR. The target rank is (50,50,3).
+In summary, the numerical results show the superiority of the sub-sketch
+STHOSVD algorithm for large-scale tensors with or without noise. We can see
+that sub-Sketch-STHOSVD could achieve close approximations to that of the
+deterministic algorithms in a time similar to other randomized algorithms.
+Sketching Algorithms for Low-Rank Tucker Approximation
+21
+Table 5 Results comparison in terms of the relative error on the LONDON picture with a
+size of 4775 × 7155 × 3 as the target rank increases.
+Target rank
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(10,10,10)
+0.019037
+0.019025
+0.031000
+0.040006
+0.020756
+(20,20,20)
+0.012669
+0.012644
+0.023467
+0.027398
+0.013703
+(30,30,30)
+0.010168
+0.010124
+0.018354
+0.020451
+0.010965
+(40,40,40)
+0.008630
+0.008599
+0.015792
+0.017029
+0.009443
+(50,50,50)
+0.007576
+0.007532
+0.013917
+0.015333
+0.008286
+(60,60,60)
+0.006778
+0.006710
+0.012967
+0.013589
+0.007359
+(70,70,70)
+0.006119
+0.006049
+0.011813
+0.011886
+0.006687
+(80,80,80)
+0.005532
+0.005491
+0.010658
+0.011148
+0.006123
+(90,90,90)
+0.005076
+0.005023
+0.010018
+0.010378
+0.005602
+(100,100,100)
+0.004669
+0.004619
+0.009249
+0.009578
+0.005172
+Table 6 Results comparison in terms of the CPU time (in second) on the LONDON
+picture with a size of 4775 × 7155 × 3 as the target rank increases.
+Target rank
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(10,10,10)
+156.13
+49.22
+0.94
+0.99
+1.12
+(20,20,20)
+165.22
+77.64
+1.24
+1.48
+1.56
+(30,30,30)
+241.11
+76.57
+1.69
+1.39
+1.69
+(40,40,40)
+242.08
+74.25
+1.57
+1.45
+1.68
+(50,50,50)
+268.71
+72.85
+1.51
+1.45
+1.80
+(60,60,60)
+265.52
+77.80
+1.75
+1.51
+2.26
+(70,70,70)
+241.95
+77.82
+1.93
+1.78
+2.24
+(80,80,80)
+264.86
+73.53
+1.86
+1.74
+2.31
+(90,90,90)
+274.73
+72.67
+1.93
+1.83
+2.16
+(100,100,100)
+283.88
+86.42
+2.24
+2.20
+2.46
+Table 7 Results comparison in terms of the PSNR on the LONDON picture with a size
+of 4775 × 7155 × 3 as the target rank increases.
+Target rank
+THOSVD
+STHOSVD
+R-STHOSVD
+Sketch-STHOSVD
+sub-Sketch-STHOSVD
+(10,10,10)
+20.06
+20.07
+17.96
+16.86
+19.70
+(20,20,20)
+21.84
+21.84
+19.18
+18.51
+21.50
+(30,30,30)
+22.79
+22.81
+20.25
+19.78
+22.46
+(40,40,40)
+23.50
+23.52
+20.90
+20.57
+23.11
+(50,50,50)
+24.07
+24.09
+21.45
+21.03
+23.68
+(60,60,60)
+24.55
+24.60
+21.76
+21.55
+24.20
+(70,70,70)
+25.00
+25.05
+22.16
+22.13
+24.61
+(80,80,80)
+25.43
+25.47
+22.61
+22.41
+25.00
+(90,90,90)
+25.81
+25.85
+22.87
+22.72
+25.38
+(100,100,100)
+26.17
+26.22
+23.22
+23.07
+25.73
+6 Conclusion
+In this paper we proposed eﬃcient sketching algorithms, i.e., Sketch-
+STHOSVD and sub-Sketch-STHOSVD, to calculate the low-rank Tucker
+approximation of tensors by combining the two-sided sketching technique with
+the STHOSVD algorithm and using the subspace power iteration. Detailed
+error analysis is also conducted. Numerical results on both synthetic and real-
+world data tensors demonstrate the competitive performance of the proposed
+algorithms in comparison to the state-of-the-art algorithms.
+Acknowledgements
+We would like to thank the anonymous referees for their comments and sug-
+gestions on our paper, which lead to great improvements of the presentation.
+22
+Sketching Algorithms for Low-Rank Tucker Approximation
+G. Yu’s work was supported in part by National Natural Science Foundation
+of China (No. 12071104) and Natural Science Foundation of Zhejiang Province
+(No. LD19A010002).
+Appendix
+Lemma 1 [[25], Theorem 2] Let ̺ < k −1 be a positive natural number and Ω∈
+Rk×n be a Gaussian random matrix. Suppose Q is obtained from Algorithm 7. Then
+∀A ∈Rm×n, we have
+EΩ∥A −QQ⊤A∥2
+F ≤(1 + f(̺, k)̟4q
+k ) · τ 2
+̺+1(A).
+(4)
+Lemma 2 [[22], Lemma A.3] Let A ∈Rm×n be an input matrix and ˆA = QX
+be the approximation obtained from Algorithm 7. The approximation error can be
+decomposed as
+∥A −ˆA∥2
+F = ∥A −QQ⊤A∥2
+F + ∥X −Q⊤A∥2
+F .
+(5)
+Lemma 3 [[22], Lemma A.5] Assume Ψ ∈Rl×n is a standard normal matrix
+independent from Ω. Then
+EΨ∥X −Q⊤A∥2
+F = f(k, l) · ∥A −QQ⊤A∥2
+F .
+(6)
+The error-bound for Algorithm 7 can be shown in Lemma 4 below.
+Lemma 4 Assume the sketch size parameter satisﬁes l > k + 1. Draw random
+test matrices Ω∈Rn×k and Ψ∈Rl×m independently from the standard normal
+distribution. Then the rank-k approximation ˆA obtained from Algorithm 7 satisﬁes
+E ∥A −ˆA ∥2
+F ≤(1 + f(k, l)) · min
+̺<k−1(1 + f(̺, k)̟k
+4q) · τ 2
+̺+1(A).
+Proof Using equations (4), (5) and (6), we have
+E ∥A −ˆA ∥2
+F = EΩ∥A −QQ⊤A∥2
+F + EΩEΨ∥X −Q⊤A∥2
+F
+= (1 + f(k, l)) · EΩ∥A −QQ⊤A∥2
+F
+≤(1 + f(k, l)) · (1 + f(̺, k)̟k
+4q) · τ 2
+̺+1(A).
+After minimizing over eligible index ̺ < k −1, the proof is completed.
+□
+Sketching Algorithms for Low-Rank Tucker Approximation
+23
+We are now in the position to prove Theorem 5. Combining Theorem 2
+and Lemma 4, we have
+E{Ωj}N
+j=1∥X −b
+X ∥2
+F
+=
+N
+X
+n=1
+E{Ωj}N
+j=1∥ˆ
+X (n−1) −ˆ
+X (n)∥2
+F
+=
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+n
+EΩn∥ˆ
+X (n−1) −ˆ
+X (n)∥2
+F
+o
+=
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+n
+EΩn∥G(n−1) ×n−1
+i=1 U (i)×n(I −U (n)U (n)⊤)∥2
+F
+o
+≤
+N
+X
+n=1
+E{Ωj}n−1
+j=1
+n
+EΩn∥(I −U (n)U (n)⊤)G(n−1)
+(n)
+)∥2
+F
+o
+≤
+N
+X
+n=1
+E{Ωj}n−1
+j=1 (1 + f(rn, ln)) ·
+min
+̺n<rn−1(1 + f(̺n, rn)̟r
+4q)
+In
+X
+i=rn+1
+σ2
+i (G(n−1)
+(n)
+)
+≤
+N
+X
+n=1
+E{Ωj}n−1
+j=1 (1 + f(rn, ln)) ·
+min
+̺n<rn−1(1 + f(̺n, rn)̟r4q)∆2
+n(X)
+=
+N
+X
+n=1
+(1 + f(rn, ln)) ·
+min
+̺n<rn−1(1 + f(̺n, rn)̟r
+4q)∆2
+n(X)
+≤
+N
+X
+n=1
+(1 + f(rn, ln)) ·
+min
+̺n<rn−1(1 + f(̺n, rn)̟r
+4q)∥X −ˆ
+Xopt∥2
+F ,
+which completes the proof of Theorem 5.
+References
+[1] Comon, P.: Tensors: A brief introduction. IEEE Signal Processing Maga-
+zine. 31(3), 44-53(2014)
+[2] Hitchcock, F. L.: Multiple Invariants and Generalized Rank of a P-
+Way Matrix or Tensor. Journal of Mathematics and Physics. 7(1-4),
+39-79(1928)
+[3] Kiers, H. A. L.: Towards a standardized notation and terminology in
+multiway analysis. Journal of Chemometrics Society. 14(3), 105-122(2000)
+[4] Tucker, L. R.: Implications of factor analysis of three-way matrices for
+measurement of change. Problems in measuring change. 15, 122-137(1963)
+24
+Sketching Algorithms for Low-Rank Tucker Approximation
+[5] Tucker, L. R.: Some mathematical notes on three-mode factor analysis.
+Psychometrika. 31(3), 279-311(1966)
+[6] De Lathauwer, L., De Moor, B., Vandewalle, J.: A multilinear singu-
+lar value decomposition. SIAM journal on Matrix Analysis Applications.
+21(4), 1253-1278(2000)
+[7] Hackbusch, W., K¨uhn, S.: A new scheme for the tensor representation.
+Journal of Fourier analysis applications. 15(5), 706-722(2009)
+[8] Grasedyck, L.: Hierarchical Singular Value Decomposition of Tensors.
+SIAM journal on Matrix Analysis Applications. 31(4), 2029-2054 (2010)
+[9] Oseledets, I. V.: Tensor-train decomposition. SIAM Journal on Scientiﬁc
+Computing. 33(5), 2295-2317(2011)
+[10] De Lathauwer, L., De Moor, B., Vandewalle, J.: On the best rank-1 and
+rank-(r1, r2,...,rn) approximation of higher-order tensors. SIAM journal
+on Matrix Analysis Applications. 21(4), 1324-1342(2000)
+[11] Vannieuwenhoven, N., Vandebril, R., Meerbergen, K.: A new truncation
+strategy for the higher-order singular value decomposition. SIAM Journal
+on Scientiﬁc Computing. 34(2), A1027-A1052(2012)
+[12] Zhou, G., Cichocki, A., Xie, S.: Decomposition of big tensors with low
+multilinear rank. arXiv preprint, arXiv:1412.1885(2014)
+[13] Che, M., Wei, Y.: Randomized algorithms for the approximations of
+Tucker and the tensor train decompositions. Advances in Computational
+Mathematics. 45(1), 395-428(2019)
+[14] Minster, R., Saibaba, A. K., Kilmer, M. E.: Randomized algorithms for
+low-rank tensor decompositions in the Tucker format. SIAM Journal on
+Mathematics of Data Science. 2(1), 189-215 (2020)
+[15] Che, M., Wei, Y., Yan, H.: The computation of low multilinear rank
+approximations of tensors via power scheme and random projection.
+SIAM Journal on Matrix Analysis Applications. 41(2), 605-636 (2020)
+[16] Che, M., Wei, Y., Yan, H.: Randomized algorithms for the low multilin-
+ear rank approximations of tensors. Journal of Computational Applied
+Mathematics. 390(2), 113380(2021)
+[17] Sun, Y., Guo, Y., Luo, C., Tropp, J., Udell, M.: Low-rank tucker approx-
+imation of a tensor from streaming data. SIAM Journal on Mathematics
+of Data Science. 2(4), 1123-1150(2020)
+Sketching Algorithms for Low-Rank Tucker Approximation
+25
+[18] Tropp, J. A., Yurtsever, A., Udell, M., Cevher, V.: Streaming low-rank
+matrix approximation with an application to scientiﬁc simulation. SIAM
+Journal on Scientiﬁc Computing. 41(4), A2430-A2463(2019)
+[19] Malik, O. A., Becker, S.: Low-rank tucker decomposition of large tensors
+using tensorsketch. Advances in neural information processing systems.
+31, 10116-10126 (2018)
+[20] Ahmadi-Asl, S., Abukhovich, S., Asante-Mensah, M. G., Cichocki, A.,
+Phan, A. H., Tanaka, T.: Randomized algorithms for computation of
+Tucker decomposition and higher order SVD (HOSVD). IEEE Access. 9,
+28684-28706(2021)
+[21] Halko, N., Martinsson, P.-G., Tropp, J. A.: Finding structure with ran-
+domness: Probabilistic algorithms for constructing approximate matrix
+decompositions. SIAM review. 53(2), 217-288 (2011)
+[22] Tropp, J. A., Yurtsever, A., Udell, M., Cevher, V.: Practical sketching
+algorithms for low-rank matrix approximation. SIAM Journal on Matrix
+Analysis Applications. 38(4), 1454-1485(2017)
+[23] Rokhlin, V., Szlam, A., Tygert, M.: A randomized algorithm for princi-
+pal component analysis. SIAM Journal on Matrix Analysis Applications,
+31(3), 1100-1124(2009)
+[24] Xiao, C., Yang, C., Li, M.: Eﬃcient Alternating Least Squares Algorithms
+for Low Multilinear Rank Approximation of Tensors. Journal of Scientiﬁc
+Computing. 87(3), 1-25(2021)
+[25] Zhang, J., Saibaba, A. K., Kilmer, M. E., Aeron, S.: A randomized tensor
+singular value decomposition based on the t-product. Numerical Linear
+Algebra with Applications. 25(5), e2179(2018)

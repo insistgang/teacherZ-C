@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  xcai-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+  
+  xcai-notebook:
+    build: .
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+    command: jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+  
+  xcai-dashboard:
+    build: ./dashboard
+    ports:
+      - "3000:3000"

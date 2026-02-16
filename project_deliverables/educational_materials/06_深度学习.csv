@@ -1,0 +1,58 @@
+正面,背面,标签
+深度学习的三要素是什么?,"数据、模型、算力<br>大量标注数据<br>深度神经网络<br>GPU加速训练",深度学习::概念
+反向传播的原理是什么?,"链式法则<br>梯度从输出层传回输入层<br>计算每个参数的梯度<br>更新权重",深度学习::概念
+什么是梯度消失问题?,"激活函数梯度<1<br>深层网络梯度指数衰减<br>浅层几乎不更新<br>Sigmoid常见",深度学习::概念
+如何缓解梯度消失?,"1. ReLU激活<br>2. 残差连接<br>3. BatchNorm<br>4. 合适初始化",深度学习::方法
+什么是梯度爆炸?,"梯度>1<br>参数指数增长<br>NaN值<br>梯度裁剪解决",深度学习::概念
+BatchNorm的作用是什么?,"标准化每层输入<br>加速收敛<br>允许大学习率<br>正则化效果",深度学习::方法
+BatchNorm的训练/测试区别?,"训练: 使用当前batch统计<br>测试: 使用running统计<br>running_mean/var<br>移动平均",深度学习::概念
+LayerNorm vs BatchNorm?,"LayerNorm: 样本维度归一化<br>BatchNorm: 特征维度归一化<br>LN适合序列数据<br>BN适合图像",深度学习::对比
+Dropout的原理是什么?,"随机失活神经元<br>训练时p概率置零<br>测试时缩放<br>防止过拟合",深度学习::方法
+Dropout的测试行为?,"输出乘以(1-p)<br>或训练时/ (1-p)<br>Inverted Dropout<br>期望一致",深度学习::概念
+什么是残差连接?,"y = F(x) + x<br>跳跃连接<br>梯度直通<br>允许超深网络",深度学习::方法
+ResNet解决了什么问题?,"- 梯度消失<br>- 退化问题<br>- 深度增加但性能下降<br>恒等映射学习",深度学习::概念
+什么是Adam优化器?,"自适应学习率<br>动量+RMSprop<br>m_t, v_t<br>β₁=0.9, β₂=0.999",深度学习::方法
+Adam的更新公式?,"m_t = β₁m_{t-1} + (1-β₁)g_t<br>v_t = β₂v_{t-1} + (1-β₂)g_t²<br>θ_t = θ_{t-1} - α·m̂_t/√v̂_t",深度学习::公式
+学习率调度的方法?,"1. Step decay<br>2. Cosine annealing<br>3. Warmup<br>4. Reduce on plateau",深度学习::方法
+什么是学习率Warmup?,"初始小学习率<br>逐步增加到目标值<br>稳定初始训练<br>Transformer常用",深度学习::方法
+权重衰减是什么?,"L2正则化<br>loss + λ||w||²<br>防止过拟合<br>权重衰减=正则化梯度",深度学习::概念
+AdamW与Adam的区别?,"AdamW: 解耦权重衰减<br>Adam: L2正则化混入梯度<br>AdamW泛化更好<br>Transformer标配",深度学习::对比
+什么是Early Stopping?,"验证集性能停止改善时停止<br>防止过拟合<br>保存最佳模型<br>patience参数",深度学习::方法
+数据增强的作用是什么?,"增加数据多样性<br>防止过拟合<br>提高泛化<br>模拟真实变化",深度学习::概念
+图像数据增强方法?,"1. 几何: 旋转、翻转、缩放<br>2. 颜色: 亮度、对比度<br>3. Mixup<br>4. CutMix<br>5. AutoAugment",深度学习::方法
+什么是Mixup?,"混合两张图像<br>x = λx₁ + (1-λ)x₂<br>y = λy₁ + (1-λ)y₂<br>标签平滑效果",深度学习::方法
+CutMix的原理?,"裁剪并粘贴区域<br>x = M⊙x₁ + (1-M)⊙x₂<br>保留局部特征<br>比Mixup更自然",深度学习::方法
+什么是迁移学习?,"预训练+微调<br>利用大规模数据知识<br>小数据集有效<br>领域适应",深度学习::方法
+迁移学习的策略?,"1. 特征提取<br>2. 微调<br>3. 渐进解冻<br>4. 差异学习率",深度学习::方法
+什么是知识蒸馏?,"Teacher→Student<br>软标签<br>温度参数<br>模型压缩",深度学习::方法
+蒸馏的损失函数?,"L = αL_hard + (1-α)L_soft<br>L_soft: KL散度<br>T控制软度<br>暗知识传递",深度学习::公式
+自监督学习是什么?,"无标注数据预训练<br>设计前置任务<br>学习通用表征<br>下游任务微调",深度学习::概念
+对比学习的前置任务?,"1. SimCLR: 对比损失<br>2. MoCo: 动量编码器<br>3. BYOL: 无负样本<br>4. SimSiam: 停止梯度",深度学习::方法
+SimCLR的原理?,"同一图像两个增强视图<br>拉近正样本，推开负样本<br>InfoNCE损失<br>大批量",深度学习::方法
+MAE是什么?,"Masked Autoencoder<br>遮挡图像块<br>重建缺失部分<br>ViT预训练",深度学习::方法
+什么是注意力机制?,"动态权重分配<br>Query-Key-Value<br>加权求和<br>关注重要区域",深度学习::概念
+Self-Attention的计算公式?,"Attention(Q,K,V) = softmax(QK^T/√d)V<br>Q=XW_Q, K=XW_K, V=XW_V<br>d_k缩放防止梯度消失",深度学习::公式
+Multi-Head Attention是什么?,"多个注意力头并行<br>捕获不同关系<br>拼接+线性<br>h=8典型值",深度学习::方法
+Transformer的优势?,"- 并行计算<br>- 长程依赖<br>- 可扩展<br>- 通用架构",深度学习::概念
+位置编码的作用?,"注入位置信息<br>Transformer无顺序概念<br>正弦编码/可学习编码<br>相对位置编码",深度学习::方法
+ViT的原理?,"图像分块→序列<br>线性投影<br>Transformer编码器<br>分类token",深度学习::方法
+Swin Transformer的特点?,"层级结构<br>滑动窗口注意力<br>线性复杂度<br>多尺度特征",深度学习::方法
+什么是BERT?,"双向Transformer编码器<br>MLM预训练<br>NSP任务<br>NLP预训练模型",深度学习::方法
+GPT的特点?,"单向Transformer<br>自回归生成<br>大规模预训练<br>零样本能力",深度学习::方法
+什么是生成对抗网络?,"Generator vs Discriminator<br>博弈训练<br>G生成假样本<br>D判断真假",深度学习::方法
+GAN的损失函数?,"min_G max_D V(D,G)<br>V = E[log D(x)] + E[log(1-D(G(z)))]<br>纳什均衡",深度学习::公式
+GAN训练不稳定的原因?,"- 模式崩塌<br>- 梯度消失<br>- 非凸博弈<br>- 超参数敏感",深度学习::概念
+如何稳定GAN训练?,"1. Wasserstein GAN<br>2. Spectral Normalization<br>3. Progressive Growing<br>4. 特征匹配",深度学习::方法
+什么是WGAN?,"Wasserstein距离<br>推土机距离<br>梯度有意义<br>Lipschitz约束",深度学习::方法
+StyleGAN的创新点?,"风格注入<br>AdaIN<br>渐进生成<br>高质量人脸",深度学习::方法
+Diffusion Model的原理?,"前向加噪→逆向去噪<br>学习噪声预测<br>逐步恢复<br>DDPM, DDIM",深度学习::方法
+DDPM的训练目标?,"预测噪声ε<br>L = E[||ε - ε_θ(x_t, t)||²]<br>t时刻噪声<br>网络学习去噪",深度学习::公式
+Stable Diffusion是什么?,"Latent Diffusion<br>潜空间扩散<br>降低计算量<br>文生图SOTA",深度学习::方法
+CLIP是什么?,"Contrastive Language-Image Pre-training<br>图文对齐<br>零样本分类<br>多模态理解",深度学习::方法
+CLIP的训练方式?,"图像编码器+文本编码器<br>对比损失<br>N×N相似度矩阵<br>对角线最大化",深度学习::方法
+什么是提示学习?,"Prompt Tuning<br>调整输入模板<br>冻结模型<br>参数高效",深度学习::方法
+LoRA是什么?,"Low-Rank Adaptation<br>低秩分解<br>只训练少量参数<br>微调大模型",深度学习::方法
+PEFT方法有哪些?,"1. LoRA<br>2. Adapter<br>3. Prefix Tuning<br>4. BitFit",深度学习::方法
+模型量化的原理?,"FP32→INT8<br>减少存储和计算<br>精度损失权衡<br>PTQ/QAT",深度学习::方法
+什么是剪枝?,"移除不重要权重<br>结构化/非结构化<br>稀疏模型<br>加速推理",深度学习::方法
+知识图谱与深度学习的结合?,"图神经网络<br>实体/关系嵌入<br>多跳推理<br>可解释性",深度学习::应用

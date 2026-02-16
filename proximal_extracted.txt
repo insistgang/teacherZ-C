@@ -1,0 +1,2485 @@
+Statistics and Computing (2022) 32:87
+https://doi.org/10.1007/s11222-022-10152-9
+Proximal nested sampling for high-dimensional Bayesian model
+selection
+Xiaohao Cai1,2
+· Jason D. McEwen1,3 · Marcelo Pereyra4
+Received: 15 April 2022 / Accepted: 9 September 2022 / Published online: 5 October 2022
+© The Author(s) 2022
+Abstract
+Bayesian model selection provides a powerful framework for objectively comparing models directly from observed data,
+without reference to ground truth data. However, Bayesian model selection requires the computation of the marginal likelihood
+(model evidence), which is computationally challenging, prohibiting its use in many high-dimensional Bayesian inverse
+problems. With Bayesian imaging applications in mind, in this work we present the proximal nested sampling methodology
+to objectively compare alternative Bayesian imaging models for applications that use images to inform decisions under
+uncertainty. The methodology is based on nested sampling, a Monte Carlo approach specialised for model comparison, and
+exploits proximal Markov chain Monte Carlo techniques to scale efﬁciently to large problems and to tackle models that are
+log-concave and not necessarily smooth (e.g., involving ℓ1 or total-variation priors). The proposed approach can be applied
+computationally to problems of dimension O(106) and beyond, making it suitable for high-dimensional inverse imaging
+problems. It is validated on large Gaussian models, for which the likelihood is available analytically, and subsequently
+illustrated on a range of imaging problems where it is used to analyse different choices of dictionary and measurement model.
+Keywords Nested sampling · MCMC sampling · Marginal likelihood · Bayesian evidence · Inverse problems · Proximal
+optimisation · Model selection
+1 Introduction
+High-dimensionalinverseproblemsareubiquitousinthedata
+and imaging sciences, as well as in the physical and engineer-
+ing sciences more generally. Due to limitations of the data
+observation process and measurement noise, or even just due
+to the nature of the problem at hand, most inverse problems
+encountered are seriously ill-conditioned or ill-posed (canon-
+B Xiaohao Cai
+x.cai@soton.ac.uk
+Jason D. McEwen
+jason.mcewen@ucl.ac.uk
+Marcelo Pereyra
+m.pereyra@hw.ac.uk
+1
+Mullard Space Science Laboratory (MSSL), University
+College London (UCL), Dorking RH5 6NT, UK
+2
+School of Electronics and Computer Science, University of
+Southampton, Southampton SO17 1BJ, UK
+3
+Alan Turing Institute, London NW1 2DB, UK
+4
+School of Mathematical and Computer Sciences, Heriot-Watt
+University, Edinburgh EH14 4AS, UK
+ical examples include, e.g., medical and radio interferometric
+imaging;Durmusetal.2018;Caietal.2019;Zhouetal.2020;
+Lunz et al. 2021). Developing better methodology for solv-
+ing challenging inverse problems is a signiﬁcant focus of the
+community. The Bayesian statistical framework is currently
+one of the predominant frameworks to perform inference in
+inverse problems (Robert and Casella 2004; Pereyra et al.
+2016). The choice of the Bayesian model used has a profound
+impact on the solutions delivered, as alternative models can
+lead to signiﬁcantly different point estimations and uncer-
+tainty quantiﬁcation results.
+In this article we develop methodology to objectively
+compare alternative Bayesian models in performing infer-
+ence in the regime of high-dimensional inverse problems,
+directly form the observed data and in the absence of ground
+truth. Motivated by applications in computational imaging,
+we focus on the comparison of models with posterior distri-
+butions that are log-concave and potentially not smooth. In
+this context, model selection has been traditionally addressed
+through benchmark experiments involving ground truth data
+and expert supervision. However, for many applications it
+is difﬁcult and expensive to produce reliable ground truth
+123
+87
+Page 2 of 22
+Statistics and Computing (2022) 32 :87
+data. Moreover, for many problems it is simply impossible.
+Bayesian model selection provides a framework for selecting
+the most appropriate model directly from the observed data
+in an objective manner and without reference to ground truth
+data.
+Bayesian model selection requires the computation of the
+marginal likelihood of the data – the average likelihood of a
+model over its prior probability space – which is also called
+the Bayesian evidence. This quantity is a key ingredient of
+model selection statistics such as Bayes factors and like-
+lihood ratio tests (Robert 2007). The computation of the
+marginal likelihood for high-dimensional models is highly
+non-trivial because it requires the computation of integrals
+over the (high-dimensional) solution space. For example,
+in the context of Bayesian imaging problems, the dimen-
+sion is given by the number of parameters (e.g. pixels) of
+interest, which frequently reach sizes of O(105)–O(106) and
+beyond. For such settings, the evaluation of the marginal like-
+lihood has been previously considered to be computationally
+intractable.
+Broadly speaking, general purpose Monte Carlo methods
+can only handle model selection tasks for problems of dimen-
+sion O(10) to O(102) (for reviews see Clyde et al. 2007;
+Friel and Wyse 2012; Llorente et al. 2020). Nested sam-
+pling (Skilling 2006), a state-of-the-art Monte Carlo strategy
+designed speciﬁcally for model selection, has enabled model
+selection for moderate dimensional problems of size O(102)
+to O(103) (Mukherjee et al. 2006; Feroz and Hobson 2008;
+Feroz et al. 2009; Brewer et al. 2011; Feroz and Skilling
+2013; Handley et al. 2015). To the best of our knowledge,
+model selection for larger problems is currently possible only
+for models with very speciﬁc structures (e.g., conditionally
+Gaussian models; Harroue 2020).
+In this work, we address the difﬁcult computation of the
+marginal likelihood by proposing a new methodology that
+carefully integrates nested sampling (Skilling 2006) with
+proximal Markov chain Monte Carlo (MCMC) (Pereyra
+2016; Durmus et al. 2018). This leads to a proximal
+nested sampling methodology specialised for comparing
+high-dimensional posterior distributions that are log-concave
+but potentially not smooth. The proposed approach can be
+applied computationally to log-concave models of dimension
+O(106) and beyond, making it suitable for model comparison
+in Bayesian imaging problems. We demonstrate the approach
+with a range of scientiﬁc imaging applications.
+The remainder of the article is organised as follows. In
+Sect. 2 we recall the Bayesian model selection approach,
+highlight the associated computational challenges, and dis-
+cuss proximal MCMC methodology for Bayesian com-
+putation for inverse problems with an underlying convex
+geometry. Section 3 recalls the standard nested sampling
+method. Our proposed proximal nested sampling framework
+is presented in general form in Sect. 4. In Sect. 5 explicit
+formsofproximalnestedsamplingarepresentedforcommon
+forms of the likelihood and prior that arise in imaging sci-
+ences. Experimental results validating the proposed method
+and showcasing its use in scientiﬁc imaging applications are
+reported in Sect. 6. Finally, we conclude in Sect. 7.
+2 Bayesian inference for high-dimensional
+inverse problems
+In this section we brieﬂy recall the Bayesian decision-
+theoretic approach to model comparison, introduce some
+elements of convex analysis which are essential for our
+method, and review proximal MCMC methods, which are
+an important component of the proximal nested sampling
+methodology proposed in Sect. 4. We conclude the section by
+brieﬂy explaining the computational difﬁculties encountered
+in high-dimensional Bayesian model selection and why it is
+necessary to develop new methodology for this task. Read-
+ers familiar with Bayesian model selection and with proximal
+MCMC methodology may prefer to skip this section and con-
+tinue reading from Sect. 3.
+2.1 Bayesian estimation and model selection
+Let  ⊆Rd. We consider the estimation of a quantity
+of interest x ∈ from observed data y. Bayesian meth-
+ods address such problems by postulating a statistical model
+M relating x and y, from which estimators of x and other
+inferences can be derived. More precisely, M deﬁnes a
+joint probability distribution p(x, y|M) speciﬁed via the
+decomposition p(x, y|M) = p(y|x, M)p(x|M), where
+p(y|x, M) denotes the likelihood of x for the observed data
+y, and the marginal p(x|M) is the so-called prior of x. Fol-
+lowing Bayes’ theorem, inferences on x|y are then based on
+the posterior distribution
+p(x|y, M) = p(y|x, M)p(x|M)
+p(y|M)
+,
+(1)
+which models our beliefs about x after observing y. With
+applications in Bayesian imaging sciences in mind, we focus
+on posterior distributions that are log-concave and assume
+that the potential function x →−log p(x|y, M) is convex
+lower semicontinuous (l.s.c.) on , but possibly not smooth.
+This is an important class of models in modern Bayesian
+imaging sciences because it leads to point estimators that are
+by construction well-posed and that can be efﬁciently esti-
+mated by using scalable proximal convex optimisation and
+stochastic sampling methods (Kaipio and Somersalo 2005;
+Robert and Casella 2004; Pereyra et al. 2016).
+We condition on M explicitly in (1) because our focus
+is model selection, where one entertains several alterna-
+123
+Statistics and Computing (2022) 32 :87
+Page 3 of 22
+87
+tive posterior distributions for x|y stemming from different
+underlying modelling assumptions. As a result, rather than
+the posterior p(x|y, M), our main object of interest is the
+marginal likelihood or model evidence
+p(y|M)=
+
+
+p(y, x|M)dx =
+
+
+p(y|x, M)p(x|M)dx,
+(2)
+which measures the likelihood of the observed data under
+model M, and which we use to objectively compare dif-
+ferent models relating x and y (Robert 2007). Notice that
+the likelihood of the observed data y under the model M
+is essentially the expectation (or average value) of the like-
+lihood function p(y|x, M) with respect to (w.r.t.) the prior
+p(x|M). Therefore, a model that allocates its prior mass
+to solutions that agree with the observed data achieves a
+large marginal likelihood value. Conversely, a low marginal
+likelihood value indicates that only a small proportion of
+the solutions favoured by the prior agree with the observed
+data. In other words, the marginal likelihood (2) measures
+the degree to which the observed data is in agreement with
+the assumptions of the model, and in doing so it provides a
+goodness-of-ﬁt summary. Moreover, because all priors have
+the same total probability mass (i.e.,
+
+ p(x)dx = 1), the
+likelihood (2) naturally incorporates Occams’s razor, trading
+off model simplicity and accuracy and penalising over-ﬁtting
+(Robert 2007).
+Bayesian model selection arises from the common and
+natural inquiry of which model is the most suitable to anal-
+yse x|y from a set of models M1, . . . , MK available. For
+simplicity and without loss of generality, we suppose two
+alternative models M1 and M2 (the generalisation to addi-
+tional models is straightforward). From Bayesian decision
+theory, to objectively compare the two models in settings
+without ground truth available, one should calculate the
+Bayes factor (Robert 2007)
+ρ12 = p(M1|y)
+p(M2|y)
+p(M2)
+p(M1)
+(3)
+where p(M1) and p(M2) denote the prior probabilities
+assigned to the two competing models, and where, from
+Bayes’ theorem, we have that for any i ∈{1, 2}
+p(Mi|y) =
+p(y|Mi)p(Mi)
+p(y|M1)p(M1) + p(y|M2)p(M2) .
+(4)
+By developing (3) we can easily express the Bayes factor as
+the likelihood ratio
+ρ12 = p(y|M1)
+p(y|M2),
+(5)
+highlighting that ρ12 is invariant to choice of the prior prob-
+abilities p(M1) and p(M2). If one assumes p(M1) =
+p(M2) = 1/2 to reﬂect the absence of prior information,
+then the factor also coincides with the posterior probability
+ratio p(M1|y)/p(M2|y).
+Being a likelihood ratio, the factor ρ12 is straightforward
+to read: if ρ12 ≫1, we prefer model M1 over the alternative
+M2; conversely, if ρ12 ≪1, we prefer model M2; and if
+ρ12 ≈1, we do not prefer either, inasmuch as the data y are
+insufﬁcient for us to make an informed judgement. The fact
+that ρ12 is a likelihood ratio is also appealing from a frequen-
+tist viewpoint, as it is associated with the most powerful test
+for these two model hypotheses (Casella and Berger 2002).
+Unfortunately, calculating ρ12 is generally not possi-
+ble in large-scale settings because the dimensionality of x
+renders the marginal likelihoods p(y|M1) and p(y|M2)
+computationally intractable. More precisely, the marginal
+likelihoods are doubly-intractable because they require com-
+puting two intractable integrals over the space of solutions
+: the marginalisation of x denoted explicitly in (2); and
+the normalising constant of the priors p(x|Mi) when these
+are not available analytically, which otherwise implicitly also
+requires integrating over .
+It is worth emphasising at this point that this major dif-
+ﬁculty related to model selection is not encountered when
+performing inferences with the posteriors p(x|y, M1) and
+p(x|y, M2) individually, as one can use MCMC methods to
+sample from p(x|y, M) without ever having to evaluate the
+marginal likelihood p(y|M). As a result, efﬁcient Bayesian
+model selection remains an open problem in many areas of
+science and engineering that have widerly adopted Bayesian
+inference techniques for point estimation and uncertainty
+quantiﬁcation.
+In the following we brieﬂy recall MCMC sampling meth-
+ods derived from the overdamped Langevin diffusion pro-
+cess, particularly proximal MCMC techniques specialised
+for large models that are log-concave, and explain why it is
+necesary to modify them to enable efﬁcient model compari-
+son.
+2.2 Bayesian computation and proximal MCMC
+methods
+2.2.1 Convex analysis
+Let f : Rd →[−∞, +∞]. The function f is said to be
+proper if there exists x0 ∈Rd such that f (x0) < +∞.
+Denote for all M ∈R, { f ≤M} = {z ∈Rd | f (z) ≤M}.
+The function f is l.s.c. if for all M ∈R, { f ≤M} is a closed
+subset of Rd. For k ≥0, denoted by Ck(Rd) the set of k-
+times continuouslydifferentiablefunctions. For f ∈C1(Rd),
+denote by ∇f the gradient of f . We say that f ∈C1(Rd) is a
+Lipschitz continuously differentiable function if there exists
+123
+87
+Page 4 of 22
+Statistics and Computing (2022) 32 :87
+C ≥0 such that for all x, y ∈Rd, ∥∇f (x) −∇f (y)∥≤
+C∥x −y∥.
+Given a convex, proper, l.s.c. function h
+: Rd
+→
+(−∞, +∞] and λ > 0, the proximal operator (Bauschke
+and Combettes 2011) associated with function h at x ∈Rd
+is deﬁned as
+proxλ
+h(x) = argmin
+u∈Rd
+
+h(u) + ∥u −x∥2
+2/2λ
+
+.
+(6)
+When λ = 1, we denote prox1
+h(x) by proxh(x) for simplicity.
+Let K be a closed convex set in Rd and let χK be the
+characteristic function for K, deﬁned by χK(x) = 0 if x ∈
+K and +∞otherwise. The proximal operator of χK is the
+projection onto K, given by
+projK(x) = argmin
+u∈Rd
+
+χK(u) + ∥u −x∥2
+2/2
+
+.
+(7)
+The convex conjugate of function h, denoted by h∗, is
+deﬁned as
+h∗(x) = sup
+u∈Rd
+
+x⊤u −h(u)
+
+.
+(8)
+Its proximal operator can be related to the proximal operator
+of h by
+proxh∗(x) = x −proxh(x).
+(9)
+The λ-Moreau-Yosida envelope of h (Bauschke and Com-
+bettes 2011) is given for any x ∈Rd and λ > 0 by
+hλ(x) = min
+u∈Rd
+
+h(u) + ∥u −x∥2
+2/2λ
+
+.
+(10)
+The envelope hλ is continuously differentiable with Lips-
+chitz gradient. In particular, using the proximal operator, the
+gradient of hλ can be written
+∇hλ(x) =
+
+x −proxλ
+h(x)
+
+/λ,
+(11)
+with λ simultaneously controlling the Lipschitz constant of
+∇hλ as well as the error between h and its smooth approxi-
+mation hλ. This approximation error can be made arbitrarily
+small by reducing λ, at the expense of deteriorating the reg-
+ularity of ∇hλ, and consequently the speed of convergence
+of proximal Bayesian computation algorithms rely on hλ.
+2.2.2 Proximal Langevin MCMC sampling
+Consider the problem of calculating probabilities or expec-
+tations with respect to (w.r.t.) some distribution π(dx)
+which admits a density π(x) w.r.t. the usual d-dimensional
+Lebesgue measure. In the context of Bayesian inference,
+this is typically the posterior p(x|y, M). Evaluating expec-
+tations and probabilities w.r.t. π is non-trivial in problems
+of moderate and high dimension because of the integrals
+involved, which are usually beyond the scope of analyti-
+cal and deterministic numerical integration schemes. These
+calculations are further complicated when the normalising
+constant of π is not known, as this requires evaluating an
+additional d-dimensional integral. Monte Carlo sampling
+methods address these difﬁculties by simulating a set of
+samples from π followed by Monte Carlo stochastic inte-
+gration to compute probabilities and expectations w.r.t. π.
+While there are different ways of simulating samples from
+π, we focus on MCMC strategies where one proceeds by
+constructing a Markov chain that has π as its invariant sta-
+tionary distribution. Again, there are different methods for
+constructing such Markov chains (see Robert and Casella
+2004 for an excellent introduction to MCMC methodology
+and Green et al. 2015 for a survey of recent developments in
+the Bayesian computation literature).
+The fastest provably convergent MCMC methods for
+Bayesian inference models can be derived from the Langevin
+diffusion process, which we recall below. For simplicity,
+rather than presenting the approach in full generality, we
+focus our presentation on proximal overdamped Langevin
+sampling for non-smooth models, which we later use in the
+proximal nested sampling method proposed in Sect. 4. For a
+more exhaustive introduction to the topic please see Vargas
+et al. (2020, Section 2) and references therein.
+Assume that π
+admits a decomposition π(x)
+∝
+exp{−f (x) −g(x)} for all x ∈Rd, where f ∈C1(Rd) with
+∇f Lipschitz continuous with constant L f , and where g is
+a proper l.s.c. function that is convex on Rd but potentially
+non-smooth (e.g., g could encode constraints on the solu-
+tion space and involve non-smooth regularisers such as the
+ℓ1 norm). To simulate from π, we construct the overdamped
+Langevin stochastic differential equation (SDE) on Rd given
+by Durmus et al. (2018)
+dXt =−[∇f (Xt)+∇gλ(Xt)]dt+
+√
+2dWt,
+X0 =x0,
+(12)
+where (Wt)t≥0 is a d-dimensional Brownian motion, gλ is
+the Moreau-Yosida envelop of g given by (10), λ > 0 is a
+smoothing parameter that we will discuss later, and x0 ∈Rd.
+When x →f (x) + gλ(x) is convex, the SDE has a unique
+strong solution and Xt converges exponentially fast (as t →
+∞) to an invariant measure that is in the neighbourhood of
+π.
+To use (12) for Bayesian computation, we use a numerical
+solver to compute a discrete-time approximation of Xt over
+some time period t ∈[0, T ]; the resulting discrete sample
+path constitutes our set of Monte Carlo samples. In particu-
+lar, in this article we use the conventional Euler-Maruyama
+123
+Statistics and Computing (2022) 32 :87
+Page 5 of 22
+87
+approximation
+Xn+1 = Xn −δ
+2∇f (Xn) −δ
+2∇gλ(Xn) +
+√
+δZn+1,
+(13)
+where δ ∈[0, 1/(L f + 1/λ)] is a given stepsize and
+(Zn)n≥1 is a sequence of i.i.d. d-dimensional standard Gaus-
+sian random variables. This MCMC method is known as the
+Moreau-Yosida unadjusted Langevin algorithm (MYULA)
+(Durmus et al. 2018). The Markov chain (13) is usually
+implemented by using (11) and reads
+Xn+1 = Xn−δ
+2∇f (Xn)−δ
+2λ
+
+Xn−proxλ
+g(Xn)
+	
++
+√
+δZn+1.
+(14)
+The smoothing parameter λ and the stepsize δ jointly control
+a bias-variance trade-off between the asymptotic estimation
+errors and non-asymptotic errors associated with using a
+ﬁnite number of iterations. In this article, we use λ = 1/L f
+and δ = 0.8/(L f + 1/λ) as recommended in Durmus et al.
+(2018) (recall that ∇f is Lipschitz continuous with constant
+L f , please see Durmus et al. 2018; Vargas et al. 2020 for
+further details).
+The samples generated by (14) can be directly used
+for biased Monte Carlo estimation (Durmus et al. 2018).
+Alternatively, at the expense of additional computation,
+one can supplement each iteration of MYULA with an
+MH (Metropolis-Hastings) correction step to asymptotically
+remove the approximation errors related to the discretisa-
+tion of the SDE and the use of gλ instead of g, leading to
+a type of Metropolis-adjusted Langevin algorithm (MALA)
+(see Pereyra 2016 for details).
+2.3 Estimation of marginal likelihoods and Bayes
+factors
+Let {Xn}N
+n=1 be a set of samples from π (or an approxima-
+tion of π), generated by using a proximal MCMC method or
+otherwise. Following a Monte Carlo integration approach,
+the expectation of any function φ : Rd →R w.r.t. π is
+approximated by
+ˆEπ(φ) = 1
+N
+N
+
+n=1
+φ(Xn) ,
+(15)
+which, under assumptions, converges to the truth Eπ(φ) =
+
+ φ(x)π(x)dx as N increases (or to a biased estimate if
+the samples are not exactly from π). The accuracy of Monte
+Carlo estimates depends of course on the number of sam-
+ples N and on the properties of the MCMC method used, but
+it also depends crucially on the variance Varπ(φ). Unfortu-
+nately, Varπ(φ) is often very large for the kinds of functions
+φ required for estimating the marginal likelihood (2) (and in
+some cases Varπ(φ) is not even deﬁned), leading to Monte
+Carlo estimators of the marginal that behave poorly (Newton
+and Raftery 1994). As a result, it is difﬁcult to use the sam-
+ples {Xn}N
+n=1 to perform model selection. Several strategies
+have been proposed to address the aforementioned difﬁculty
+and derive well-posed estimators for the marginal likelihood
+(2) and the Bayes factor (3) (for reviews of classical methods
+see Friel and Wyse 2012; Clyde et al. 2007).
+One avenue is to generate samples from a sequence of
+distributions bridging π to some tractable reference π0 such
+as the prior distribution or a Gaussian approximation of π,
+e.g., thermodynamic integration (O’Ruanaidh and Fitzgerald
+1996) and annealed important sampling (Neal 2001). Such
+strategies struggle with large problems because the number
+of intermediate distributions grows quickly as d increases.
+Another promising approach to derive computationally
+efﬁcient estimators is to construct Rao-Blackwellized esti-
+mators by carefully introducing auxiliary variables, as pro-
+posed in the seminal papers Chib (1995) and Chib and
+Jeliazkov (2001). This strategy has been successfully applied
+recently to signal and image processing models that are con-
+ditionally Gaussian given conjugate model hyper-parameters
+(Harroue 2020). Some generalisations are possible, but con-
+structing efﬁcient Rao-Blackwellized estimators for more
+general classes of models, e.g., of the form (1), is highly
+non-trivial.
+An alternative natural strategy for stable Monte Carlo esti-
+mators for (2) and (3) is to construct a truncated estimator by
+ﬁrst using the samples {Xn}N
+n=1 to identify a suitable truncat-
+ing set A, followed by a sample average (15) only with the
+samples verifying Xn ∈A (Brosse et al. 2017). Although
+by construction well-posed, truncated estimators need to be
+de-biased by using the volume of A, which is usually very
+expensive to compute when the dimension d is large. From
+the results of Brosse et al. (2017), we believe that this strat-
+egy is unlikely to produce scalable methods suitable for large
+problems. One can circumvent or simplify the calculation of
+the volume of A (e.g., see Durmus et al. 2018), but in our
+experience the resulting estimators become unstable and are
+difﬁcult to use.
+Another alternative approach, which is agnostic to the
+sampling method, is the harmonic mean estimator (Newton
+and Raftery 1994); although, in its original form the vari-
+ance of the estimator can be very poorly behaved such that
+the estimator can be highly inaccurate in practice. Strategies
+to resolve this issue have been developed in the recently pro-
+posed learnt harmonic mean estimator (McEwen et al. 2022),
+which has been shown to be highly effective and can scale
+to dimension O(103) and beyond. Nevertheless, it may be
+challenging to scale this approach to the high-dimensional
+settings considered in this paper.
+123
+87
+Page 6 of 22
+Statistics and Computing (2022) 32 :87
+One can also consider the widely used Laplace’s method
+(Tierney and Kadane 1986), which relies on the assumption
+that the posterior distribution can be adequately approxi-
+mated by a Gaussian distribution. Unfortunately, this is a
+strong assumption that often leads to inaccurate estimates in
+inverse problems that are ill-conditioned or ill-posed, partic-
+ularly if d ≥dim(y). Many other alternatives are described
+in the literature, e.g., the Savage-Dickey density ratio (Trotta
+2007) and Reversible Jump MCMC (Green 1995), which are
+mainly useful for nested or small models. It is worth mention-
+ing that there are also some model selection strategies that do
+not rely on the computation of the marginal likelihood (see,
+e.g., Kamary et al. 2018; Pereyra and McLaughlin 2016);
+however these are usually very computationally intensive.
+Finally, nested sampling provides a distinctively differ-
+ent approach for efﬁciently estimating (2) and (3) (Skilling
+2006). The key idea underpinning nested sampling is the
+re-parameterisation of the marginal likelihood (2) as a one-
+dimensional integral of the likelihood with respected to the
+enclosed prior volume. This greatly reduces the computa-
+tion costs involved, provided that one can efﬁciently sample
+from the prior distribution subject to a hard constraint on
+the likelihood value. Nested sampling therefore shifts the
+computational challenge from the direct evaluation of a
+high-dimensional integral to sampling of the prior subject
+to a hard likelihood constraint. The generation of samples
+is challenging and previous works have considered a range
+of sampling strategies. For example, conventional MCMC
+sampling (Skilling 2006), rejection sampling (e.g. Mukher-
+jee et al. 2006; Feroz and Hobson 2008; Feroz et al. 2009),
+slice sampling (e.g. Handley et al. 2015), and more advanced
+MCMC samplers such as Galilean Monte Carlo (Feroz and
+Skilling 2013) and diffusive nested sampling (Brewer et al.
+2011). Following over a decade of active research, nested
+sampling is now a well-established technique for computing
+the marginal likelihood that has found widespread applica-
+tion, particularly in astronomy (e.g. Feroz and Hobson 2008;
+Feroz et al. 2009; Trotta 2007). Nevertheless, broadly speak-
+ing, current nested sampling techniques remain restricted to
+moderate dimensional problems of size O(102) to O(103).
+With imaging problems in mind, this article presents an
+efﬁcient nested sampling methodology speciﬁcally designed
+for high-dimensional log-concave models of the form (1).
+A signiﬁcant novelty of the proposed approach is that we
+address the difﬁcult generation of samples by using a prox-
+imal MCMC technique that is naturally suited for dealing
+with high-dimensional log-concave distributions subject to
+hard convex constraints. Moreover, the proximal nature of
+the method straightforwardly allows the use of the non-
+smooth priors that are frequently encountered in imaging
+(e.g., involving the ℓ1 and total-variation regularisers), which
+would not be easily addressed by using alternative gradient-
+based samplers. Section 3 below reviews the nested sampling
+approach. The proposed proximal nested sampling method-
+ology is presented in Sect. 4.
+3 Nested sampling
+For ease of notation, given a model M, let L(x)
+=
+p(y|x, M) denote the likelihood function, π(x) = p(x|M)
+the prior, and
+Z = p(y|M) =
+
+
+L(x)π(x)dx,
+(16)
+the marginal likelihood or evidence associated with a given
+model M (to simplify notation, we henceforth omit the
+dependence of Z and L on y).
+Nested sampling (Skilling 2006) was proposed speciﬁ-
+cally to facilitate the efﬁcient evaluation of Z for Bayesian
+model selection, while also supporting posterior inferences.
+As mentioned previously, the calculation of the multidi-
+mensional marginal likelihood integral (16) is generally
+computationally intractable. Nested sampling addresses this
+difﬁculty by cleverly converting (16) to a one-dimensional
+integral by re-parameterising the likelihood in terms of the
+enclosed prior volume. In addition, nested sampling involves
+the prior via simulation and hence does not require knowl-
+edge of the prior normalising constant. As a result, it also
+circumvents the second level of intractability of Z that arises
+in imaging problems.
+Let L∗= {x|L(x) > L∗}, which groups the parameter
+space  into a series of nested subspaces according to the
+level-set or iso-likelihood contour L(x) = L∗≥0. Note that
+L∗=0 = , since the likelihood values cannot be negative.
+Deﬁne the prior volume ξ by
+ξ(L∗) =
+
+L∗
+π(x)dx.
+(17)
+Note that ξ(0) = 1 and ξ(Lmax) = 0, where Lmax is the max-
+imum of the likelihood in . Let L†(ξ) be the inverse of the
+prior volume ξ(L∗) such that L†(ξ(L∗)) = L∗1, and assume
+it is a monotonically decreasing function of ξ (which, when L
+is continuous and π has connected support, is satisﬁed theo-
+retically and up to practical numerical considerations that can
+be trivially overcome; Sivia and Skilling 2006). The marginal
+likelihood integral (16) can then be rewritten as
+Z =
+ 1
+0
+L†(ξ)dξ,
+(18)
+1 In other words, L† is a tail quantile function such that, for any L∗> 0,
+the inverse of L†(ξ(L∗)) represents the probability that a draw x from
+the prior π will have a likelihood L(x) > L∗.
+123
+Statistics and Computing (2022) 32 :87
+Page 7 of 22
+87
+which is a one-dimensional integral over the prior volume ξ.
+To evaluate (18) in practice it is necessary to compute
+likelihood level-sets (iso-contours) Li, which correspond to
+prior volumes 0 < ξi ≤1 satisfying (17). A strategy to
+generate the likelihoods Li and associated prior volumes ξi is
+discussed in Sect. 3.2. Once the likelihoods Li = L†(ξi) are
+obtained,(18)canbeusedtoevaluatethemarginallikelihood,
+where {ξi}N
+i=0 is a sequence of decreasing prior volumes, i.e.,
+0 < ξN < · · · < ξ1 < ξ0 = 1.
+(19)
+After discretising the integral (18) and associating each like-
+lihood Li a quadrature weight wi, the marginal likelihood can
+be computed numerically using standard quadrature methods
+to give
+Z ≈
+N
+
+i=1
+Liwi.
+(20)
+The simplest assignment of the quadrature weights is wi =
+ξi−1 −ξi. The trapezium rule can also be used, i.e., wi =
+(ξi−1 + ξi+1)/2. The approximation error related to the dis-
+cretisation of (18) can be made arbitrarily small by increasing
+N.
+3.1 Posterior inferences
+Posterior inferences can be easily computed once Z is found.
+Any sample taken randomly in the prior volume interval
+(ξi−1, ξi) is simply assigned an importance weight
+pi = Liwi
+Z
+.
+(21)
+Samples with the assigned weights {pi} can then be used to
+calculate posterior inferences such as the posterior moments,
+probabilities, and credible regions.
+3.2 Marginal likelihood evaluation
+We now recall the basic procedure of the standard nested
+sampling framework for evaluating the marginal likelihood,
+i.e. to compute the summation (20). In particular, it is neces-
+sary to generate samples of the likelihoods Li and to estimate
+the corresponding enclosed prior volume ξi.
+Firstly, set the iteration number i = 0, the prior volume
+ξ0 = 1, and draw Nlive live samples of the unknown image x
+from the prior distribution π(x). Secondly, remove the sam-
+ple with the smallest likelihood, say Li+1, from the live set
+and replace it with a new sample. This new sample is again
+drawn from the prior, but constrained to a higher likelihood
+than Li+1.
+It is necessary to then determine the prior volume ξi+1
+enclosed by the likelihood level-set (iso-contour) deﬁned by
+Li+1. This is estimated in a stochastic manner. The enclosed
+prior volume for each step i can be estimated by a shrinkage
+ratio (random variable) ti+1, i.e. by ξi+1 = ti+1ξi, where ti+1
+follows the distribution2
+p(t) = Nlivet Nlive−1.
+(22)
+Repeat the above step (removing the sample with the
+smallest likelihood and estimating the updated prior volume)
+until the entire prior volume (and the nested shells of like-
+lihood) has been traversed. We ﬁnally obtain {Li} and {ξi}
+which can then be used to compute the marginal likelihood by
+(20). Moreover, we also simultaneously obtain a set of sam-
+ples of the parameter x comprising all the discarded (dead)
+samples and the Nlive ﬁnal live samples, which can be used
+for posterior parameter inferences (refer to Sect. 3.1 for fur-
+ther detail).
+The volume prior at step i of the nested sampling algo-
+rithm, is ξi = i
+k=1 tk; recall that tk is the shrinkage ratio
+and is independently distributed following the probability
+density function given in (22). Since the mean and standard
+deviation of log t are respectively
+E(log t) = −1/Nlive
+and σ(log t) = 1/Nlive,
+(23)
+we have
+log ξi ≈−i/Nlive ±
+√
+i/Nlive.
+(24)
+Ignoring uncertainty, one thus takes
+ξi = exp(−i/Nlive).
+(25)
+A convergence criteria for the nested sampling algorithm
+should be adopted. Terminating the algorithm too early or
+late should be avoided to ensure the marginal likelihood is
+estimated accurately without unnecessary additional compu-
+tational cost. One stopping criterion is that the difference in
+marginal likelihood estimates between two iterations falls
+below a predeﬁned threshold, while another is to ensure a
+sufﬁcient number of dead samples is used.
+The pseudo code for the nested sampling algorithm is
+given in Algorithm 1. Observe that the most challenging task
+in the nested sampling algorithm is drawing samples from
+the prior with the hard constraint that samples lie within Li ,
+i.e. within the space deﬁned by the likelihood level-set (see
+lines 8–10 in Algorithm 1). This constrained sampling step is
+2 The probability distribution (22) is for the largest of Nlive samples
+drawn uniformly from the interval [0, 1]. This follows since the param-
+eter x is uniformly sampled from the prior π(x) and {ξi} are uniformly
+distributed (by the relation dξ = π(x)dx).
+123
+87
+Page 8 of 22
+Statistics and Computing (2022) 32 :87
+relatively easy in small problems but can become very com-
+putationally challenging as problem dimension increases. As
+a result, nested sampling is usually restricted to problems of
+moderate size.
+Algorithm 1 Nested sampling algorithm
+Initialization: Data Y. Set Z = 0, ξ0 = 1 and i = 0. Draw Nlive
+samples {xn}Nlive
+n=1 from the prior distribution π(x) in the prior space .
+Output: Evidence Z and posterior probabilities {pi}.
+for i = 1, . . . , until the stopping criterion reached
+- Find the lowest likelihood, say Li, in the set of live samples.
+- Compute weight wi = (ξi−1 −ξi+1)/2, where ξi = exp(−i/Nlive).
+- Update evidence by Z = Z + Liwi.
+- Draw a new sample from the prior distribution π(x) in the restricted
+parameter space Li , and replace the individual sample associated with
+the lowest likelihood Li in the set of live samples.
+end for
+Update the evidence by Z = Z + wi+1
+Nlive
+Nlive
+n=1 L(xn).
+Compute the posterior probability for each individual sample pi =
+Liwi/Z.
+3.3 Error estimation
+If the prior volumes {ξi} considered in the discretised inte-
+gral (20) used to evaluate the marginal likelihood could be
+assigned exactly, then the only error in the estimate of the
+marginal likelihood would be due to the discretisation of the
+integral, which is trivially O(1/N 2) and negligible when N
+is sufﬁciently large. However, since the shrinkage ratio ti is
+generated randomly, each prior volume ξi is then assigned
+approximately, which tends to overwhelm the error brought
+by the discretisation of the integral and will therefore cause
+the dominant source of uncertainty in the ﬁnal computed
+evidence Z. This uncertainty, fortunately, can be estimated
+easily. We recall below the error estimation scheme presented
+in Skilling (2006) using the entropy of the prior volumes.
+This approach is highly efﬁcient since it does not require any
+additional sampling.
+Let P(ξ) = L(ξ)/Z be the posterior distribution regard-
+ing the prior volume ξ. Then the negative relative entropy H
+can be deﬁned as
+H =
+
+P(ξ) log[P(ξ)]dξ ≈
+N
+
+i=1
+Liwi
+Z
+log
+ Li
+Z
+
+,
+(26)
+which can be computed directly from the obtained likeli-
+hoods {Li}, weights {wi} and the evidence Z. Following
+Skilling (2006), the standard deviation of the uncertainty of
+log Z using the nested sampling algorithm reads √H/Nlive,
+i.e.,
+log Z = log
+ N
+
+i=1
+Liwi
+
+±
+
+H
+Nlive
+.
+(27)
+In Chopin and Robert (2010), it is established that, under
+someregularityconditions,theapproximationerrorisasymp-
+totically Gaussian in the limit N →∞and vanishes at the
+usual Monte Carlo rate O(N −1/2). Moreover, the error scales
+approximately linearly with the model dimension d.
+4 Proximal nested sampling framework
+The main difﬁculty in applying nested sampling to large
+inverse problems is to efﬁciently simulate from the prior
+distribution subject to a hard likelihood constraint. More
+precisely, at iteration i, the samples from the prior are con-
+strained to the region Li deﬁned by the likelihood level-set
+corresponding to Li (i.e. where a new sample must have a
+likelihood value greater than Li at iteration i).
+In this section we present our proposed proximal nested
+sampling method to address this challenging constrained
+samplingproblem. Moreover, theproximal natureof thesam-
+pling method ensures that non-differentiable distributions,
+such as popular sparsity-promoting priors involving the ℓ1
+norm, are supported. We ﬁrst present the methodology of
+proximal nested sampling for arbitrary log-concave distri-
+butions of the form (1). Explicit forms of proximal nested
+sampling for common choices of priors and likelihoods in
+imaging sciences are presented in Sect. 5.
+4.1 General constrained sampling problem
+Following (1) and adopting the notation of Sect. 3, assume
+that the prior and the likelihood are of the form π(x) =
+exp(−f (x)) and L(x) = exp(−g(x)), where f and g are
+convex l.s.c. (lower semicontinuous) functions on .
+We consider sampling from the prior π(x), such that
+L(x) > L∗for some generic likelihood value L∗> 0. Let
+ιL∗(x) and χL∗(x) be the indicator function and characteristic
+function, respectively, deﬁned as
+ιL∗(x) =
+
+1, L(x) > L∗,
+0, otherwise,
+and
+χL∗(x) =
+
+0,
+L(x) > L∗,
++∞, otherwise.
+(28)
+Sincelogismonotonic,L(x) > L∗isequivalentto g(x) < τ,
+where
+τ = −log L∗.
+(29)
+123
+Statistics and Computing (2022) 32 :87
+Page 9 of 22
+87
+Let Bτ := {x | g(x) < τ}. Then it is apparent that χL∗(x),
+as a constraint for x, is equivalent to χBτ (x), where
+χBτ (x) =
+
+0,
+x ∈Bτ,
++∞, otherwise.
+(30)
+Let πL∗(x) = π(x)ιL∗(x) represent the prior distribu-
+tion with the hard likelihood constraint L(x) > L∗. Since
+ιL∗(x) = exp(−χL∗(x)), then we have
+πL∗(x) = π(x)ιL∗(x)
+= exp(−f (x))exp(−χL∗(x))
+= exp(−[ f (x) + χL∗(x)])
+= exp(−[ f (x) + χBτ (x)]).
+(31)
+Note that taking logarithm of πL∗(x) reads
+−log πL∗(x) = f (x) + χBτ (x).
+(32)
+In the following section we introduce our proximal nested
+sampling algorithm for parameter x to sample from the con-
+strained prior distribution exp(−[ f (x) + χBτ (x)]).
+4.2 Drawing a sample from the constrained prior
+Sampling distributions over  is usually challenging because
+of the dimensionality involved. Sampling from the con-
+strained prior (32) is particularly difﬁcult because of the
+hard constraint that x ∈Bτ, encoded in the character-
+istic function χBτ (x). Sampling is further complicated if
+the log-prior f (x) is not Lipschitz differentiable over 
+(e.g. for non-differentiable sparsity-promoting priors), since
+high-dimensional sampling methods rely heavily on gra-
+dient information. To circumvent these issues we adopt a
+proximal MCMC approach, which is particularly suitable
+for high-dimensional distributions that are log-concave but
+not smooth. More precisely, in a manner akin to Durmus
+et al. (2018), we use the unadjusted Langevin algorithm
+(ULA) MCMC sampling strategy combined with Moreau-
+Yosida approximations of non-differential terms, followed
+by Metropolis Hastings correction step to control the approx-
+imations made, as described in Pereyra (2016).
+Using the ULA iterative formula, for each given τ (recall
+that τ corresponds to a likelihood value L∗by τ = −log L∗;
+see (29)), we can generate the following Markov chain
+x(k+1) =x(k) −δ
+2∇
+
+f (x(k)) + χBτ (x(k))
+
++
+√
+δw(k+1),
+(33)
+where δ > 0 is the step size and wk+1 ∼N(0, 1K ) (a K-
+sequence of standard Gaussian random variables).
+The non-differentiable characteristic function χBτ (x) can
+be approximated by its Moreau-Yosida envelope χλ
+Bτ (x),
+with approximation controlled by λ > 0. It is straightfor-
+ward to show that
+χλ
+Bτ (x) = 1
+2λ∥x −x∗∥2
+2,
+(34)
+where x∗istheclosestpointinBτ to x,givenbytheprojection
+of x onto Bτ, i.e. x∗= projBτ (x) = proxχBτ (x). Critically,
+the λ-Moreau-Yosida envelope is 1
+λ-Lipschitz differentiable.
+Its gradient can be calculated directly from (34) or by noting
+(11), yielding
+∇χλ
+Bτ (x) = (x −x∗)/λ = (x −proxχBτ (x))/λ.
+(35)
+Replacing the characteristic function by its Moreau-
+Yosida approximation in (33) , and noting the gradient (35),
+yields
+x(k+1) = x(k) −δ
+2∇f (x(k)) −δ
+2λ
+
+x(k) −proxχBτ (x(k))
+
++
+√
+δw(k+1).
+(36)
+When
+f (x) is differentiable its gradient can be com-
+puted directly (we consider the case where f (x) is non-
+differentiable shortly). For differential log-priors f (x), (36)
+provides the general strategy for sampling from the prior
+subject to the hard likelihood constraint (with a subsequent
+Metropolis-Hasting step as discussed below).
+If the sample x(k) is already in Bτ, i.e. x ∈Bτ, the
+term
+
+x(k)−proxλ
+χBτ (x(k))
+
+disappears and the Markov chain
+iteration simply involves taking a noisy step to descent the
+gradient. In contrast, if x(k) is not in Bτ, i.e. x /∈Bτ, then a
+step is taken in the direction −
+
+x(k) −proxλ
+χBτ (x(k))
+
+, which
+acts to move the next iteration in the Markov chain in the
+direction of the projection of x(k) onto the convex set Bτ. This
+term therefore acts to push the Markov chain back into the
+constraintsetBτ ifitwandersoutsideofit,althoughduetothe
+Moreau-Yosida approximation of χBτ it does not guarantee
+the constraint is satisﬁed (the subsequent Metropolis-Hasting
+step does guarantee the hard likelihood constraint is satisﬁed
+as discussed below).
+When f (x) is non-differentiable, it may be approximated
+by its differentiable Moreau-Yosida envelope f λ(x). By not-
+ing (11), the gradient of the term involving the sum of the
+two Moreau-Yosida approximations then reads
+∇( f λ(x)+χλ
+Bτ (x))=(x−proxλ
+f (x))/λ
++(x−proxχBτ (x))/λ.
+(37)
+123
+87
+Page 10 of 22
+Statistics and Computing (2022) 32 :87
+Here we have used the same regularisation parameter λ >
+0 for both approximations for notational brevity, although
+clearly different parameters can be considered for f λ(x) and
+χλ
+Bτ (x) if desired.
+Replacing in (33) both f (x) and χBτ (x) by their Moreau-
+Yosida approximations, and noting the gradient (37), yields
+x(k+1) = (1 −δ
+λ)x(k) + δ
+2λproxλ
+f (x(k))
++ δ
+2λproxχBτ (x(k)) +
+√
+δw(k+1).
+(38)
+For non-differentiable log-concave priors, (38) provides the
+general strategy for sampling from the prior subject to the
+hard likelihood constraint.
+To summarise, given a proper initial sample, say x(0), we
+generate a Markov chain by iteratively applying the Markov
+kernel (36) if f is Lipschitz differentiable or the regularised
+surrogate (38) if it is not, which allows drawing samples from
+the prior that are likely to be within the likelihood iso-contour
+L∗. This is the main challenge in nested sampling.
+The Markov chains generated by ULA-type kernels
+exhibit some bias resulting from the discretisation of the
+Langevin stochastic differential equation and from the use of
+Moreau-Yosida regularisations. This bias can be asymptoti-
+cally removed by introducing a Metropolis-Hasting correc-
+tion step to ensure convergence to the required target density.
+In detail, at each iteration, a new candidate x′ generated using
+formula (36) or (38) is then accepted with probability
+min
+
+1, q(x(k)|x′)πL∗(x′)
+q(x′|x(k))πL∗(x(k))
+
+,
+(39)
+where q(·|·) is a transition kernel, which we deﬁne by a
+Gaussian related to the ULA random component (following
+Pereyra 2016), i.e.,
+q(x′|x(k)) ∼exp
+
+−
+
+x′ −x(k) −δ
+2∇log πL∗(x(k))
+2
+2δ
+	
+.
+(40)
+If the candidate sample x′ is outside of Bτ, i.e. x′ /∈Bτ,
+then πL∗(x′) = 0 and according to the Metropolis-Hasting
+update the candidate will not be accepted, ensuring the hard
+likelihood constraint is satisﬁed.
+We summarise our proximal technique to draw an individ-
+ual sample from the prior under the hard likelihood constraint
+in Algorithm 2.
+4.3 Initialisation from the unconstrained prior
+The initialisation of the nested sampling method is to draw
+Nlive samples {xn}Nlive
+n=1 from the prior distribution π(x) in the
+Algorithm 2 Proximal individual sample draw algorithm
+ProxSampleDraw(x(0), L∗)
+Initialization: k = 0, Kgap.
+Input: x(0), L∗(starting point of Markov chain and likelihood thresh-
+old).
+Output: Individual sample xnew fulﬁlling the constraint L(xnew) > L∗.
+Compute τ = −log L∗.
+for k = 1, . . .
+- Compute x(k) using the iterative formula (36) if f is differentiable;
+otherwise (38).
+- Metropolis-Hasting step following (39) to remove the estimation
+bias.
+if L(x(k)) > L∗and k ≥Kgap
+break.
+end if
+end for
+Set xnew = x(k).
+prior space . If the log-prior f (x) is differentiable this may
+be applied trivially with the ULA iterative formula. Other-
+wise f (x) may again be approximated by its Moreau-Yosida
+envelope and samples from the prior can be generated by the
+iterative formula
+x(k+1) = (1 −δ
+2λ)x(k) + δ
+2λproxλ
+f (x(k)) +
+√
+δw(k+1).
+(41)
+To draw Nlive samples from the prior, it is necessary to
+ﬁrst discard initial samples generated before converging on
+the target prior distribution. Initial samples corresponding
+to a number of burn-in iterations, say Kburn, are discarded.
+Due to correlations between samples and the algorithm’s
+memory footprint, the chain is thinned by discarding a
+number of intermediate iterations between samples (the
+chain’s thinning factor), say (Kgap −1). That is, only the
+Kgap-th sample generated by the iterative formula is kept.
+Only 1-in-Kgap samples are stored when k > Kburn and
+mod(k −Kburn, Kgap) = 0, where mod(·, ·) represents mod-
+ulus after division. A Metropolis-Hasting step can also be
+introduced here to remove the estimation bias. We summarise
+the technique for drawing Nlive live samples from the prior
+in Algorithm 3.
+4.4 Proximal nested sampling algorithm
+After embedding Algorithms 2 and 3 into Algorithm 1 (i.e.,
+the standard nested sampling algorithm), we obtain our
+proposed proximal nested sampling algorithm, which is sum-
+marised in Algorithm 4. Recall that Algorithm 2 generates
+a new single sample from the prior subject to the hard like-
+lihood constraint, which is used to replace the sample with
+the lowest likelihood value in the live sample set. We suggest
+using a sample randomly selected from the live sample set
+as a starting point for Algorithm 2.
+123
+Statistics and Computing (2022) 32 :87
+Page 11 of 22
+87
+Algorithm 3 Proximal algorithm of drawing live samples
+(from prior)
+Initialization: Nlive, Kburn, Kgap, and x(0).
+Output: Nlive live samples {xn}Nlive
+n=1 (draw from the prior with no con-
+straint).
+for k = 1, . . . , Kburn
+- Compute x(k) using the iterative formula (41).
+end for
+n = 1;
+for k = Kburn + 1, . . . , Kburn + NliveKgap
+- Compute x(k) using the iterative formula (41).
+- Metropolis-Hasting step to remove the estimation bias.
+if mod(k −Kburn, Kgap) = 0
+xn = x(k); n = n + 1.
+end if
+end for
+So far we have presented the proximal nested sampling
+framework in its most general form for arbitrary log-concave
+distributions, which is based on the iterative formula (36)
+or (38) to sample from the constrained prior. These itera-
+tive formula involve computing proximal operators related
+to the log-prior and likelihood constraint, which we have
+not yet considered in further detail. In principle computing
+proximal operators involves solving a minimisation problem,
+although in many scenarios this can be solved analytically or
+otherwiseefﬁcientiterativealgorithmscanbeused.Inthefol-
+lowing section we consider explicit forms of proximal nested
+sampling for common forms of the prior and likelihood, out-
+lining explicitly how the required proximal operators can be
+computed.
+Algorithm 4 Proximal nested sampling algorithm
+Initialization: Data Y. Set Z = 0, ξ0 = 1 and i = 0. Using Algorithm 3
+to draw Nlive samples {xn}Nlive
+n=1 from the prior distribution π(x) in the
+prior space .
+Output: Evidence Z and posterior probabilities {pi}.
+for i = 1, . . . , until the stopping criterion reached
+- Find the lowest likelihood, say Li, in the set of live samples.
+- Compute weight wi = (ξi−1 −ξi+1)/2, where ξi = exp(−i/Nlive).
+- Update evidence by Z = Z + Liwi.
+- Randomly select a sample, say x(0), from the set of live samples.
+-
+Use
+Algorithm
+2
+to
+draw
+a
+new
+sample
+xnew
+=
+ProxSampleDraw(x(0), Li) from the prior distribution π(x) in the
+restricted parameter space Li , and replace the individual sample xi,low
+by the newly drawn sample xnew.
+end for
+Update the evidence by Z = Z + Nlive
+n=1 L(xn)wi+1/Nlive.
+Compute the posterior probability for each individual sample pi =
+Liwi/Z.
+Before concluding this section, we note that the proposed
+proximal nested sampling method summarised in Algorithm
+4 seeks to provide a Bayesian model selection strategy that
+is computationally efﬁcient, simple, robust, and easy to
+deploy, as opposed to a strategy that seeks to deliver opti-
+mal performance by using adaptive methods or by leveraging
+model-speciﬁc properties. For example, for some models
+with favourable factorisation properties, better results would
+be obtained by replacing ULA by a Gibbs sampler (see
+e.g. Lucka 2016). Similarly, for models that are close to
+isotropic, one could replace ULA with a proximal Markov
+kernel derived from the underdamped Langevin SDE, which
+includes a Hamiltonian term (see e.g. Melidonis et al. 20223).
+Such methods scale more efﬁciently to large models than
+the overdamped Langevin method used in this paper, but they
+are less robust to anisotropy, which is a common feature in
+Bayesian inverse problems. Moreover, one could also con-
+sider using an adaptive MALA kernel with a matrix-valued
+step-size taking into account second-order properties of the
+posterior distribution (Pereyra et al. 2016). Lastly, because
+the proposed proximal nested sampling method has been
+speciﬁcally designed for large models that are log-concave, it
+is not equipped with mechanisms to handle multi-modality.
+For problems involving multi-modality, we would recom-
+mend modifying the Markov kernel either by using some
+formofannealing(Neal2001),orbyusinganadaptiveimpor-
+tance sampling scheme (Martino et al. 2017). However, as
+mentioned previously, performing model selection for mod-
+els that are both large and multi-modal is very difﬁcult and
+remains an important perspective for future work.
+5 Explicit forms of proximal nested sampling
+In the general proximal nested sampling framework pre-
+sented in Sect. 4 we considered arbitrary log-concave terms
+for the prior and likelihood and did not consider further how
+to compute the proximal operators related to those terms.
+We now exemplify our proposed proximal nested sampling
+framework with explicit forms for common priors and likeli-
+hoods used in high-dimensional signal and image processing
+problems. In particular, we outline explicitly how to compute
+the required proximal operators.
+For illustration, we focus on sparsity-promoting priors
+corresponding to f (x) = μ∥†x∥1, where † ∈Cp×d
+represents a sparsifying transform, and Gaussian likelihoods
+corresponding to g(x) = ∥y −x∥2
+2/2σ 2, where y ∈Cm
+denotes measured data, x ∈Rd the underlying parameters,
+and  ∈Cm×d the measurement operator (model), although
+other common priors are also considered. For simplicity,
+3 Note that we focus on proximal MCMC kernels since purely gradient-
+based MCMC methods based on the Langevin or Hamiltonian dynamics
+are not directly applicable to the non-smooth models considered in this
+paper. They might fail to be geometrically ergodic, in which case the
+nested sampling scheme would also behave poorly (see Betancourt 2011
+for an example of a nested sampling method based on Hamiltonian
+dynamics).
+123
+87
+Page 12 of 22
+Statistics and Computing (2022) 32 :87
+although not essential, we assume  is an orthonormal trans-
+formation, i.e., † = † = I.
+From the iterative forms given in (36), (38) and (41), on
+which our proximal nested sampling framework is based, it
+is necessary to compute two proximal operators: proxλ
+f (x)
+and proxχBτ (x), related to the prior and likelihood, respec-
+tively (recall that the deﬁnition of χBτ is related to likelihood
+function g; see (30)). In the following we calculate these two
+proximal operators for explicit expressions of f (x) and g(x)
+and show the corresponding explicit forms of the iterative
+formulas of (36), (38) and (41).
+5.1 Proximal operator for the prior
+When f (x) represents a ﬂat prior or f (x) = μ∥†x∥2
+2
+(Gaussian prior) it is differentiable with gradient
+∇f (x) = 0 or ∇f (x) = 2μ†x = 2μx,
+(42)
+respectively (here we use † = I). Obviously, there is no
+need to use the Moreau-Yosida envelope ∇f λ(x) to approx-
+imate ∇f (x) when f (x) is differentiable.
+When f (x) represents a sparsity-promoting Laplacian-
+type prior f (x) = μ∥†x∥1, ∀x′ ∈Rd, we have
+proxλ
+f (x′) = argmin
+x∈Rd
+
+μ∥†x∥1 + ∥x −x′∥2
+2/2λ
+
+= x′ + 
+
+proxλμ
+∥·∥1(†x′) −†x′	
+= x′ + 
+
+softλμ(†x′) −†x′	
+,
+(43)
+where the second line follows by standard properties of
+the proximal operator (Combettes and Pesquet 2011) and
+where softλ(x) = (softλ(x1), softλ(x2), · · · ) is the soft-
+thresholding operator deﬁned by
+softλ(xi) =
+
+0,
+|xi| < λ,
+xi(|xi| −λ)/|xi|, otherwise.
+(44)
+5.2 Proximal operator for the likelihood
+Consider the Gaussian likelihood corresponding to g(x) =
+∥y−x∥2
+2/2σ 2.RecallthatχBτ (x) = 0if x ∈{x | g(x) < τ}
+and otherwise χBτ (x) = +∞. We are to solve
+proxλ
+χBτ (x′) = argmin
+x∈Rd
+
+χBτ (x) + ∥x −x′∥2
+2/2λ
+
+= argmin
+x∈Rd
+
+χBτ (x) + ∥x −x′∥2
+2
+
+= projχBτ (x′),
+(45)
+which is a projection onto set Bτ.
+For the case where the measurement operator is the iden-
+tity,  = I, (e.g. denoising problems) then problem (45) is
+the projection onto the ℓ2 ball with radius
+√
+2τσ 2. In this case
+the proximal (projection) operator has closed-form solution
+projχBτ (x) =
+
+x,
+if x ∈Bτ,
+x−y
+∥x−y∥2
+√
+2τσ 2 + y, otherwise.
+(46)
+For the case where the measurement operator is not the
+identity,  ̸= I, problem (45) is equivalent to ﬁnding an
+x ∈Rd satisfying
+min
+x∈Rd
+
+χB′
+τ′(u) + ∥x −x′∥2
+2/2
+
+,
+s.t. u = x,
+(47)
+where B′
+τ
+:= {z | ∥y −z∥2
+2 < τ} and τ ′ = 2τσ 2.
+Minimisation problem (47) can be solved by a variety of dif-
+ferent optimisation methods, e.g. by the alternating direction
+method of multipliers (ADMM) and primal-dual algorithms
+(see, e.g., Parikh and Boyd 2013 and references therein for
+further details). In the following we present detailed proce-
+dures for using the ADMM and primal-dual algorithms to
+solve problem (47).
+5.2.1 Computation using ADMM method
+Firstly, the augmented Lagrangian of the minimisation prob-
+lem (47) can be represented as
+(x, u, z) := χB′
+τ′(u) + 1
+2∥x −x′∥2
+2 + βz†(u −x)
++β
+2 ∥u −x∥2
+2,
+(48)
+for dual variable z and penalty parameter β > 0. Starting
+from an initialisation x(0), z(0), the augmented Lagrangian
+of (48) can be minimised with respect to variables u and x
+alternatively, while updating the dual value z using the dual
+ascent method to ensure the constraint u = x is satisﬁed
+for the ﬁnal solution, i.e.
+u(i) = argmin
+u∈Cm (x(i), u, z(i)),
+(49)
+x(i+1) = argmin
+x∈Rd (x, u(i), z(i)),
+(50)
+z(i+1) = z(i) + u(i) −x(i+1),
+(51)
+123
+Statistics and Computing (2022) 32 :87
+Page 13 of 22
+87
+which can be rewritten as the following explicit iterative
+scheme
+u(i) = argmin
+u∈CM
+
+χB′
+τ′(u) + β
+2 ∥u −x(i) + z(i)∥2
+2
+
+,
+(52)
+x(i+1) = argmin
+x∈RD
+1
+2∥x −x′∥2
+2 + β
+2 ∥u(i) −x + z(i)∥2
+2
+
+,
+(53)
+z(i+1) = z(i) + u(i) −x(i+1).
+(54)
+The solution to problem (52) has a closed-form expression
+since it is the projection onto a scaled and shifted ℓ2 ball, i.e.,
+u(i) =
+
+x(i)−z(i),
+if x(i)−z(i) ∈B′
+τ ′,
+x(i)−z(i)−Y
+∥x(i)−z(i)−Y∥2
+√
+2τσ 2 + Y, otherwise.
+(55)
+Problem (53) is differentiable and so can be solved by gra-
+dient descent. It is straightforward to show that this problem
+is equivalent to solving the linear system w.r.t. x
+(β† + I)x = x′ + β†(u(i) + z(i)),
+(56)
+which can be solved by using iterative methods, with
+(β† + I) positive deﬁnite.
+The pseudo code to compute the proximal operator,
+proxχBτ (x), using ADMM is summarised in Algorithm 5.
+Various stopping criteria can be considered, such as a max-
+imum iteration number or the relative error of solutions at
+two consecutive iterations, i.e., ∥x(i+1) −x(i)∥2/∥x(i)∥2.
+Algorithm 5 ADMM for proximal operator associated with
+the likelihood
+Initialization: x(0), z(0).
+Input: x, L∗
+Output: x∗(the value of proxχBτ (x)).
+Compute τ = −log L∗, and form χBτ .
+for i = 0, . . ., until the stopping criterion reached
+- Compute u(i) by (55);
+- Compute x(i+1) by solving (56);
+- Update z(i+1) by (54).
+end for
+Set x∗= x(i+1).
+5.2.2 Computation using primal-dual method
+Alternatively, problem (45) can be solved using a primal-dual
+method. Note that the problem can be rewritten as
+min
+x∈Rd
+
+χB′
+τ′(x) + ∥x −x′∥2
+2/2
+
+,
+(57)
+which is equivalent to the saddle-point problem
+min
+x∈Rd max
+z∈CK
+
+z†x −χ∗
+B′
+τ′(z) + ∥x −x′∥2
+2/2
+
+,
+(58)
+where χ∗
+B′
+τ′ is the convex conjugate of χB′
+τ′. The saddle-
+point problem (58) can be solved by alternatively optimising
+with respect to the primal variable x and the dual variable
+z. Considering a proximal forward-background step for each
+alternate optimisation, ﬁrst for the dual variable z followed by
+the primal variable x, leads to the following iterative scheme
+z(i+1) = proxχ∗
+B′
+τ′
+(z(i) + δ1¯x(i)),
+(59)
+x(i+1) = proxh(x(i) −δ2†z(i+1)),
+(60)
+¯x(i+1) = x(i+1) + δ3(x(i+1) −x(i)),
+(61)
+where h(x) = ∥x −x′∥2
+2/2, and δk, for k = 1, 2, 3, are algo-
+rithm step size parameters. We next consider how to solve
+problem (59) and (60) explicitly.
+Problem (59) can be solved by
+z(i+1) = proxχ∗
+B′
+τ′
+(z(i) + δ1¯x(i))
+= z(i) + δ1¯x(i) −proxχB′
+τ′ (z(i) + δ1¯x(i)),
+(62)
+where we have noted the relationship between the proximal
+operator of the convex conjugate of a function given by (9).
+Since B′
+τ ′ is an ℓ2 ball, the proximal operator in (62) has the
+closed-form expression
+proxχB′
+τ′ (z)=projB′
+τ′ (z)=
+
+z,
+if z ∈B′
+τ ′,
+z−y
+∥z−y∥2
+√
+2τσ 2 + y, otherwise.
+(63)
+Problem (60) is to solve
+x(i+1) =argmin
+x∈Rd
+
+∥x −x′∥2
+2+∥x−(x(i)−δ2†z(i+1))∥2
+2
+
+,
+(64)
+which involves a differentiable objective function and so can
+be solved analytically, yielding the closed-form solution
+x(i+1) = (x′ + x(i) −δ2†z(i+1))/2.
+(65)
+The pseudo code to compute the proximal operator,
+proxλ
+χBτ (x), using the primal-dual method is summarised in
+Algorithm 6. The same stopping criterion as for ADMM in
+Algorithm 5 can also be used for Algorithm 6.
+Note that the main difference between the primal-dual
+method and ADMM is that the primal-dual method does not
+123
+87
+Page 14 of 22
+Statistics and Computing (2022) 32 :87
+need to solve the linear system in (56). Therefore, the primal-
+dual method is typically more efﬁcient computationally and
+is the approach used in the numerical experiments that follow.
+However, there are speciﬁc problems for which the linear
+system in (56) admits a computationally efﬁcient solution
+and where the ADMM method might be more appropriate.
+Algorithm 6 Primal-dual method for proximal operator asso-
+ciated with the likelihood
+Initialization: x(0), ¯x(0), z(0).
+Input: x, L∗
+Output: x∗(the value of proxχBτ (x)).
+Compute τ = −log L∗, and form χBτ .
+for i = 0, . . ., until the stopping criterion reached
+- Compute z(i+1) by (62);
+- Compute x(i+1) by solving (65);
+- Update ¯x(i+1) by (61).
+end for
+Set x∗= x(i+1).
+5.3 Explicit iterative formula for drawing samples
+We are now in a position to outline the explicit iterative for-
+mulas to draw samples for a variety of common priors using
+our proximal nested sampling method.
+The explicit representations of the iterative equations (36)
+(for differentiable f (x)) and (38) (for non-differentiable
+f (x)), which are used in Algorithm 2 to draw an individual
+samplefromthepriorunderthehardlikelihoodconstraint,for
+uniform, Gaussian and Laplacian priors, i.e. f (x) constant,
+f (x) = μ∥†x∥2
+2 and f (x) = μ∥†x∥1, respectively, are
+x(k+1) = (1 −δ
+2λ)x(k) + δ
+2λx∗(k) +
+√
+δw(k+1),
+(66)
+x(k+1) = (1 −δ
+2λ −δμ)x(k) + δ
+2λx∗(k) +
+√
+δw(k+1), (67)
+x(k+1) = (1 −δ
+2λ)x(k) + δ
+2λ
+
+softλμ(†x(k))
+−†x(k)
++ δ
+2λx∗(k) +
+√
+δw(k+1),
+(68)
+where x∗(k) = proxχBτ (x(k)) is obtained using Algorithm 5
+or 6.
+Correspondingly, the explicit representations of equation
+(41), which is used in Algorithm 3 to draw Nlive initial live
+samples from the prior distribution π(x) in the prior space
+, are, respectively,
+x(k+1) = x(k) +
+√
+δw(k+1),
+(69)
+x(k+1) = (1 −δμ)x(k) +
+√
+δw(k+1),
+(70)
+x(k+1) =x(k)+ δ
+2λ
+
+softλμ(†x(k))−†x(k)
++
+√
+δw(k+1).
+(71)
+We conclude this section with a brief discussion of the
+types of priors that the proposed proximal nested sampling
+method supports. While any prior that is log-concave could
+be addressed by using proximal nested sampling, we only
+recommend using the method for priors with proximal oper-
+ators that are easy to evaluate or to approximate numerically.
+This is the case for many models used in applied high-
+dimensional statistics, where inference is often conducted
+by using convex optimisation algorithms that also require
+computing proximal operators. For more details about how
+to evaluate proximal operators, their properties, and lists of
+functions with known mappings please see Bauschke and
+Combettes (2011), Combettes and Pesquet (2011) and Parikh
+and Boyd (2013, Ch. 6). A library with MATLAB imple-
+mentations of frequently used proximity mappings is also
+available online4.
+Moreover, since the proposed proximal nested sampling
+approach was speciﬁcally designed for models that are log-
+concave and with Bayesian imaging applications in mind,
+we anticipate that it will be mostly used with informative
+priors designed to regularise and stabilise high-dimensional
+estimation problems. As explained in Llorente et al. (2022),
+the marginal likelihood can be very sensitive to the choice
+of the prior. Therefore, it is important that the parameters
+of the prior are chosen carefully. In particular, we expect
+that proximal nested sampling will be used in combination
+with empirical Bayesian strategies that automatically adjust
+the parameters of the prior by maximum marginal likelihood
+estimation (see e.g. Vidal et al. 2020).
+Furthermore, high-dimensional Bayesian models that are
+log-concave often result from a careful trade-off between
+modelling accuracy and computational tractability, and thus
+they are inherently misspeciﬁed (e.g., in the case of Bayesian
+imaging applications, one would not expect the prior to
+deﬁne a realistic generative model). Consequently, when
+using proximal nested sampling in this context one is inher-
+ently operating in an M-open Bayesian modelling paradigm,
+where none of the models under consideration are formally
+“true”. We refer the reader to Llorente et al. (2022) for more
+details about performing model selection in this context, as
+well as for details about prior sensitivity, objectivity, and the
+use of data-driven priors in Bayesian model selection.
+4 https://github.com/cvxgrp/proximal.
+123
+Statistics and Computing (2022) 32 :87
+Page 15 of 22
+87
+6 Numerical experiments
+In this section we validate our proposed proximal nested
+sampling method and demonstrate its utility on a range of
+illustrative problems.
+We ﬁrst validate our method on a problem with a Gaussian
+likelihood and Gaussian prior where the value of the marginal
+likelihood(Bayesianevidence)canbecomputedanalytically.
+The dimensions of the problem considered range from low
+to very high, i.e. 2 to 106 dimensions.
+Following on from this, we demonstrate the effective-
+ness of the proximal nested sampling method by applying
+it to two canonical imaging inverse problems, namely image
+denoising and image reconstruction. In particular, we demon-
+strate the use of proximal nested sampling for the principled
+Bayesian model selection of the sparsifying dictionary, the
+regularisation parameter (i.e. the μ parameter of the prior)
+and the appropriate measurement operator when it may be
+misspeciﬁed. Furthermore, as mentioned already, as a by-
+product the samples obtained by nested sampling approaches
+can also be used to perform posterior inferences. This is
+critical in imaging problems in order to recover point esti-
+mates, e.g. restored images. Moreover, alternative forms of
+uncertainty quantiﬁcation can also be considered from other
+posterior inferences, e.g. variance estimates and posterior
+credible regions (see, e.g., Cai et al. 2018).
+6.1 Implementation and computational resources
+To perform the numerical experiments presented subse-
+quently, the proximal nested sampling algorithms developed
+in this article were implemented in MATLAB.5 The numer-
+ical experiments performed to compute the marginal like-
+lihood for low-dimensional problems (i.e., dimensions less
+than 200) were run on a Macbook laptop with an i7 Intel
+CPU and memory of 16 GB. A high-performance worksta-
+tion, with 24 CPU cores, x86 64 architecture and 256 GB
+memory, was used for high-dimensional problems.
+6.2 Validation in high dimensions
+We ﬁrst consider the validation of the proximal nested sam-
+pling method. For ease of validation, we consider the prior
+potential f (x) = μ∥†x∥2
+2, with μ = 1/2,  = I, and the
+likelihood potential g(x) = ∥y −x∥2
+2/2σ 2, with σ = 1,
+ = I. For this setting, we have a closed-form solution of the
+marginal likelihood value (see Appendix for further details).
+5 A Python version of the proxnest code implementing the proximal
+nestedsamplingframeworkproposedinthisarticlehassincebeendevel-
+oped and is available at https://github.com/astro-informatics/proxnest.
+Fig. 1 Validation of our proximal nested sampling technique (for
+dimensions 2–200) to compute the marginal likelihood (Bayesian evi-
+dence) for a scenario where a closed-form solution is accessible. The
+logarithm of the unnormalised prior volume (V ) times the marginal
+likelihood value (Z) is plotted against the dimensions of the problem
+considered. The blue-circle line, red-asterisk line and the black-solid
+line show the results of MC integration, proximal nested sampling and
+the ground truth, respectively. We can clearly see that the results com-
+puted by proximal nested sampling agree with the ground truth well,
+whereas the result computed by MC integration with 105 samples can
+only achieve acceptable results when the dimension is below ∼20. The
+computation time for the problem with dimension 200 is approximately
+one minute.
+Test data y ∈Rd are generated by
+y = x + w,
+(72)
+where x is an d-dimensional vector of uniformly distributed
+random numbers in [0, 1]d, and w is an d-dimensional vec-
+tor of normally distributed random numbers. Note that the
+underlying model used to generate the mock data does not
+match the prior π used here, but that is ﬁne for validation of
+the calculation of the marginal likelihood. Also, in imaging
+setting the prior is never perfectly speciﬁed. In the following,
+we consider increasing dimensions from d = 2 to d = 106.
+Weseparatethetestintothreeparts:i)smallmodelsofdimen-
+sion from d = 2 to d = 200, ii) moderately large models of
+dimension from d = 2 to d = 105, and iii) high dimensional
+models with d = 106.
+We ﬁrst test our method for low-dimensional models (i.e.,
+d < 200). For our proximal nested sampling method, we use
+Nlive = 2×102 live samples and N = 3×103 dead samples,
+with a thinning factor of 10. We also compare our result with
+vanilla Monte Carlo (MC) integration where a uniform prior
+with integrand f · g is utilised, with the number of samples
+set to 105. Figure 1 presents the results. Our proximal nested
+sampling method agrees well with the ground truth, whereas
+simple MC integration can only achieve acceptable results
+when the dimension is small, say d < 20. The computation
+time for the problem with dimension 200 is approximately
+one minute.
+We now test our proximal nested sampling method for
+high-dimensional cases. Results for dimensions of y up to
+123
+87
+Page 16 of 22
+Statistics and Computing (2022) 32 :87
+Fig. 2 Validation of our proximal nested sampling technique (for
+dimensions up to 105) to compute the marginal likelihood (Bayesian
+evidence) for a scenario where a closed-form solution is accessible.
+The logarithm of the unnormalised prior volume (V ) times the marginal
+likelihood value (Z) is plotted against the dimensions of the prob-
+lem considered. The red-asterisk line and the black-solid line show
+the results of proximal nested sampling and the ground truth, respec-
+tively. We can clearly see that the results computed by proximal nested
+sampling agrees with the ground truth well. The computation time for
+the problem with dimension 105 is approximately 10 minutes
+105 are given in Fig. 2, where we set the number of the
+live samples Nlive = 103 and the number of dead samples
+N = 104, with thinning factor 10 (we do not consider direct
+MC integration any further since it is already shown to fail
+for dimensions above ∼20). These results again show that
+our proximal nested sampling method can achieve results
+in close agreement with the ground truth. The computation
+time for the problem with dimension 105 is approximately
+10 minutes.
+Finally, we consider dimension 106 as an example to show
+that our proximal nested sampling method can be pushed to
+dimensions much higher than 105. With the same parame-
+ters as that used for dimension 105, ten runs were performed
+for a 106 dimensional setting of the same problem. The
+logarithm of the ground truth value was calculated to be
+2.3850 × 105. The mean of ten runs of proximal nested
+sampling was computed be to 2.3851 × 105, with standard
+deviation 0.0002 × 105. The result computed by proximal
+nested sampling is in excellent agreement with the ground
+truth. The computation time for each run of the problem with
+dimension 106 is approximately 30 minutes.
+6.3 Model selection in image processing
+We now illustrate the application of proximal nested sam-
+pling for Bayesian model selection in imaging problems.
+In particular, we focus on two canonical problems, image
+denoising and image reconstruction, with different like-
+lihoods and priors. We emphasise that Bayesian model
+selection for these imaging problems is not well addressed
+by existing techniques due to the high dimensions considered
+(i.e., higher than 105) and the use of general log-concave pri-
+ors (e.g., like the sparsity promoting Laplace-type priors that
+include ℓ1 terms).
+The three images in Fig. 3 are used in the experiments
+that follow: Cameraman image, the W28 supernova rem-
+nant, and the HI region of the M31 galaxy, all with size of
+256 × 256 pixels and with intensities in the range [0, 255].
+Sparsity-promoting priors (which are not smooth) and Gaus-
+sian likelihoods are consider in the following experiments,
+formed as f (x) = μ∥†x∥1 and g(x) = ∥y −x∥2
+2/2σ 2,
+respectively, where μ,  and  are set to different forms for
+model selection purposes.
+6.3.1 Prior model selection in image denoising: dictionary
+selection
+For a standard denoising problem we apply proximal nested
+sampling to select the dictionary  used for the sparsify-
+ing transform. The noisy image y is generated by y =
+x + w, where x is the ground truth clean image and w
+Fig.3 Images used to showcase the use of proximal nested sampling for
+Bayesian model selection in high-dimensional image processing prob-
+lems. Panel (a): Cameraman grey-scale image; Panels (b)–(c): W28 and
+M31 radio galaxies normalised to [0, 1] and then shown in log10 scale
+(i.e. the numeric labels on the colour bar are the logarithms of the image
+intensity), respectively
+123
+Statistics and Computing (2022) 32 :87
+Page 17 of 22
+87
+Fig. 4 Dictionary selection for
+an image denoising problem
+solved by proximal nested
+sampling (test image is
+cameraman). First row shows
+the clean image and noisy
+image. Second row shows the
+posterior mean images
+recovered by proximal nested
+sampling for priors with
+(sparsifying) transforms
+ = I, DB2 and DB8,
+respectively, where the log-prior
+reads f (x) = μ∥†x∥1. By
+eye, both DB2 and DB8
+wavelets provide superior
+reconstruction ﬁdelity compared
+to  = I. The model  = DB2
+may also be judged to provide
+slightly superior performance to
+ = DB8
+Table 1 Marginal likelihood (Bayesian evidence) values computed by
+proximal nested sampling for Bayesian model selection of the spar-
+sifying dictionary for an image denoising problem (see Fig. 4 for
+corresponding reconstructed images)
+Prior
+log Z
+RMSE
+ = I
+−6.54 × 104±0.08
+41.07
+ = DB2
+−3.06 × 104±0.09
+14.29
+ = DB8
+−3.09 × 104±0.09
+14.51
+Sparsity-promoting (non-differentiable) priors are considered with
+(sparsifying) transforms  = I, DB2 and DB8. Comparing models,
+Bayesian model selection afforded by proximal nested sampling sug-
+gests the model with the DB2 dictionary is superior, followed by DB8,
+both of which are far superior to the case where  = I, which agrees
+with the RMSE (root mean square error) values and assessment per-
+formed by eye, which require the ground truth to be known
+is Gaussian noise with zero mean and standard deviation
+σ = ∥x∥∞10−SNR/20, where ∥· ∥∞is the inﬁnity norm,
+and the input signal-to-noise ratio (SNR) is set to 20. Set
+ = I in the likelihood g(x) = ∥y −x∥2
+2/2σ 2 (i.e.,
+g(x) = ∥y −x∥2
+2/2σ 2). We then investigate the inﬂuence of
+different choices for  in the prior term f (x) = μ∥†x∥1,
+with μ = 105. Speciﬁcally, three forms of  are consid-
+ered, namely the identity (I), Daubechies 2 wavelets (DB2),
+and Daubechies 8 wavelets (DB8). For the proximal nested
+sampling method, the number of the live samples Nlive and
+dead samples N is respectively set to 2 × 103, and 4 × 104
+with thinning factor 102, which is sufﬁcient to ensure con-
+vergence.
+Figure 4 presents the posterior means recovered (i.e. the
+reconstructed images) for the three dictionaries considered,
+i.e. for  = {I, DB2, DB8}. It is clear that the reconstructed
+imagescorrespondingto = DB2andDB8aresigniﬁcantly
+better than that for  = I. Moreover, while the difference
+between the reconstructed images of the models for  =
+DB2 and DB8 is small, by eye the image recovered with
+DB2 may be judged slightly superior.
+Table 1 presents the calculated marginal likelihood val-
+ues6 for the different sparsifying transforms  selected for
+the prior. The root mean square error (RMSE) is also given,
+where the RMSE gauges the difference between the posterior
+mean image and the ground truth image. Note that the RMSE
+cannot normally be computed in practical problems since the
+ground truth is not known. Since for these experiments we
+know the ground truth the RMSE is a useful measure for
+comparison purposes.
+Table 1 shows that the model with  = I possesses the
+smallest marginal likelihood value. This implies that for this
+denoising problem the model with  = I is inferior to mod-
+els where  is set to DB2 and DB8. Moreover, the marginal
+likelihood difference between models where  is set to DB2
+or DB8 is not dramatic, nevertheless this implies that DB2 is
+preferred. These ﬁnding inferred by Bayesian model selec-
+tion agree with the RSME values computed for each model,
+where the model with  = DB2 is slightly preferred over
+DB8, and both models with DB2 and DB8 are highly pre-
+ferred over the model with  = I (recall that in practice
+it is not possible to compute the RMSE since it requires
+knowledge of the underlying ground truth). Furthermore, the
+6 The value of the log marginal likelihoods computed is low (in other
+words, its absolute value is very high) since the problems we consider
+are extremely high-dimensional.
+123
+87
+Page 18 of 22
+Statistics and Computing (2022) 32 :87
+Fig. 5 Regularisation parameter selection for an image reconstruction
+problem solved by proximal nested sampling (test image is W28 radio
+galaxy). Images from left to right are the posterior mean images recov-
+ered by proximal nested sampling for μ in the prior deﬁnition set to
+106, 107 and 108, respectively. The data y are generated by measuring
+30% of noisy Fourier coefﬁcients of the test image. On close inspection
+it may be noticed that reconstruction for model with μ = 106 is superior
+to the one with μ = 107, which is superior to the one with μ = 108
+model preferences inferred by proximal nested sampling also
+agree with the assessment of reconstructed image quality
+by-eye discussed above. The results obtained are consistent
+with common knowledge that it is typically more effective
+to denoise a natural image using a prior that promotes spar-
+sity in some (sparsifying) transform domain (e.g. a wavelet
+domain) rather than in the image domain itself. The compu-
+tation time for the problem with  = I is approximately
+10 minutes, and for the problem with  = DB2 or DB8 is
+approximately 60 minutes.
+In high-dimensional settings note that Bayes factors can
+be very large due to the concentration of probability in high-
+dimensions, hence it is not meaningful to consider traditional
+scales for assessing model comparisons such as the Jeffery’s
+scale (Nesseris and García-Bellido 2013). Instead, we rec-
+ommend comparing marginal likelihood values directly.
+6.3.2 Prior model selection in image reconstruction:
+regularisation parameter selection
+We now apply proximal nested sampling to a standard recon-
+struction problem and, ﬁrstly, consider the selection of the
+regularisationparameterμdeﬁningthewidthoftheprior.Itis
+typically very challenging to optimally set the regularisation
+parameter μ, which controls the strength of prior knowledge
+and plays a key role in reconstruction quality. Consider noisy
+observations (noisy measurements)
+y = x + w,
+(73)
+where w again denotes Gaussian noise with zero mean and
+σ = ∥x∥∞10−SNR/20 (standard deviation), with SNR set to
+30,andm andd arerespectivelythedimensionof y andimage
+x. Consider the prior f (x) = μ∥†x∥1, with  = DB8, and
+Table 2 Marginal likelihood (Bayesian evidence) values computed by
+proximal nested sampling for Bayesian model selection of the regulari-
+sation parameter μ for an image reconstruction problem (see Fig. 5 for
+corresponding reconstructed images)
+μ
+log Z
+RMSE
+106
+−2.61 × 104±0.09
+1.82
+107
+−5.39 × 104±0.09
+2.81
+108
+−2.90 × 105±0.09
+6.70
+Prior deﬁnition with μ set to 106, 107 and 108, respectively, are con-
+sidered. Comparing models, Bayesian model selection afforded by
+proximal nested sampling suggests the model with μ = 106 is superior
+to the one with μ = 107, which is superior to the one with μ = 108,
+whichagreeswiththe RMSE (root meansquare error)valuesandassess-
+ment performed by eye, which require the ground truth to be known
+likelihood g(x) = ∥y −x∥2
+2/2σ 2. For the reconstruction
+scenario,  represents the sensing (measurement) operator.
+In particular, we consider a measurement model comprising
+incomplete Fourier measurements (common in radio inter-
+ferometric and magnetic resonance imaging) deﬁned by the
+sensing operator  = M F, constructed from the Fourier
+transform F followed by a selection mask M which is gener-
+ated randomly through the variable density sampling proﬁle
+(Puy et al. 2011). We consider the scenario where only 30%
+of Fourier coefﬁcients are measured, i.e. m = 0.3d. Note
+that different forms of the mask M result in different sensing
+operators .
+Figure 5 presents the posterior means recovered by prox-
+imal nested sampling (i.e. the reconstructed images) for
+models with μ set to 106, 107 and 108. It is difﬁcult to assess
+the effectiveness of different regularisation parameters by
+eye, but on close inspection it may be noticed that the model
+with μ = 106 is superior to the one with μ = 107, which is
+123
+Statistics and Computing (2022) 32 :87
+Page 19 of 22
+87
+superior to the one with μ = 108. The computation time for
+each problem is approximately 150 minutes.
+Table 2 presents the marginal likelihood and RMSE values
+computed for the models with different regularisation param-
+eters μ. The computed marginal likelihood for the model
+with μ = 106 is larger that the value for the model with
+μ = 107, which is larger than the model with μ = 108,
+suggesting the model with μ = 106 is preferred. The com-
+puted marginal likelihoods are consistent with the model
+preferences obtained by comparing the RMSE of each model
+and by visual inspection. Recall that both RMSE and visual
+comparisons can only be performed here where the ground
+truth is available and cannot be used for model compari-
+son in practice. In summary, this example demonstrates that
+our proximal nested sampling method is capable of select-
+ing superior regularisation parameters for models stemming
+from high-dimensional inverse problems.
+6.3.3 Measurement model selection in image
+reconstruction
+We now apply proximal nested sampling to the same recon-
+struction problem considered above (i.e. image reconstruc-
+tion from noisy and incomplete Fourier measurements) but
+focus on the problem of misspeciﬁcation of the measure-
+ment model . Noisy observations Y are generated by (73),
+measuring 10% of Fourier coefﬁcients, i.e. with m = 0.1d.
+We use the ground truth model Mtruth to simulate obser-
+vation data y. However, when solving the resulting inverse
+problem we consider a number of different measurement
+models, not only the ground truth model Mtruth but also mis-
+speciﬁed models Mγ , where γ > 0 encodes the level of
+misspeciﬁcation.
+The method by which the model is misspeciﬁed in
+motivated by radio interferometric imaging. In radio interfer-
+ometry, the coordinates of the Fourier coefﬁcients acquired
+by the telescope are measured in units of (radio) wavelength.
+If the wavelength at which observations are made is misspec-
+iﬁed, the coordinates of the Fourier coefﬁcients acquired will
+bescaled.Wemodelpreciselythistypeofmisspeciﬁedmodel
+here to represent the case where the instrument wavelength
+is not calibrated accurately.
+An incorrectly speciﬁed wavelength then simply acts to
+modify the mask of the ground truth measurement model
+Mtruth. The misspeciﬁed model corresponding to mask Mγ ,
+for misspeciﬁcation parameter γ , is generated by extend-
+ing every measured position in Mtruth radially. Speciﬁcally,
+every measured position is extended radially along the line
+connecting it to the origin to a length of γ d j, j ∈mask,
+where γ is the misspeciﬁcation scaling factor, d j is the dis-
+tance from the original measured position j to the origin in
+Mtruth, and mask is the set which contains all the measured
+positions. It is worth mentioning that the larger the scaling
+factor γ , the larger the distortion of Mγ from the ground
+truth Mtruth. Note also that γ = 0 corresponds to a correctly
+speciﬁed model, i.e. Mγ =0 = Mtruth.
+For proximal nested sampling, the number of the live sam-
+ples Nlive and dead samples N is respectively set to 2 × 103
+and 3 × 104 with thinning factor 102, which is sufﬁcient to
+ensure convergence. Regularisation parameter μ = 108 is
+used for these experiments.
+Figure 6 presents the posterior means recovered (i.e. the
+reconstruction images) for models with γ = Mγ F and
+ = MtruthF,. Here misspeciﬁed models M0.12, M0.09,
+M0.06 and M0.03 are generated for misspeciﬁcation scaling
+factors γ with values of 0.12, 0.09, 0.06 and 0.03, respec-
+tively. It is apparent by eye that the posterior mean image
+recovered with the ground truth model is the best and that the
+quality of the recovered posterior mean image degrades as
+the size of the misspeciﬁcation scale parameter γ increases.
+The computation time for each problem is approximately 150
+minutes.
+Table 3 presents the marginal likelihood and RMSE val-
+ues computed for the different models considered. The
+computed marginal likelihood is largest when the correct
+ground truth model is adopted in the likelihood. As the
+misspeciﬁcation parameter γ is increased (corresponding
+to greater misspeciﬁcation and less accurate models), the
+corresponding computed marginal likelihood values mono-
+tonically decrease (become more negative). For Bayesian
+model comparison, the model with the lowest misspeci-
+ﬁcation parameter γ is always preferred. The computed
+marginal likelihoods are consistent with the model prefer-
+ences obtained by comparing the RMSE of each model and
+by visual inspection (although recall that such tests cannot
+be used for model comparison in practice when the ground
+truth is not known).
+7 Conclusions
+Nested sampling provides an efﬁcient computational frame-
+work to estimate the marginal likelihood (Bayesian evidence)
+for Bayesian model selection. It effectively re-parameterises
+the marginal likelihood into a one-dimensional integral of
+the likelihood with respect to the enclosed prior volume. The
+challenge of nested sampling is to sample from the prior dis-
+tribution subject to a hard likelihood constraint. A variety of
+successful techniques have been developed to perform such
+sampling in low and moderate dimensional problems. How-
+ever, existing approaches are not directly useful for imaging
+applications because they scale poorly to large problems and
+struggle to support models that are not smooth.
+In this article we presented the proximal nested sampling
+method that is speciﬁcally designed for Bayesian models that
+are log-concave, potentially very high-dimensional (d = 106
+123
+87
+Page 20 of 22
+Statistics and Computing (2022) 32 :87
+Fig. 6 Measurement model misspeciﬁcation for an image reconstruc-
+tion problem solved by proximal nested sampling (test image is M31
+radio galaxy). Panel (a): dirty (back-projected) image †Y; Panels (b)–
+(f): posterior mean images recovered by proximal nested sampling
+for misspeciﬁed models Mγ , where increasing γ > 0 corresponds
+to increasing levels of misspeciﬁcation (and γ = 0 corresponds to the
+ground truth model). It is apparent by eye that the posterior mean image
+recovered with the ground truth model is the best and that the quality
+of the recovered posterior mean image degrades as the size of the mis-
+speciﬁcation scale parameter γ increases
+Table 3 Marginal likelihood (Bayesian evidence values computed by
+proximal nested sampling for Bayesian model selection for measure-
+ment model misspeciﬁcation for an image reconstruction problem (see
+Fig. 6 for corresponding reconstructed images)
+Likelihood
+log Z
+RMSE
+ = MtruthF
+−4.47 × 103±0.08
+3.40
+ = M0.03F
+−4.88 × 103±0.08
+7.85
+ = M0.06F
+−5.63 × 103±0.08
+12.01
+ = M0.09F
+−9.21 × 103±0.07
+15.71
+ = M0.12 F
+−1.44 × 104±0.08
+18.08
+Misspeciﬁed models are denoted Mγ , where increasing γ > 0 corre-
+sponds to increasing levels of misspeciﬁcation (and γ = 0 corresponds
+to the ground truth model). Comparing models, Bayesian model selec-
+tion afforded by proximal nested sampling suggests the model with the
+lowest misspeciﬁcation parameter γ is always preferred, which also
+agrees with the RMSE (root mean square error) values and assessment
+performed by eye, which require the ground truth to be known
+and beyond), and potentially not smooth. This is achieved by
+exploiting tools from proximal calculus and Moreau-Yosida
+regularisation to efﬁciently sample from the prior subject to
+the hard likelihood constraint through a proximal MCMC
+approach. The resulting Markov chain iterations combine a
+gradient step that approximates a Langevin SDE that scales
+efﬁciently to large problems, with a projection term that acts
+to push the Markov chain back into the likelihood constraint
+set if it wanders outside of it, and a Metropolis-Hastings
+correction step to ensure the hard likelihood constraint is
+satisﬁed.
+The proposed proximal nested sampling framework was
+implemented and validated on a Gaussian model for which
+the marginal likelihood could be calculated in closed-form,
+showing excellent agreement between values computed ana-
+lytical and by proximal nested sampling, even in very high
+dimensions. The use of proximal nested sampling for prin-
+cipled Bayesian model selection was then showcased on
+a variety of imaging problems with non-smooth sparsity-
+promoting prior distributions. In particular, model selection
+problems were considered related to dictionary selection, and
+selection of the appropriate measurement model when it may
+be misspeciﬁed.
+Proximal nested sampling allows Bayesian model selec-
+tion to be performed at a much higher dimension than that
+123
+Statistics and Computing (2022) 32 :87
+Page 21 of 22
+87
+was previously possible, while also supporting non-smooth
+priors that are widely used in imaging. It is our hope that
+proximal nested sampling will thus ﬁnd widespread use for
+high-dimensional Bayesian model selection, particularly in
+the imaging sciences.
+Important perspectives for future work include: a detailed
+theoretical analysis of the convergence properties of prox-
+imal nested sampling; an extension to (biased) accelerated
+proximal methods (Vargas et al. 2020); and an analysis of
+the properties of marginal maximum likelihood estimation
+for the class of models considered in this paper, such as
+estimator consistency for model selection in an M-closed
+setting and concentration in an M-open setting (Llorente
+et al. 2022). Moreover, it would be interesting to apply prox-
+imalnestedsamplingtoothertypesofmodels,suchasmodels
+with likelihood-based priors (Llorente et al. 2022), which
+can be handled straightforwardly by proximal nested sam-
+pling when the likelihood is log-concave. It would also be
+interesting to modify proximal nested sampling to tackle
+high-dimensional models that are multi-modal, particularly
+models with data-driven priors encoded by neural networks
+(see e.g. Mukherjee et al. 2022, Section 5).
+Acknowledgements This work was supported by the Leverhulme Trust
+and by EPSRC grants EP/T007346/1 and EP/W007673/1. The authors
+would like to thank the editor and two anonymous reviewers for their
+valuable suggestions to improve the manuscript. The authors are also
+grateful to Abdul-Lateef Haji-Ali for helpful comments. For the pur-
+pose of open access, the authors have applied a Creative Commons
+Attribution (CC BY) licence to any Author Accepted Manuscript ver-
+sion arising.
+Open Access This article is licensed under a Creative Commons
+Attribution 4.0 International License, which permits use, sharing, adap-
+tation, distribution and reproduction in any medium or format, as
+long as you give appropriate credit to the original author(s) and the
+source, provide a link to the Creative Commons licence, and indi-
+cate if changes were made. The images or other third party material
+in this article are included in the article’s Creative Commons licence,
+unless indicated otherwise in a credit line to the material. If material
+is not included in the article’s Creative Commons licence and your
+intended use is not permitted by statutory regulation or exceeds the
+permitteduse,youwillneedtoobtainpermissiondirectlyfromthecopy-
+right holder. To view a copy of this licence, visit http://creativecomm
+ons.org/licenses/by/4.0/.
+Appendix A
+The volume of the prior f (x) = μ∥†x∥2
+2 with  = I is
+V =
+ ∞
+−∞
+exp
+
+−μ∥x∥2
+2
+	
+dx
+=
+ ∞
+−∞
+exp
+
+−1
+22μx⊤x
+
+dx
+=
+
+(2π)d
+(2μ)d .
+(A1)
+For the prior f (x) = μ∥†x∥2
+2 with  = I and the
+likelihood g(x) = ∥y−x∥2
+2/2σ 2 with  = I, the Bayesian
+evidence value has the following closed-form representation:
+1
+V
+ ∞
+−∞
+exp(−μ∥x∥2
+2) exp(−∥y −x∥2
+2/2σ 2)dx
+= 1
+V
+ ∞
+−∞
+exp
+
+−μ∥x∥2
+2 −∥y −x∥2
+2/2σ 2	
+dx
+= 1
+V
+ ∞
+−∞
+exp
+
+−(μ + 1/2σ 2)x⊤x + y⊤x/σ 2 −y⊤y/2σ 2	
+dx
+= 1
+V exp
+
+−y⊤y
+2σ 2
+  ∞
+−∞
+exp
+
+−1
+2(2μ+1/σ 2)x⊤x+y⊤x/σ 2
+
+dx
+= 1
+V
+
+(2π)d
+(2μ+1/σ 2)d exp
+
+−y⊤y
+2σ 2
+
+exp
+1
+2
+1
+2μ+1/σ 2
+y⊤y
+σ 4
+
+,
+(A2)
+whose logarithmic value is
+log
+
+(2π)d
+(2μ + 1/σ 2)d +
+
+−y⊤y
+2σ 2
+
++
+1
+2
+1
+2μ + 1/σ 2
+y⊤y
+σ 4
+
+−log V .
+(A3)
+References
+Bauschke, H.H., Combettes, P.L.: Convex Analysis and Mono-
+tone Operator Theory in Hilbert Spaces. Springer-Verlag,
+New York (2011). https://link.springer.com/book/10.1007/978-1-
+4419-9467-7
+Betancourt, M.: Nested sampling with constrained Hamiltonian Monte
+Carlo. AIP Conference Proceedings 1305, 165 (2011). https://doi.
+org/10.1063/1.3573613
+Brewer, B.J., Pártay, L.B., Csányi, G.: Diffusive nested sampling. Stat.
+Comput. 21, 649–656 (2011)
+Brosse, N., Durmus, A., Éric Moulines, et al.: Sampling from a
+log-concave distribution with compact support with proximal
+Langevin Monte Carlo. In: Kale, S., Shamir, O. (eds) Proceed-
+ings of the 2017 Conference on Learning Theory, Proceedings of
+Machine Learning Research, vol 65. PMLR, Amsterdam, Nether-
+lands, pp. 319–342 (2017)
+Cai, X., Pereyra, M., McEwen, J.D.: Uncertainty quantiﬁcation for radio
+interferometric imaging I: proximal-MCMC methods. Mon. Not.
+R. Astron. Soc. (MNRAS) 480(3), 4154–4169 (2018)
+Cai, X., Pratley, L., McEwen, J.D.: Online radio interferometric imag-
+ing: assimilating and discarding visibilities on arrival. Mon. Not.
+R. Astron. Soc. (MNRAS) 485(4), 4559–4572 (2019)
+Casella, G., Berger, R.L.: Statistical Inference. Duxbury - Thomson
+Learning,
+Boston
+(2002).
+https://books.google.co.uk/books/
+about/Statistical_Inference.html?id=ZpkPPwAACAAJ&redir_
+esc=y
+Chib, S.: Marginal likelihood from the Gibbs output. J. Am. Stat. Assoc.
+90, 1313–1321 (1995)
+Chib, S., Jeliazkov, I.: Marginal likelihood from the Metropolis-
+Hastings output. J. Am. Stat. Assoc. 96, 270–281 (2001)
+Chopin, N., Robert, C.P.: Properties of nested sampling. Biometrika
+97(3), 741–755 (2010)
+123
+87
+Page 22 of 22
+Statistics and Computing (2022) 32 :87
+Clyde, M.A., Berger, J.O., Bullard, F., et al.: Current challenges in
+Bayesian model choice. In: Statistical Challenges in Modern
+Astronomy IV ASP Conference Series, vol. 371, pp. 224–240
+(2007)
+Combettes, P., Pesquet, J.C.: Proximal Splitting Methods in Signal Pro-
+cessing. Springer, New York (2011)
+Durmus, A., Moulines, E., Pereyra, M.: Efﬁcient Bayesian computation
+by proximal Markov chain Monte Carlo: when Langevin meets
+Moreau. SIAM J. Imaging Sci. 1(1), 473–506 (2018)
+Feroz, F., Skilling, J.: Exploring multi-modal distributions with nested
+sampling. In: AIP Conference Proceedings, vol. 1553,pp. 106–113
+(2013)
+Feroz, F., Hobson, M.P.: Multimodal nested sampling: an efﬁcient and
+robust alternative to MCMC methods for astronomical data analy-
+sis. Mon. Not. R. Astron. Soc. (MNRAS) 384(2), 449–463 (2008)
+Feroz, F., Hobson, M.P., Bridges, M.: MULTINEST: an efﬁcient and
+robust Bayesian inference tool for cosmology and particle physics.
+Mon. Not. R. Astron. Soc. (MNRAS) 398(4), 1601–1614 (2009)
+Friel, N., Wyse, J.: Estimating the evidence - a review. Stat. Neerl. 66(3),
+288–308 (2012)
+Green, P.J.: Reversible jump markov chain monte carlo computation and
+bayesian model determinatio. Biometrika 82(4), 711–732 (1995)
+Green, P.J., Łatuszy´nski, K., Pereyra, M., et al.: Bayesian computa-
+tion: a summary of the current state, and samples backwards and
+forwards. Stat. Comput. 25(4), 835–862 (2015)
+Handley, W.J., Hobson, M.P., Lasenby, A.N.: POLYCHORD: nested
+sampling for cosmology. Mon. Not. R. Astron. Soc. Lett. 450,
+L61–L65 (2015)
+Harroue, B.: Approche bayésienne pour la sélection de modèles : appli-
+cation á la restauration d’image. PhD thesis, http://www.theses.fr/
+2020BORD0127 (2020)
+Kaipio, J., Somersalo, E.: Statistical and Computational Inverse Prob-
+lems. Springer, New-York (2005)
+Kamary, K., Mengersen, K., Robert, C.P., et al.: Testing hypotheses via
+a mixture estimation model. arXiv: 1412.2044 (2018)
+Llorente, F., Martino, L., Curbelo, E., et al.: On the safe use of prior den-
+sities for Bayesian model selection. arXiv:2206.05210v1 (2022)
+Llorente, F., Martino, L., Delgado, D., et al.: Marginal likelihood com-
+putation for model selection and hypothesis testing: an extensive
+review. arXiv: 2005.08334 (2020)
+Lucka, F.: Fast gibbs sampling for high-dimensional bayesian inversion.
+Inverse Probl. 32(11), 115019 (2016)
+Lunz, S., Hauptmann, A., Tarvainen, T., et al.: On learned operator
+correction in inverse problems. SIAM J. Imaging Sci. 14(1), 92–
+127 (2021)
+Martino, L., Elvira, V., et al.: Layered adaptive importance sampling.
+Stat. Comput. 27, 599–623 (2017)
+McEwen, J.D., Wallis, C.G.R., Price, M.A. et al.: Machine learning
+assisted Bayesian model comparison: the learnt harmonic mean
+estimator. Stat. Comput. arXiv: 2111.12720 (2022)
+Melidonis, S., Dobson, P., Altmann, Y., et al.: Efﬁcient Bayesian com-
+putation for low-photon imaging problems. arXiv: 2206.05350
+(2022)
+Mukherjee, S., Hauptmann, A., Öktem, O., et al.: Learned reconstruc-
+tion methods with convergence guarantees. arXiv: 2206.05431
+(2022)
+Mukherjee,P.,Parkinson,D.,Liddle,A.R.:Anestedsamplingalgorithm
+for cosmological model selection. Astrophys. J. 638, L51–L54
+(2006)
+Neal, R.: Annealed importance sampling. Stat. Comput. 11, 125–139
+(2001)
+Nesseris, S., García-Bellido, J.: Is the Jeffreys’ scale a reliable tool for
+Bayesian model comparison in cosmology? J. Cosmol. Astropart.
+Phys. 2013, 036 (2013)
+Newton, M.A., Raftery, A.E.: Approximate Bayesian inference with the
+weighted likelihood bootstrap. J. R. Stat. Soc. 56, 3–48 (1994)
+O’Ruanaidh, J., Fitzgerald, W.J.: Numerical Bayesian Methods Applied
+to Signal Processing. Springer-Verlag, New York (1996)
+Parikh, N., Boyd, S.: Proximal algorithms. Found. Trends Optim. 1,
+123–231 (2013)
+Pereyra, M., McLaughlin, S.:Comparing bayesian models in the
+absence of ground truth. In: 2016 24th European Signal Processing
+Conference (EUSIPCO), pp. 528–532 (2016)
+Pereyra, M.: Proximal Markov chain Monte Carlo algorithms. Stat.
+Comput. 26, 745–760 (2016)
+Pereyra, M., Schniter, P., Chouzenoux, E., et al.: A survey of stochastic
+simulation and optimization methods in signal processing. IEEE
+J. Sel. Top. Signal Process. 10(2), 224–241 (2016)
+Puy, G., Vandergheynst, P., Wiaux, Y.: On variable density compressive
+sampling. IEEE Signal Process. Lett. 18, 595–598 (2011)
+Robert, C.P.: The Bayesian Choice. Springer-Verlag, New York (2007)
+Robert, C.P., Casella, G.: Monte Carlo Statistical Methods. Springer-
+Verlag, New York (2004)
+Sivia, D., Skilling, J.: Data Analysis: A Bayesian Tutorial. Oxford Sci-
+ence Publications, Oxford (2006)
+Skilling, J.: Nested sampling for general Bayesian computation.
+Bayesian Anal. 1, 833–859 (2006)
+Tierney, L., Kadane, J.B.: Accurate approximations for posterior
+moments and marginal densities. J. Am. Stat. Assoc. 81, 82–86
+(1986)
+Trotta, R.: Applications of Bayesian model selection to cosmologi-
+cal parameters. Mon. Not. R. Astron. Soc. (MNRAS) 378, 72–82
+(2007)
+Vargas, L., Pereyra, M., Zygalakis, K.C.: Accelerating proximal markov
+chain monte carlo by using an explicit stabilised method. SIAM J.
+Imaging Sci., in press, arXiv: 1908.08845 (2020)
+Vidal, A.F., Bortoli, V.D., Pereyra, M., et al.: Maximum likelihood esti-
+mation of regularization parameters in high-dimensional inverse
+problems: an empirical bayesian approach part i: methodology
+and experiments. SIAM J. Imaging Sci. 13(4), 1945–1989 (2020).
+https://doi.org/10.1137/20m1339829
+Zhou, Q., Yu, T., Zhang, X., et al.: Bayesian inference and uncertainty
+quantiﬁcation for medical image reconstruction with poisson data.
+SIAM J. Imaging Sci. 13(1), 29–52 (2020)
+Publisher’s Note Springer Nature remains neutral with regard to juris-
+dictional claims in published maps and institutional afﬁliations.
+123

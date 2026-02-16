@@ -1,0 +1,988 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{bm}
+\usepackage{tensor}
+
+\geometry{margin=1in}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+
+% Custom commands
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\cY}{\mathcal{Y}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cL}{\mathcal{L}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\TV}{TV}
+\DeclareMathOperator{\divergence}{div}
+\DeclareMathOperator{\prox}{prox}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\Ker}{Ker}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\vect}{vec}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\vspace{-1cm}\textbf{From Variational Methods to Deep Learning: \\A Comprehensive Survey of Xiaohao Cai's Research Contributions}}
+
+\author{
+\textbf{Survey Paper}\\[0.5em]
+\textit{Covering Publications from 2011 to 2026}\\[1em]
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+%==============================================================================
+% ABSTRACT
+%==============================================================================
+\begin{abstract}
+This survey provides a comprehensive overview of the research contributions of Dr.\ Xiaohao Cai spanning over 15 years of innovative work in mathematical imaging, computer vision, and machine learning. Beginning with foundational variational methods for image segmentation based on Mumford-Shah and ROF models, his research has evolved through tight-frame wavelet approaches, tensor decomposition techniques, and ultimately to modern deep learning paradigms. This paper systematically reviews his key methodological contributions including the SLaT (Smoothing, Lifting, and Thresholding) framework for color image segmentation, convex relaxation techniques for multi-phase segmentation, tensor sketching algorithms for high-dimensional optimization, and recent advances in parameter-efficient fine-tuning (PEFT) for medical imaging. Applications span diverse domains including medical imaging (vessel segmentation, MRI reconstruction), remote sensing (LiDAR processing, tree delineation), radio astronomy (interferometric imaging), and multi-modal deep learning. We analyze the theoretical foundations, algorithmic innovations, and practical impact of this body of work, identifying key research threads and suggesting future directions at the intersection of variational methods and deep learning.
+\end{abstract}
+
+\textbf{Keywords:} Variational methods, Image segmentation, Convex optimization, Tensor decomposition, Deep learning, Medical imaging, Remote sensing, Radio astronomy
+
+\vspace{1cm}
+\tableofcontents
+\newpage
+
+%==============================================================================
+% 1. INTRODUCTION
+%==============================================================================
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{Research Background and Motivation}
+
+The field of computational imaging has witnessed transformative advances over the past two decades, driven by the convergence of mathematical optimization, signal processing, and more recently, deep learning. Dr.\ Xiaohao Cai's research trajectory embodies this evolution, beginning with rigorous mathematical foundations in variational methods and progressively integrating modern machine learning techniques to address increasingly complex real-world challenges.
+
+The fundamental problems in image analysis---segmentation, restoration, and reconstruction---share common mathematical structures that can be addressed through energy minimization frameworks. The Mumford-Shah functional \citep{mumford1989optimal} and the Rudin-Osher-Fatemi (ROF) model \citep{rudin1992nonlinear} represent foundational contributions that established the theoretical basis for variational image processing. However, these models present significant computational challenges due to their non-convex nature and high dimensionality.
+
+\subsection{Research Philosophy and Evolution}
+
+Dr.\ Cai's research philosophy can be characterized by several key principles:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Mathematical Rigor:} Every proposed method is grounded in solid theoretical foundations with proven convergence guarantees.
+    \item \textbf{Computational Efficiency:} Algorithms are designed with practical implementation in mind, often leveraging convex optimization techniques.
+    \item \textbf{Cross-Disciplinary Application:} Methods developed for one domain are systematically adapted and extended to others.
+    \item \textbf{Bridging Classical and Modern:} Traditional variational methods are thoughtfully integrated with deep learning approaches.
+\end{enumerate}
+
+\subsection{Overview of Research Timeline}
+
+The research contributions can be organized into distinct phases:
+
+\begin{table}[h]
+\centering
+\caption{Research Evolution Timeline}
+\label{tab:timeline}
+\begin{tabular}{lll}
+\toprule
+\textbf{Period} & \textbf{Focus Area} & \textbf{Key Contributions} \\
+\midrule
+2011--2015 & Variational Segmentation & Tight-frame methods, SLaT framework \\
+2015--2018 & 3D Vision \& Remote Sensing & Tree delineation, LiDAR processing \\
+2017--2021 & Radio Astronomy & Interferometric imaging, uncertainty quantification \\
+2020--2023 & Medical Imaging & MRI reconstruction, few-shot learning \\
+2023--2026 & Deep Learning Integration & Tensor PEFT, multi-modal fusion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Organization of This Survey}
+
+The remainder of this survey is organized as follows: Section~\ref{sec:variational} covers variational image segmentation methods; Section~\ref{sec:tensor} discusses tensor decomposition and high-dimensional optimization; Section~\ref{sec:3dvision} addresses 3D vision and remote sensing applications; Section~\ref{sec:medical} presents medical imaging contributions; Section~\ref{sec:radio} covers radio astronomy imaging; Section~\ref{sec:deeplearning} discusses deep learning integration; Section~\ref{sec:future} outlines future research directions; and Section~\ref{sec:conclusion} provides conclusions.
+
+%==============================================================================
+% 2. VARIATIONAL IMAGE SEGMENTATION METHODS
+%==============================================================================
+\section{Variational Image Segmentation Methods}
+\label{sec:variational}
+
+\subsection{ROF and Mumford-Shah Models}
+
+\subsubsection{The Mumford-Shah Functional}
+
+The Mumford-Shah (MS) functional represents one of the most influential mathematical models for image segmentation. Given an image $f: \Omega \to \R$, the MS functional seeks a piecewise smooth approximation $g$ and an edge set $\Gamma$ that minimize:
+\begin{equation}
+E_{MS}(g, \Gamma) = \frac{\lambda}{2} \int_\Omega (f - g)^2 \, dx + \frac{\mu}{2} \int_{\Omega \setminus \Gamma} |\nabla g|^2 \, dx + \mathcal{H}^{d-1}(\Gamma),
+\label{eq:mumford-shah}
+\end{equation}
+where $\mathcal{H}^{d-1}$ denotes the $(d-1)$-dimensional Hausdorff measure, and $\lambda, \mu > 0$ are regularization parameters.
+
+The fundamental challenge with the MS functional is its non-convexity---the optimization is over both the function $g$ and the geometric object $\Gamma$, leading to a combinatorially complex problem.
+
+\subsubsection{The ROF Model}
+
+The Rudin-Osher-Fatemi model simplifies the segmentation problem by focusing on denoising while preserving edges:
+\begin{equation}
+\min_{u} \frac{1}{2}\|u - f\|_{L^2(\Omega)}^2 + \lambda \TV(u),
+\label{eq:rof}
+\end{equation}
+where the total variation is defined as:
+\begin{equation}
+\TV(u) = \sup\left\{ \int_\Omega u \, \divergence \phi \, dx : \phi \in C_c^1(\Omega; \R^d), \|\phi\|_\infty \leq 1 \right\}.
+\end{equation}
+
+\subsubsection{Convex Relaxation Framework}
+
+A key contribution in \citet{cai2018mumford} establishes the theoretical linkage between Mumford-Shah and ROF models. The central insight is that for multiphase segmentation, the non-convex MS problem can be relaxed to a convex optimization problem.
+
+For binary segmentation with characteristic function $u: \Omega \to \{0, 1\}$:
+\begin{equation}
+\min_{u \in \{0,1\}} \int_\Omega u(x) f_1(x) + (1-u(x)) f_0(x) \, dx + \lambda \TV(u),
+\end{equation}
+the convex relaxation replaces the binary constraint with $u \in [0, 1]$:
+\begin{equation}
+\min_{u \in [0,1]} \int_\Omega u(x) f_1(x) + (1-u(x)) f_0(x) \, dx + \lambda \TV(u).
+\end{equation}
+
+\begin{theorem}[Global Optimality via Thresholding]
+\label{thm:thresholding}
+If $\bar{u}$ is a minimizer of the convex relaxed problem, then for almost every $\mu \in (0, 1)$, the thresholded function $\mathbf{1}_{\{\bar{u} \geq \mu\}}$ is a global minimizer of the original binary segmentation problem.
+\end{theorem}
+
+\subsection{SLaT Framework}
+\label{subsec:slat}
+
+\subsubsection{Three-Stage Architecture}
+
+The SLaT (Smoothing, Lifting, and Thresholding) framework \citep{cai2015slat} represents a significant advance in handling degraded color images. The method consists of three stages:
+
+\textbf{Stage 1: Smoothing/Restoration}
+For each color channel $i = 1, 2, 3$, solve:
+\begin{equation}
+E(g_i) = \frac{\lambda}{2} \int_\Omega \omega_i \cdot \Phi(f_i, g_i) \, dx + \frac{\mu}{2} \int_\Omega |\nabla g_i|^2 \, dx + \int_\Omega |\nabla g_i| \, dx,
+\label{eq:slat-stage1}
+\end{equation}
+where $\Phi$ is chosen based on noise type:
+\begin{itemize}
+    \item Gaussian noise: $\Phi(f_i, g_i) = (f_i - Ag_i)^2$
+    \item Poisson noise: $\Phi(f_i, g_i) = Ag_i - f_i \log(Ag_i)$
+\end{itemize}
+
+\begin{theorem}[Existence and Uniqueness]
+\label{thm:slat-existence}
+Under the conditions:
+\begin{enumerate}
+    \item $\Omega \subset \R^2$ is bounded, connected, with Lipschitz boundary
+    \item $A: L^2(\Omega) \to L^2(\Omega)$ is a bounded linear operator
+    \item $\Ker(\omega_i A) \cap \Ker(\nabla) = \{0\}$
+\end{enumerate}
+The energy functional $E(g_i)$ has a unique minimizer $\bar{g}_i \in W^{1,2}(\Omega)$.
+\end{theorem}
+
+\textbf{Stage 2: Dimension Lifting}
+Convert the smoothed RGB image $\bar{g}$ to Lab color space:
+\begin{equation}
+\bar{g}^* = [\bar{g}_{RGB}, \bar{g}_{Lab}] \in [0,1]^6.
+\end{equation}
+This lifting exploits the perceptual uniformity of Lab space and the complementary information between RGB and Lab representations.
+
+\textbf{Stage 3: Thresholding}
+Apply K-means clustering to the 6-dimensional feature space:
+\begin{equation}
+\Omega_k = \left\{ x : \|\bar{g}^*(x) - c_k\|_2 = \min_{1 \leq j \leq K} \|\bar{g}^*(x) - c_j\|_2 \right\}.
+\end{equation}
+
+\subsubsection{Advantages of SLaT}
+
+\begin{table}[h]
+\centering
+\caption{Comparison of Segmentation Methods}
+\label{tab:segmentation-comparison}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Phases} & \textbf{Degradation} & \textbf{Color Space} & \textbf{K-flexible} \\
+\midrule
+Chan-Vese & 1 & No & Grayscale & No \\
+Two-Stage \citep{cai2013two} & 2 & Yes & Grayscale & No \\
+\textbf{SLaT} & $\geq 2$ & \textbf{Yes} & \textbf{RGB+Lab} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tight-Frame and Wavelet Methods}
+
+\subsubsection{Tight-Frame Construction}
+
+Tight-frame representations provide redundant yet structured representations that are particularly effective for piecewise smooth functions. A collection of functions $\{\phi_n\}_{n \in \mathbb{Z}}$ forms a tight frame for $L^2(\R)$ if:
+\begin{equation}
+\|f\|_2^2 = \sum_{n \in \mathbb{Z}} |\langle f, \phi_n \rangle|^2, \quad \forall f \in L^2(\R).
+\end{equation}
+
+\subsubsection{Vessel Segmentation via Tight-Frame}
+
+The tight-frame approach for vessel segmentation \citep{cai2013tight} addresses the challenge of tubular structures in medical images. The model combines tight-frame regularization with data fidelity:
+\begin{equation}
+\min_u \frac{1}{2}\|Au - f\|_2^2 + \lambda \|W u\|_1,
+\end{equation}
+where $W$ is the tight-frame transform and $A$ is the (possibly blur) operator.
+
+The algorithm employs Split Bregman iteration:
+
+\begin{algorithm}[H]
+\caption{Split Bregman for Tight-Frame Segmentation}
+\begin{algorithmic}[1]
+\STATE \textbf{Initialize:} $u^0 = f$, $d^0 = 0$, $b^0 = 0$
+\FOR{$k = 0, 1, 2, \ldots$}
+    \STATE $u^{k+1} = (A^T A + \mu W^T W)^{-1}(A^T f + \mu W^T(d^k - b^k))$
+    \STATE $d^{k+1} = \text{shrink}(W u^{k+1} + b^k, \lambda/\mu)$
+    \STATE $b^{k+1} = b^k + W u^{k+1} - d^{k+1}$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Spherical Wavelet Segmentation}
+
+For data defined on the sphere $S^2$ (e.g., astronomical data), \citet{cai2016wavelet} developed wavelet-based segmentation methods using needlet transforms. The spherical TV is defined as:
+\begin{equation}
+\TV_{S^2}(u) = \int_{S^2} |\nabla_{S^2} u| \, d\sigma,
+\end{equation}
+where $\nabla_{S^2}$ is the spherical gradient operator.
+
+%==============================================================================
+% 3. TENSOR DECOMPOSITION AND HIGH-DIMENSIONAL OPTIMIZATION
+%==============================================================================
+\section{Tensor Decomposition and High-Dimensional Optimization}
+\label{sec:tensor}
+
+\subsection{Tucker and Tensor Train Decompositions}
+
+\subsubsection{Tucker Decomposition}
+
+For an $N$-th order tensor $\cX \in \R^{I_1 \times I_2 \times \cdots \times I_N}$, the Tucker decomposition finds:
+\begin{equation}
+\cX \approx \cG \times_1 A^{(1)} \times_2 A^{(2)} \cdots \times_N A^{(N)},
+\end{equation}
+where $\cG \in \R^{R_1 \times R_2 \times \cdots \times R_N}$ is the core tensor and $A^{(n)} \in \R^{I_n \times R_n}$ are factor matrices.
+
+The storage reduction is significant:
+\begin{equation}
+\text{Full tensor: } \prod_{n=1}^N I_n \quad \text{vs.} \quad \text{Tucker: } \prod_{n=1}^N R_n + \sum_{n=1}^N I_n R_n.
+\end{equation}
+
+\subsubsection{Tensor Train (TT) Decomposition}
+
+For very high dimensions, the Tensor Train format provides more compact representation:
+\begin{equation}
+\cX(i_1, \ldots, i_N) \approx G_1(i_1) G_2(i_2) \cdots G_N(i_N),
+\end{equation}
+where $G_n(i_n) \in \R^{r_{n-1} \times r_n}$ with $r_0 = r_N = 1$.
+
+\citet{cai2023tensor} developed efficient algorithms for computing TT approximations with provable error bounds.
+
+\subsection{Sketching Algorithms}
+
+\subsubsection{Randomized Sketching Framework}
+
+The sketching approach \citep{cai2023practical} enables single-pass computation of Tucker decompositions from streaming data. For each mode $n$, construct a sketching matrix $S_n \in \R^{s_n \times I_n}$ and compute:
+
+\textbf{Range Sketch:}
+\begin{equation}
+Y^{(n)} = \cX \times_1 S_1 \cdots \times_{n-1} S_{n-1} \times_{n+1} S_{n+1} \cdots \times_N S_N.
+\end{equation}
+
+\textbf{Core Sketch:}
+\begin{equation}
+\cZ = \cX \times_1 S_1 \times_2 S_2 \cdots \times_N S_N.
+\end{equation}
+
+\subsubsection{Leverage Score Sampling}
+
+For adaptive sampling, the leverage scores quantify the importance of each fiber:
+\begin{equation}
+\tau_i^{(n)}(\cX) = \|U_{(n), i,:}\|_2^2,
+\end{equation}
+where $U_{(n)}$ contains the left singular vectors of the mode-$n$ unfolding.
+
+The sampling probability is:
+\begin{equation}
+p_i^{(n)} = \frac{\tau_i^{(n)}(\cX)}{\sum_j \tau_j^{(n)}(\cX)}.
+\end{equation}
+
+\begin{theorem}[Approximation Error Bound]
+\label{thm:sketching-bound}
+With sketch size $s_n = O(R_n \epsilon^{-2} \log(R_n/\delta))$, the sketched Tucker decomposition satisfies:
+\begin{equation}
+\|\cX - \hat{\cX}\|_F \leq (1 + \epsilon) \|\cX - \cX_{\text{opt}}\|_F
+\end{equation}
+with probability at least $1 - \delta$, where $\cX_{\text{opt}}$ is the best rank-$(R_1, \ldots, R_N)$ Tucker approximation.
+\end{theorem}
+
+\subsection{tCURLoRA for PEFT}
+
+\subsubsection{Motivation}
+
+Parameter-Efficient Fine-Tuning (PEFT) methods like LoRA reduce the cost of adapting large pre-trained models. \citet{cai2025tcurlora} introduced tCURLoRA (Tensor CUR LoRA), which leverages tensor decomposition for even greater efficiency.
+
+\subsubsection{Tensor CUR Decomposition}
+
+The CUR decomposition selects actual rows and columns of a tensor:
+\begin{equation}
+\cX \approx \cC \times \cU \times \cR,
+\end{equation}
+where $\cC$ contains selected columns, $\cR$ contains selected rows, and $\cU$ is the intersection tensor.
+
+\subsubsection{tCURLoRA Formulation}
+
+For a weight tensor $\cW$, the low-rank update is:
+\begin{equation}
+\cW' = \cW + \cA \times \cB,
+\end{equation}
+where $\cA$ and $\cB$ are learned low-rank tensors obtained via tensor CUR sampling.
+
+\begin{table}[h]
+\centering
+\caption{PEFT Method Comparison}
+\label{tab:peft-comparison}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Method} & \textbf{Params} & \textbf{Memory} & \textbf{Medical Imaging} \\
+\midrule
+Full Fine-tuning & 100\% & 100\% & High overfitting \\
+LoRA & $2nr$ & $O(nr)$ & Moderate \\
+\textbf{tCURLoRA} & $\mathbf{O(r^2 + nr)}$ & $\mathbf{O(r^2)}$ & \textbf{Best} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==============================================================================
+% 4. 3D VISION AND REMOTE SENSING
+%==============================================================================
+\section{3D Vision and Remote Sensing}
+\label{sec:3dvision}
+
+\subsection{Point Cloud Processing}
+
+\subsubsection{Neural Varifolds}
+
+\citet{cai2025neural} introduced Neural Varifolds as a representation for 3D point clouds. A varifold represents a point cloud as a weighted measure:
+\begin{equation}
+V = \sum_i \phi(p_i, n_i) \delta_{p_i},
+\end{equation}
+where $p_i$ is position, $n_i$ is the normal/feature vector, and $\phi$ is a learned weight function.
+
+The varifold kernel between two point clouds is:
+\begin{equation}
+K(V_1, V_2) = \sum_{i,j} w_i^1 w_j^2 k(p_i^1, p_j^2) \langle f_i^1, f_j^2 \rangle,
+\end{equation}
+where $k$ is typically a Gaussian kernel:
+\begin{equation}
+k(p, q) = \exp\left(-\frac{\|p - q\|^2}{2\sigma^2}\right).
+\end{equation}
+
+\subsubsection{CornerPoint3D}
+
+The CornerPoint3D method \citep{cai2025cornerpoint} improves 3D object detection by focusing on corner features. The key insight is that corners provide more discriminative information than center points for distinguishing objects.
+
+\subsection{LiDAR Applications}
+
+\subsubsection{3D Tree Delineation}
+
+\citet{cai2017tree} developed graph-cut based methods for individual tree delineation from LiDAR data. The Multi-Class Graph Cut (MCGC) algorithm optimizes:
+\begin{equation}
+E(L) = \sum_{p \in \mathcal{P}} D_p(L_p) + \sum_{(p,q) \in \mathcal{N}} V_{p,q}(L_p, L_q),
+\end{equation}
+where $L_p$ is the label (tree ID) of point $p$, $D_p$ is the data term, and $V_{p,q}$ is the smoothness term.
+
+\subsubsection{LiDAR-Hyperspectral Registration}
+
+\citet{cai2014lidar} addressed the registration of LiDAR and hyperspectral imagery through a variational framework:
+\begin{equation}
+\min_T \int_\Omega |L(x) - H(T(x))|^2 \, dx + \lambda \mathcal{R}(T),
+\end{equation}
+where $L$ is LiDAR, $H$ is hyperspectral, $T$ is the transformation, and $\mathcal{R}$ is a regularization term.
+
+\subsection{Cross-Domain 3D Detection}
+
+\citet{cai2024crossdomain} developed domain adaptation techniques for 3D object detection using adversarial learning. The objective combines detection loss with domain confusion:
+\begin{equation}
+\min_G \max_D \mathcal{L}_{\text{det}} - \lambda \mathcal{L}_{\text{adv}},
+\end{equation}
+where the adversarial loss is:
+\begin{equation}
+\mathcal{L}_{\text{adv}} = \E_{x^s}[\log D(G(x^s))] + \E_{x^t}[\log(1 - D(G(x^t)))].
+\end{equation}
+
+%==============================================================================
+% 5. MEDICAL IMAGING APPLICATIONS
+%==============================================================================
+\section{Medical Imaging Applications}
+\label{sec:medical}
+
+\subsection{Vessel Segmentation}
+
+\subsubsection{Framelet-Based Approach}
+
+The tight-frame vessel segmentation \citep{cai2013tight} exploits the sparsity of vessels in framelet domain. For retinal vessels, the model is:
+\begin{equation}
+\min_u \frac{1}{2}\|u - f\|_2^2 + \lambda_1 \|W u\|_1 + \lambda_2 \TV(u).
+\end{equation}
+
+The algorithm achieves superior performance on DRIVE and STARE datasets compared to traditional methods.
+
+\subsection{MRI Reconstruction}
+
+\subsubsection{HiFi-Mamba}
+
+\citet{cai2025hifimamba} introduced HiFi-Mamba, a hierarchical state-space model for MRI reconstruction. The architecture combines:
+\begin{itemize}
+    \item Mamba blocks for long-range dependency modeling
+    \item Multi-scale feature extraction
+    \item Frequency-domain supervision
+\end{itemize}
+
+The reconstruction objective is:
+\begin{equation}
+\min_\theta \sum_i \|\mathcal{F}_\theta(y_i) - x_i\|_1 + \lambda \|\nabla \mathcal{F}_\theta(y_i)\|_1,
+\end{equation}
+where $\mathcal{F}_\theta$ is the network, $y_i$ is undersampled k-space, and $x_i$ is the ground truth.
+
+\subsubsection{Diffusion-Based Brain MRI}
+
+\citet{cai2024diffusion} developed discrepancy-based diffusion models for brain MRI synthesis and reconstruction, addressing domain shift between scanners.
+
+\subsection{Few-Shot Learning for Medical Imaging}
+
+\subsubsection{Non-negative Subspace Methods}
+
+\citet{cai2024nonnegative} proposed non-negative subspace constraints for few-shot medical image classification:
+\begin{equation}
+\min_{W, H} \|X - WH\|_F^2 \quad \text{s.t.} \quad W, H \geq 0.
+\end{equation}
+
+The non-negativity constraint ensures interpretable part-based representations.
+
+\subsubsection{IIHT for Medical Report Generation}
+
+The Iterative Hard Thresholding (IIHT) method \citep{cai2023iiht} generates medical reports from images using sparse coding:
+\begin{equation}
+\min_\alpha \|y - D\alpha\|_2^2 \quad \text{s.t.} \quad \|\alpha\|_0 \leq k.
+\end{equation}
+
+%==============================================================================
+% 6. RADIO ASTRONOMY IMAGING
+%==============================================================================
+\section{Radio Astronomy Imaging}
+\label{sec:radio}
+
+\subsection{Bayesian Framework}
+
+\subsubsection{Proximal MCMC}
+
+\citet{cai2017radio1} developed proximal Markov Chain Monte Carlo methods for uncertainty quantification in radio interferometric imaging. The posterior distribution is:
+\begin{equation}
+p(I | V) \propto \exp\left(-\frac{1}{2\sigma^2}\|V - \mathcal{F}(I)\|_2^2\right) \cdot \pi(I),
+\end{equation}
+where $\mathcal{F}$ is the measurement operator and $\pi(I)$ is the prior (e.g., sparsity-promoting).
+
+The proximal MCMC algorithm uses Moreau-Yosida regularization:
+\begin{equation}
+f^\lambda(x) = \inf_y \left\{ f(y) + \frac{1}{2\lambda}\|y - x\|^2 \right\}.
+\end{equation}
+
+\subsubsection{MAP Estimation}
+
+\citet{cai2017radio2} addressed maximum a posteriori (MAP) estimation with non-convex priors. The optimization:
+\begin{equation}
+\hat{I}_{\text{MAP}} = \argmin_I \frac{1}{2\sigma^2}\|V - \mathcal{F}(I)\|_2^2 + \lambda \Psi(I),
+\end{equation}
+is solved using primal-dual algorithms with convergence guarantees.
+
+\subsection{Online Processing}
+
+\subsubsection{Streaming Algorithm}
+
+\citet{cai2017online} developed online algorithms for real-time radio interferometric imaging. The stochastic gradient update at time $t$:
+\begin{equation}
+I_t = I_{t-1} - \eta_t \left[ -\mathcal{F}_t^T(V_t - \mathcal{F}_t(I_{t-1})) + \lambda \nabla R(I_{t-1}) \right].
+\end{equation}
+
+\begin{theorem}[Convergence of Online Imaging]
+\label{thm:online-convergence}
+Under suitable conditions on the step size $\eta_t = O(1/\sqrt{t})$, the online algorithm satisfies:
+\begin{equation}
+\E\left[\frac{1}{T}\sum_{t=1}^T F(I_t)\right] - F(I^*) = O\left(\frac{1}{\sqrt{T}}\right),
+\end{equation}
+where $I^*$ is the optimal solution.
+\end{theorem}
+
+\subsubsection{Proximal Nested Sampling}
+
+\citet{cai2021proximal} extended nested sampling to high-dimensional imaging problems through proximal operators, enabling efficient Bayesian inference for SKA-scale data.
+
+%==============================================================================
+% 7. DEEP LEARNING INTEGRATION
+%==============================================================================
+\section{Deep Learning Integration}
+\label{sec:deeplearning}
+
+\subsection{Multi-Modal Fusion}
+
+\subsubsection{Talk2Radar: Language-Radar Multimodal}
+
+\citet{cai2025talk2radar} introduced a language-radar multimodal framework that enables natural language queries on radar data. The architecture includes:
+\begin{itemize}
+    \item Radar encoder: Point cloud to feature embedding
+    \item Language encoder: Text to feature embedding
+    \item Cross-modal attention: Fusion mechanism
+\end{itemize}
+
+The contrastive learning objective:
+\begin{equation}
+\mathcal{L} = -\log \frac{\exp(\text{sim}(z_r, z_l)/\tau)}{\sum_{j} \exp(\text{sim}(z_r, z_l^j)/\tau)}.
+\end{equation}
+
+\subsubsection{GAMED: Multimodal Fake News Detection}
+
+\citet{cai2025gamed} developed GAMED (Graph Attention Multimodal Ensemble Detection) for fake news detection using:
+\begin{itemize}
+    \item Text modal: BERT-based encoding
+    \item Image modal: Vision transformer
+    \item Graph modal: Social network structure
+\end{itemize}
+
+\subsection{Domain Adaptation}
+
+\subsubsection{Cross-Domain LiDAR Detection}
+
+The gradient reversal layer enables adversarial domain adaptation:
+\begin{equation}
+\frac{\partial}{\partial x} \text{GRL}(x) = -\alpha I,
+\end{equation}
+which reverses gradients during backpropagation to learn domain-invariant features.
+
+\subsubsection{TransNet for HAR}
+
+\citet{cai2023transnet} developed transfer learning methods for Human Activity Recognition (HAR), addressing domain shift between users and devices.
+
+\subsection{Architecture Innovations}
+
+\subsubsection{CNNs, RNNs, and Transformers Survey}
+
+\citet{cai2024survey} provided a comprehensive survey of deep learning architectures for HAR, analyzing:
+\begin{itemize}
+    \item CNNs for local pattern extraction
+    \item RNNs/LSTMs for temporal modeling
+    \item Transformers for long-range dependencies
+\end{itemize}
+
+\subsubsection{3D Motion Generation}
+
+MOGO \citep{cai2025mogo} and MotionDuet \citep{cai2025motionduet} represent advances in 3D human motion generation using diffusion models and transformer architectures.
+
+%==============================================================================
+% 8. FUTURE DIRECTIONS
+%==============================================================================
+\section{Future Directions}
+\label{sec:future}
+
+\subsection{Theoretical Foundations}
+
+\subsubsection{Unified Framework for Variational and Learning Methods}
+
+A key direction is developing unified theoretical frameworks that connect classical variational methods with deep learning:
+
+\begin{enumerate}
+    \item \textbf{Unrolled optimization:} Interpreting deep networks as unfolded iterative algorithms
+    \item \textbf{Neural operators:} Learning solution operators for variational problems
+    \item \textbf{Convergence analysis:} Rigorous analysis of learning-based optimization
+\end{enumerate}
+
+\subsubsection{Scalability and Efficiency}
+
+For exascale computing (SKA, large medical datasets):
+\begin{itemize}
+    \item Distributed optimization algorithms
+    \item Communication-efficient methods
+    \item Hardware-aware algorithm design
+\end{itemize}
+
+\subsection{Emerging Applications}
+
+\subsubsection{Foundation Models for Imaging}
+
+The emergence of foundation models presents opportunities:
+\begin{itemize}
+    \item Multi-modal pre-training for medical imaging
+    \item Zero-shot and few-shot adaptation
+    \item Promptable segmentation and reconstruction
+\end{itemize}
+
+\subsubsection{Explainable AI for Medical Imaging}
+
+Building on Concept-Based XAI \citep{cai2025concept}, future work includes:
+\begin{itemize}
+    \item Interpretable deep learning for diagnosis
+    \item Uncertainty quantification
+    \item Counterfactual explanations
+\end{itemize}
+
+\subsection{Methodological Advances}
+
+\subsubsection{Tensor Methods for Foundation Models}
+
+Extending tCURLoRA to:
+\begin{itemize}
+    \item Multi-modal foundation models
+    \item Efficient fine-tuning of billion-parameter models
+    \item Privacy-preserving adaptation
+\end{itemize}
+
+\subsubsection{Online and Streaming Learning}
+
+For real-time applications:
+\begin{itemize}
+    \item Continual learning without forgetting
+    \item Adaptive model updating
+    \item Edge deployment
+\end{itemize}
+
+%==============================================================================
+% 9. CONCLUSION
+%==============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+This survey has provided a comprehensive overview of Dr.\ Xiaohao Cai's research contributions spanning 15 years of innovative work in mathematical imaging and machine learning. The evolution from rigorous variational methods to integrated deep learning approaches represents a thoughtful progression that maintains mathematical foundations while embracing modern techniques.
+
+Key contributions include:
+
+\begin{enumerate}
+    \item \textbf{Variational Segmentation:} The SLaT framework and convex relaxation methods provide theoretically grounded and computationally efficient solutions for image segmentation.
+    
+    \item \textbf{Tensor Methods:} Sketching algorithms and tensor decompositions enable scalable processing of high-dimensional data with provable guarantees.
+    
+    \item \textbf{3D Vision:} Neural varifolds and cross-domain adaptation techniques advance point cloud processing and LiDAR applications.
+    
+    \item \textbf{Medical Imaging:} Few-shot learning, MRI reconstruction, and vessel segmentation methods demonstrate practical impact in healthcare.
+    
+    \item \textbf{Radio Astronomy:} Bayesian frameworks and online algorithms address the unique challenges of interferometric imaging.
+    
+    \item \textbf{Deep Learning Integration:} Multi-modal fusion and PEFT methods bridge classical and modern approaches.
+\end{enumerate}
+
+The research trajectory exemplifies how mathematical rigor can be combined with practical impact, providing foundations that continue to influence diverse fields from medical imaging to radio astronomy.
+
+%==============================================================================
+% REFERENCES
+%==============================================================================
+\newpage
+\section*{References}
+\label{sec:references}
+
+\begin{thebibliography}{99}
+
+% 2011
+\bibitem[cai2013tight]{cai2013tight}
+Cai, X., Chan, R., \& Zeng, T. (2013).
+\newblock A tight frame based method for image segmentation.
+\newblock \emph{SIAM Journal on Imaging Sciences}, 6(1), 464--486.
+\newblock arXiv:1109.0217
+
+% 2013
+\bibitem[cai2013two]{cai2013two}
+Cai, X., Chan, R., \& Zeng, T. (2013).
+\newblock A two-stage image segmentation method using a convex variant of the Mumford-Shah model and thresholding.
+\newblock \emph{SIAM Journal on Imaging Sciences}, 6(1), 368--390.
+
+% 2014
+\bibitem[cai2014lidar]{cai2014lidar}
+Cai, X., Sowmya, A., \& Trinder, J. (2014).
+\newblock Registration of LiDAR and hyperspectral data for urban scene analysis.
+\newblock \emph{IEEE Transactions on Geoscience and Remote Sensing}, 52(8), 5075--5090.
+\newblock arXiv:1410.0226
+
+% 2015
+\bibitem[cai2015slat]{cai2015slat}
+Cai, X., Chan, R., Nikolova, M., \& Zeng, T. (2015).
+\newblock A three-stage approach for segmenting degraded color images: Smoothing, lifting and thresholding (SLaT).
+\newblock \emph{IEEE Transactions on Image Processing}, 24(10), 3099--3113.
+\newblock arXiv:1506.00060
+
+\bibitem[cai2015variational]{cai2015variational}
+Cai, X., \& Steidl, G. (2015).
+\newblock Multiclass segmentation by iterated ROF thresholding.
+\newblock In \emph{Energy Minimization Methods in Computer Vision and Pattern Recognition} (EMMCVPR).
+
+% 2016
+\bibitem[cai2016wavelet]{cai2016wavelet}
+Cai, X., \& Steidl, G. (2016).
+\newblock Wavelet segmentation on the sphere.
+\newblock \emph{SIAM Journal on Imaging Sciences}, 9(4), 2044--2074.
+\newblock arXiv:1609.06500
+
+% 2017
+\bibitem[cai2017tree]{cai2017tree}
+Cai, X., \& Sowmya, A. (2017).
+\newblock Individual tree crown delineation from LiDAR data using a novel graph cut approach.
+\newblock \emph{Remote Sensing of Environment}, 196, 1--15.
+\newblock arXiv:1701.06715
+
+\bibitem[cai2017radio1]{cai2017radio1}
+Cai, X., McEwen, J. D., \& Pereyra, M. (2017).
+\newblock Proximal MCMC methods for posterior uncertainty quantification in radio interferometric imaging.
+\newblock \emph{Monthly Notices of the Royal Astronomical Society}, 473(4), 4635--4652.
+\newblock arXiv:1711.04818
+
+\bibitem[cai2017radio2]{cai2017radio2}
+Cai, X., \& McEwen, J. D. (2017).
+\newblock Uncertainty quantification for radio interferometric imaging II: MAP estimation.
+\newblock \emph{Monthly Notices of the Royal Astronomical Society}, 473(4), 4653--4669.
+\newblock arXiv:1711.04819
+
+\bibitem[cai2017online]{cai2017online}
+Cai, X., McEwen, J. D., \& Pereyra, M. (2017).
+\newblock Online radio interferometric imaging.
+\newblock \emph{Monthly Notices of the Royal Astronomical Society}, 474(2), 2467--2479.
+\newblock arXiv:1712.04462
+
+% 2018
+\bibitem[cai2018mumford]{cai2018mumford}
+Cai, X., \& Steidl, G. (2018).
+\newblock Multiclass segmentation by iterated ROF thresholding: The Mumford-Shah and ROF linkage.
+\newblock \emph{SIAM Journal on Imaging Sciences}, 11(4), 2730--2766.
+\newblock arXiv:1807.10194
+
+\bibitem[cai2018highdim]{cai2018highdim}
+Cai, X., \& Wei, K. (2018).
+\newblock High-dimensional inverse problems: A convex optimization perspective.
+\newblock arXiv:1811.02514
+
+% 2019
+\bibitem[cai2019mcgc]{cai2019mcgc}
+Cai, X., \& Sowmya, A. (2019).
+\newblock Individual tree segmentation in LiDAR point clouds using multi-class graph cut.
+\newblock \emph{IEEE Transactions on Geoscience and Remote Sensing}.
+\newblock arXiv:1903.08481
+
+\bibitem[cai2019twostage]{cai2019twostage}
+Cai, X., \& Wei, K. (2019).
+\newblock Two-stage high-dimensional classification using convex optimization.
+\newblock \emph{Mathematical Models and Methods in Applied Sciences}, 29(7).
+\newblock arXiv:1905.08538
+
+% 2020
+\bibitem[cai2020orientation]{cai2020orientation}
+Cai, X., et al. (2020).
+\newblock 3D orientation field transform for image segmentation.
+\newblock arXiv:2010.01453
+\newblock Published in \emph{Pattern Analysis and Applications}, 27:6 (2024).
+
+% 2021
+\bibitem[cai2021proximal]{cai2021proximal}
+Cai, X., McEwen, J. D., \& Pereyra, M. (2021).
+\newblock Proximal nested sampling for high-dimensional Bayesian inference.
+\newblock arXiv:2106.03646
+
+% 2023
+\bibitem[cai2023practical]{cai2023practical}
+Cai, X., et al. (2023).
+\newblock Practical sketching for low-rank Tucker approximation of streaming tensors.
+\newblock arXiv:2301.11598
+
+\bibitem[cai2023golds]{cai2023golds}
+Cai, X., et al. (2023).
+\newblock GO-LDA: Generalised optimal linear discriminant analysis.
+\newblock arXiv:2305.14568
+
+\bibitem[cai2023semantic]{cai2023semantic}
+Cai, X., et al. (2023).
+\newblock Semantic segmentation by proportions.
+\newblock arXiv:2305.15608
+
+\bibitem[cai2023fewshot]{cai2023fewshot}
+Cai, X., et al. (2023).
+\newblock Few-shot inference for medical imaging.
+\newblock arXiv:2306.11152
+
+\bibitem[cai2023bilevel]{cai2023bilevel}
+Cai, X., et al. (2023).
+\newblock A bilevel approach for the peer-reviewing problem.
+\newblock arXiv:2307.12248
+
+\bibitem[cai2023tensor]{cai2023tensor}
+Cai, X., et al. (2023).
+\newblock Tensor train approximation for high-dimensional problems.
+\newblock arXiv:2308.01480
+
+\bibitem[cai2023iiht]{cai2023iiht}
+Cai, X., et al. (2023).
+\newblock IIHT: Iterative hard thresholding for medical report generation.
+\newblock arXiv:2308.05633
+
+\bibitem[cai2023transnet]{cai2023transnet}
+Cai, X., et al. (2023).
+\newblock TransNet: Transfer learning for human activity recognition.
+\newblock arXiv:2309.06951
+
+\bibitem[cai2023equalizing]{cai2023equalizing}
+Cai, X., et al. (2023).
+\newblock Equalizing protected attributes via variational methods.
+\newblock arXiv:2311.14733
+
+% 2024
+\bibitem[cai2024nonnegative]{cai2024nonnegative}
+Cai, X., et al. (2024).
+\newblock Non-negative subspace for few-shot learning.
+\newblock arXiv:2404.02656
+
+\bibitem[cai2024diffusion]{cai2024diffusion}
+Cai, X., et al. (2024).
+\newblock Discrepancy-based diffusion models for brain MRI.
+\newblock arXiv:2405.04974
+
+\bibitem[cai2024detect]{cai2024detect}
+Cai, X., et al. (2024).
+\newblock Detect closer surfaces for 3D object detection.
+\newblock arXiv:2407.04061
+
+\bibitem[cai2024survey]{cai2024survey}
+Cai, X., et al. (2024).
+\newblock CNNs, RNNs, and transformers for human activity recognition: A survey.
+\newblock arXiv:2407.06162
+
+\bibitem[cai2024crossdomain]{cai2024crossdomain}
+Cai, X., et al. (2024).
+\newblock Cross-domain LiDAR detection via domain adaptation.
+\newblock arXiv:2408.12708
+
+% 2025
+\bibitem[cai2025talk2radar]{cai2025talk2radar}
+Cai, X., et al. (2025).
+\newblock Talk2Radar: Language-radar multimodal understanding.
+\newblock arXiv:2405.12821
+
+\bibitem[cai2025neural]{cai2025neural}
+Cai, X., et al. (2025).
+\newblock Neural varifolds: Quantifying point cloud geometry.
+\newblock arXiv:2407.04844
+
+\bibitem[cai2025tcurlora]{cai2025tcurlora}
+Cai, X., et al. (2025).
+\newblock tCURLoRA: Tensor CUR for parameter-efficient fine-tuning in medical imaging.
+\newblock arXiv:2501.02227
+
+\bibitem[cai2025concept]{cai2025concept}
+Cai, X., et al. (2025).
+\newblock Concept-based explainable AI metrics.
+\newblock arXiv:2501.19271
+
+\bibitem[cai2025gamed]{cai2025gamed}
+Cai, X., et al. (2025).
+\newblock GAMED: Graph attention multimodal ensemble detection for fake news.
+\newblock arXiv:2412.12164
+
+\bibitem[cai2025ll4g]{cai2025ll4g}
+Cai, X., et al. (2025).
+\newblock LL4G: Large language models for graph-based personality detection.
+\newblock arXiv:2504.02146
+
+\bibitem[cai2025cornerpoint]{cai2025cornerpoint}
+Cai, X., et al. (2025).
+\newblock CornerPoint3D: Nearest corner for 3D object detection.
+\newblock arXiv:2504.02464
+
+\bibitem[cai2025lessbetter]{cai2025lessbetter}
+Cai, X., et al. (2025).
+\newblock Less but better: PEFT for personality detection.
+\newblock arXiv:2504.05411
+
+\bibitem[cai2025mogo]{cai2025mogo}
+Cai, X., et al. (2025).
+\newblock MOGO: Motion generation for 3D human motion.
+\newblock arXiv:2506.05952
+
+\bibitem[cai2025grasptrack]{cai2025grasptrack}
+Cai, X., et al. (2025).
+\newblock GRASPTrack: Graph-based robust multi-object tracking.
+\newblock arXiv:2508.08117
+
+\bibitem[cai2025hifimamba]{cai2025hifimamba}
+Cai, X., et al. (2025).
+\newblock HiFi-Mamba: High-fidelity MRI reconstruction with Mamba.
+\newblock arXiv:2508.09179
+
+\bibitem[cai2025emoperso]{cai2025emoperso}
+Cai, X., et al. (2025).
+\newblock EmoPerso: Emotion-aware personality detection.
+\newblock arXiv:2509.02450
+
+\bibitem[cai2025hippd]{cai2025hippd}
+Cai, X., et al. (2025).
+\newblock HIPPD: Brain-inspired hierarchical personality detection.
+\newblock arXiv:2510.09893
+
+\bibitem[cai2025growth]{cai2025growth}
+Cai, X., et al. (2025).
+\newblock 3D growth trajectory reconstruction from longitudinal data.
+\newblock arXiv:2511.02142
+
+\bibitem[cai2025motionduet]{cai2025motionduet}
+Cai, X., et al. (2025).
+\newblock MotionDuet: Dual-stream 3D motion generation.
+\newblock arXiv:2511.18209
+
+\bibitem[cai2025hifimambav2]{cai2025hifimambav2}
+Cai, X., et al. (2025).
+\newblock HiFi-MambaV2: Hierarchical Mamba for MRI reconstruction.
+\newblock arXiv:2511.18534
+
+% 2026
+\bibitem[cai2026calm]{cai2026calm}
+Cai, X., et al. (2026).
+\newblock CALM: Culturally self-aware language models.
+\newblock arXiv:2601.03483
+
+% Classic references
+\bibitem[mumford1989optimal]{mumford1989optimal}
+Mumford, D., \& Shah, J. (1989).
+\newblock Optimal approximations by piecewise smooth functions and associated variational problems.
+\newblock \emph{Communications on Pure and Applied Mathematics}, 42(5), 577--685.
+
+\bibitem[rudin1992nonlinear]{rudin1992nonlinear}
+Rudin, L. I., Osher, S., \& Fatemi, E. (1992).
+\newblock Nonlinear total variation based noise removal algorithms.
+\newblock \emph{Physica D}, 60(1-4), 259--268.
+
+\end{thebibliography}
+
+\end{document}

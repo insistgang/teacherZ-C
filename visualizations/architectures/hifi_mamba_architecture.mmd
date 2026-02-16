@@ -1,0 +1,31 @@
+flowchart TB
+    subgraph Encoder["编码器"]
+        I[输入图像<br/>H×W×3] --> C1[Conv 7×7<br/>stride=2]
+        C1 --> P1[MaxPool]
+        P1 --> E1[Encoder Block 1<br/>×3]
+        E1 --> E2[Encoder Block 2<br/>×3]
+        E2 --> E3[Encoder Block 3<br/>×3]
+    end
+    
+    subgraph Bottleneck["Mamba核心"]
+        E3 --> M1[State Space Model]
+        M1 --> M2[Vim Block]
+        M2 --> M3[Mamba Block<br/>×4]
+        M3 --> M4[Feature Fusion]
+    end
+    
+    subgraph Decoder["解码器"]
+        M4 --> D1[Decoder Block 1<br/>+ Skip]
+        D1 --> D2[Decoder Block 2<br/>+ Skip]
+        D2 --> D3[Decoder Block 3<br/>+ Skip]
+        D3 --> UP[Bilinear Upsample]
+        UP --> OUT[Conv 1×1<br/>Sigmoid]
+    end
+    
+    E1 -.->|Skip| D3
+    E2 -.->|Skip| D2
+    E3 -.->|Skip| D1
+    
+    style I fill:#e3f2fd
+    style OUT fill:#c8e6c9
+    style M3 fill:#fff3e0

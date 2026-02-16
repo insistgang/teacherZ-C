@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xiaohao Cai Research Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">XC</div>
+        <span>Research</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="active">Home</a>
+        <a href="papers.html">Papers</a>
+        <a href="network.html">Network</a>
+        <a href="methods.html">Methods</a>
+        <a href="demo.html">Demo</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <div class="container">
+      <h1>Xiaohao Cai Research Portfolio</h1>
+      <p>Exploring the intersection of variational methods, deep learning, and image analysis</p>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 30px 20px;">
+    <section class="card researcher-card" id="researcher-card"></section>
+
+    <section style="margin-top: 30px;">
+      <h2 style="margin-bottom: 20px; color: var(--dark);">Research Statistics</h2>
+      <div class="stats-grid" id="stats-grid"></div>
+    </section>
+
+    <section style="margin-top: 40px;">
+      <h2 style="margin-bottom: 20px; color: var(--dark);">Research Domains</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3 style="margin-bottom: 15px;">Distribution by Domain</h3>
+          <div class="chart-container">
+            <canvas id="pie-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom: 15px;">Key Contributions</h3>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; background: #4CAF50; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">SaT</div>
+              <div>
+                <strong>Smoothing and Thresholding</strong>
+                <p style="font-size: 0.85rem; color: var(--text-light);">Novel segmentation paradigm</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; background: #2196F3; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">ROF</div>
+              <div>
+                <strong>Variational Restoration</strong>
+                <p style="font-size: 0.85rem; color: var(--text-light);">ROF model extensions</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; background: #F44336; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">TD</div>
+              <div>
+                <strong>Tensor Decomposition</strong>
+                <p style="font-size: 0.85rem; color: var(--text-light);">Tucker, CUR, Tensor Train</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; background: #E91E63; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">DL</div>
+              <div>
+                <strong>Deep Learning</strong>
+                <p style="font-size: 0.85rem; color: var(--text-light);">Mamba, Diffusion, Few-shot</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="margin-top: 40px;">
+      <h2 style="margin-bottom: 20px; color: var(--dark);">Research Timeline</h2>
+      <div class="card">
+        <div class="timeline" id="timeline-container"></div>
+      </div>
+    </section>
+
+    <section style="margin-top: 40px;">
+      <h2 style="margin-bottom: 20px; color: var(--dark);">Latest Publications</h2>
+      <div class="papers-grid" id="latest-papers"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>Xiaohao Cai Research Portfolio | University of Southampton</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

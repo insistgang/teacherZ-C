@@ -1,0 +1,707 @@
+the Kinetics-400 and Charades datasets. By introducing different temporal resolutions, this work innovated
+on the two-stream concept, capturing fine and coarse temporal details. Wang et al. (2018) expanded on
+their previous work with TSN, developing a multi-stream approach that incorporated RGB, optical flow,
+and warped optical flow streams to model long-range temporal structures more effectively. This approach
+achieved state-of-the-art results by capturing both spatial and temporal information across various time
+scales. In 2021, temporal difference networks (TDN) were introduced by Wang et al. (2021), leveraging the
+multi-stream CNN with a focus on capturing motion dynamics efficiently. Using the UCF-101 and HMDB-51
+datasets, TDN achieved notable improvements by effectively modeling temporal differences. By emphasizing
+temporal differences, this work advanced the ability of the two-stream CNN to capture motion dynamics
+more effectively.
+Table 1 presents the works discussed in this section that utilized two or more stream CNNs approaches.
+Table 1: Two-stream CNN-based approaches in HAR.
+Paper
+Model
+Dataset
+Novelty
+Simonyan
+and
+Zisserman
+(2014a)
+Two-stream
+CNN
+UCF-101,
+HMDB-51
+Introduced the two-stream architecture separating
+spatial and temporal streams for effective action
+recognition.
+Feichtenhofer
+et al. (2016)
+Two-stream
+CNN
+UCF-101,
+HMDB-51
+Explored various fusion strategies to combine spatial
+and temporal streams, and improved performance.
+Wang et al.
+(2016)
+Two-stream
+CNN + TSN
+UCF-101,
+HMDB-51
+Introduced TSN to capture long-range temporal
+structures by dividing videos into segments.
+Cosmin Duta
+et al. (2017)
+Three-
+Stream CNN
+UCF-101,
+HMDB-51
+Proposed a three-stream method using
+spatio-temporal vectors with locally max-pooled
+features for enhanced performance.
+Zolfaghari
+et al. (2018)
+Two-stream
+CNN + 3D
+CNN
+Kinetics,
+UCF-101
+Combined the two-stream CNN with lightweight 3D
+CNNs for efficient real-time processing.
+Feichtenhofer
+et al. (2019)
+Two-stream
+CNN +
+SlowFast
+Kinetics-400,
+Charades
+Introduced SlowFast networks processing video
+data at varying frame rates to capture both spatial
+and motion dynamics.
+Continued on next page
+11
+Table 1 – continued from previous page
+Paper
+Model
+Dataset
+Novelty
+Wang et al.
+(2018)
+CNN-RNN,
+(Multi-
+stream TSN)
+UCF101,
+HMDB51
+Expanded on TSN by developing a multi-stream
+approach that incorporated RGB, optical flow, and
+warped optical flow streams to model long-range
+temporal structures more effectively.
+Wang et al.
+(2021)
+Multi-
+stream CNN
++ TDN
+Something-
+Something
+V1 and V2
+Introduced TDN focusing on capturing motion
+dynamics efficiently.
+3.1.2 3D CNN-Based Approaches
+The foundational work conducted by Ji et al. (2012) introduced 3D CNNs for HAR, demonstrating their
+effectiveness in capturing spatio-temporal features on the KTH and UCF-101 datasets and outperforming
+traditional 2D CNNs. The work paved the way for further research on enhancing 3D convolutional models.
+Tran et al. (2015) introduced C3D, a generic 3D CNN for spatio-temporal feature learning, achieving
+state-of-the-art performance on the Sports-1M and UCF-101 datasets and highlighting the scalability and
+effectiveness of 3D convolutions. Building on the work by Ji et al. (2012), C3D demonstrated the potential
+of 3D CNNs across diverse datasets, influencing subsequent research in 3D CNNs. Varol et al. (2017)
+introduced long-term temporal convolutions to capture extended motion patterns. This work improved the
+accuracy on the UCF-101 and HMDB-51 datasets and emphasized the importance of long-term motion
+information. Moreover, this study extended the temporal scope of 3D CNNs, highlighting the need for
+capturing long-term motion for accurate action recognition. In the same year, Qiu et al. (2017) proposed
+pseudo-3D residual networks (P3D), which combined 2D and 3D convolutions to balance the accuracy
+and computational complexity. This work achieved competitive performance on the Kinetics and UCF-101
+datasets. Moreover, P3D networks offered a more efficient approach by blending 2D and 3D convolutions,
+further refining the capabilities of 3D CNNs. Additionally, Carreira and Zisserman (2017) introduced I3D
+by inflating 2D convolutions to 3D, achieving significant improvements on the Kinetics dataset by leveraging
+ImageNet pre-training, thereby setting new performance benchmarks. I3D bridged the gap between 2D and
+3D CNNs, demonstrating the benefits of transfer learning in 3D convolutional models.
+Hara et al. (2018) evaluated the scalability of 3D CNNs with increased data and model sizes, demonstrat-
+ing that deeper 3D CNNs can achieve better performance on the Kinetics and UCF-101 datasets, paralleling
+the success of 2D CNNs on ImageNet. This study emphasized the need for larger datasets and deeper mod-
+els in 3D convolutional research, highlighting the potential of 3D CNNs to retrace the historical success of
+2D CNNs. Building on these insights, Diba et al. (2017) introduced a new temporal 3D ConvNet architec-
+ture with enhanced transfer learning capabilities, demonstrating superior performance on the UCF-101 and
+HMDB-51 datasets through architectural innovations and effective transfer learning. This work underscored
+the importance of architectural innovation and transfer learning, pushing the boundaries of 3D CNN per-
+formance and further advancing the field of action recognition. Tran et al. (2018) further contributed by
+conducting a comprehensive analysis of spatio-temporal convolutions, highlighting the benefits of factoriz-
+ing 3D convolutions into separate spatial and temporal components, achieving state-of-the-art results on the
+Kinetics and UCF-101 datasets. This dissection provided insights that informed subsequent model designs
+and optimizations. In the same year, Xie et al. (2018) explored the trade-offs between speed and accuracy
+in spatio-temporal feature learning, proposing efficient 3D CNN variants that balance computational cost
+and recognition performance on the Kinetics and UCF-101 datasets. Their work highlighted the practical
+considerations of deploying 3D CNNs, emphasizing the need to balance speed and accuracy, thereby refin-
+ing the approach to spatio-temporal feature learning. Additionally, Wang et al. (2018) introduced non-local
+neural networks to capture long-range dependencies, demonstrating that non-local operations significantly
+improve the modeling of complex temporal relationships and enhance action recognition performance on the
+Kinetics and Something-Something datasets. By integrating non-local operations, this study advanced the
+ability of 3D CNNs to capture complex temporal patterns, further pushing the boundaries of spatio-temporal
+modeling.
+Feichtenhofer et al. (2019) introduced SlowFast Networks, a novel approach that processes video at differ-
+ent frame rates to capture both slow and fast motion dynamics, and achieved state-of-the-art results on the
+Kinetics-400 and Charades datasets. This innovation highlighted the importance of capturing varied motion
+dynamics for improved video recognition. In the same year, Tran et al. (2019) presented channel-separated
+convolutional networks (CSN), which reduced computational complexity by separating convolutions by
+channel, demonstrating efficiency without sacrificing accuracy on the Kinetics and Sports-1M datasets. This
+approach contributed to the development of more computationally feasible models. Concurrently, Ghadi-
+yaram et al. (2019) leveraged large-scale weakly-supervised pre-training on video data, significantly boosting
+12
+performance on the IG-65M and Kinetics datasets and underscoring the potential of massive datasets in
+enhancing 3D CNN capabilities. Additionally, Kopuklu et al. (2019) proposed resource-efficient 3D CNNs
+using depthwise separable convolutions and achieved competitive accuracy with significantly reduced com-
+putational requirements on the Kinetics-400 and UCF-101 datasets. This work emphasized the importance
+of optimizing 3D CNNs for computational efficiency, further advancing the field of action recognition.
+Feichtenhofer (2020) proposed X3D, a family of efficient video models by expanding architectures along
+multiple axes. It achieved state-of-the-art performance with reduced model complexity on the Kinetics-
+400 and Charades datasets. X3D highlighted the significance of model efficiency in balancing performance
+and computational demands. In the same year, Li et al. (2020) introduced an efficient 3D CNN with a
+temporal attention mechanism and achieved high accuracy with efficient computation by focusing on salient
+temporal features on the Kinetics-400 and UCF-101 datasets. This work demonstrated the potential of
+selectively focusing on important temporal features to enhance the efficiency and accuracy of 3D CNNs,
+further advancing the field of action recognition.
+Table 2 presents the works discussed in this section that utilized 3D CNN approaches.
+Table 2: 3D CNN-based approaches in HAR.
+Paper
+Model
+Dataset
+Novelty
+Ji et al.
+(2012)
+3D CNN
+UCF-101,
+HMDB-51
+Introduced 3D CNNs for HAR, effectively capturing
+spatio-temporal features and outperforming 2D
+CNNs.
+Tran et al.
+(2015)
+3D CNN
+Sports-1M,
+UCF-101
+Introduced C3D, a generic 3D CNN for
+spatio-temporal feature learning, and achieved
+state-of-the-art performance.
+Varol et al.
+(2017)
+3D CNN
+UCF-101,
+HMDB-51
+Introduced long-term temporal convolutions to
+capture extended motion patterns, and improved
+accuracy.
+Qiu et al.
+(2017)
+3D CNN
+Kinetics,
+UCF-101
+Proposed P3D networks combining 2D and 3D
+convolutions, balancing accuracy and
+computational complexity.
+Carreira and
+Zisserman
+(2017)
+3D CNN
+Kinetics
+Introduced I3D by inflating 2D convolutions to 3D,
+leveraging ImageNet pre-training for significant
+improvements.
+Hara et al.
+(2018)
+3D CNN
+Kinetics,
+UCF-101
+Evaluated the scalability of 3D CNNs with
+increased data and model sizes, and showed
+parallels to 2D CNN success.
+Diba et al.
+(2017)
+3D CNN
+UCF-101,
+HMDB-51
+Introduced a new temporal 3D ConvNet architecture
+with enhanced transfer learning capabilities.
+Tran et al.
+(2018)
+3D CNN
+Kinetics,
+UCF-101
+Conducted a comprehensive analysis of
+spatio-temporal convolutions, and highlighted the
+benefits of factorizing 3D convolutions.
+Xie et al.
+(2018)
+3D CNN
+Kinetics,
+UCF-101
+Explored speed-accuracy trade-offs in
+spatio-temporal feature learning, and proposed
+efficient 3D CNN variants.
+Wang et al.
+(2018)
+3D CNN
+Kinetics,
+Something-
+Something
+Introduced non-local operations to capture
+long-range dependencies, and improved modeling of
+complex temporal relationships.
+Feichtenhofer
+et al. (2019)
+3D CNN
+Kinetics-400,
+Charades
+Proposed SlowFast networks to process video at
+different frame rates, capturing both slow and fast
+motion dynamics.
+Tran et al.
+(2019)
+3D CNN
+Kinetics,
+Sports-1M
+Introduced CSN to reduce computational
+complexity without sacrificing accuracy.
+Continued on next page
+13
+Table 2 – continued from previous page
+Paper
+Model
+Dataset
+Novelty
+Ghadiyaram
+et al. (2019)
+3D CNN
+IG-65M,
+Kinetics
+Leveraged large-scale weakly-supervised
+pre-training on video data, and significantly
+boosted performance.
+Kopuklu
+et al. (2019)
+3D CNN
+Kinetics-400,
+UCF-101
+Proposed resource-efficient 3D CNNs using
+depthwise separable convolutions, and achieved
+competitive accuracy with reduced computational
+requirements.
+Feichtenhofer
+(2020)
+3D CNN
+Kinetics-400,
+Charades
+Proposed X3D, a family of efficient video models by
+expanding architectures along multiple axes.
+Li et al.
+(2020)
+3D CNN
+Kinetics-400,
+UCF-101
+Introduced a temporal attention mechanism to
+enhance efficiency and accuracy in 3D CNNs.
+3.1.3 CNN-RNN-Based Approaches
+The integration of CNNs and RNNs for HAR was significantly advanced by the work of Donahue et al.
+(2015), who introduced long-term recurrent convolutional networks (LRCN). This approach effectively com-
+bined the spatial feature extraction capabilities of CNNs with the temporal dynamics modeling of LSTMs,
+demonstrating substantial improvements in action recognition tasks on datasets like UCF-101 and HMDB-
+51. Building on this foundation, Yue-Hei Ng et al. (2015) extended the application of deep networks to
+video classification by integrating deep CNNs with LSTMs to handle longer video sequences. Their method,
+tested on the Sports-1M and UCF-101 datasets, highlighted the importance of capturing extended tem-
+poral dependencies for improved performance in complex video classification tasks. Further pushing the
+boundaries, Srivastava et al. (2015) explored unsupervised learning of video representations using LSTMs.
+By leveraging LSTMs to learn spatio-temporal features without labeled data, their approach demonstrated
+effective video representation learning on the UCF-101 dataset, showcasing the versatility and potential of
+CNN-RNN architectures in both supervised and unsupervised learning scenarios for HAR.
+The development of CNN-RNN architectures for HAR saw significant advancements in 2016. Wu et al.
+(2015) proposed a hybrid deep learning framework that modeled spatial-temporal clues by combining CNNs
+for spatial feature extraction with RNNs for temporal sequence modeling. Their approach, tested on the
+UCF-101 and HMDB-51 datasets, demonstrated substantial improvements in video classification accuracy.
+Additionally, Li et al. (2016) expanded the application of CNN-RNN architectures to real-time scenarios
+with their approach for online human action detection using joint classification-regression RNNs. Combining
+CNNs for spatial features and RNNs for temporal dynamics, their method, tested on the J-HMDB and
+UCF-101 datasets, achieved notable improvements in accuracy and efficiency, showcasing the practicality of
+CNN-RNN models in real-time action detection.
+Building on these advancements, 2017 and 2018 witnessed further refinements and innovations in CNN-
+RNN architectures for HAR. Li et al. (2018) introduced VideoLSTM, integrating convolutions, attention
+mechanisms and optical flow within a recurrent framework, and demonstrating improved performance on
+the UCF101 and HMDB51 datasets. Carreira and Zisserman (2017) made a significant contribution with the
+two-stream Inflated 3D ConvNet (I3D), which inflated 2D CNN architectures into 3D and combined them
+with RNNs for temporal modeling. The model was evaluated on the Kinetics dataset, as well as UCF101 and
+HMDB51. Ullah et al. (2017) proposed a novel architecture combining CNNs with bi-directional LSTMs,
+effectively utilizing both spatial and temporal information from video sequences and showing superior per-
+formance on the UCF-101 and HMDB-51 datasets. In 2020, in the realm of human activity recognition
+using sensor data, Xia et al. (2020) proposed an LSTM-CNN architecture that effectively captured both
+temporal dependencies and local feature patterns, showing improved accuracy on the WISDM, UCI HAR,
+and OPPORTUNITY datasets. Similarly, Mutegeki and Han (2020) developed a CNN-LSTM approach for
+smartphone sensor-based activity recognition, demonstrating high accuracy on the UCI HAR dataset and
+further validating the effectiveness of combining CNNs and RNNs for processing time-series data in activity
+recognition tasks.
+Recent advancements in HAR have leveraged sophisticated CNN-RNN architectures to enhance perfor-
+mance and reduce computational complexity. Muhammad et al. (2021) introduced an attention-based LSTM
+network combined with dilated CNN features, and significantly improved the recognition accuracy on the
+UCF-101 and HMDB-51 datasets by capturing essential spatial features through dilated convolutions and
+temporal patterns with attention mechanisms. Building on this, Malik et al. (2023) focused on multiview
+HAR; utilizing a CNN-LSTM architecture to cascade pose features, they achieved high accuracy (94.4% on
+14
+the MCAD dataset and 91.67% on the IXMAS dataset) while reducing the computational load by targeting
+pose data rather than entire images.
+Table 3 presents the works discussed in this section that utilized CNN-RNN approaches.
+Table 3: CNN-RNN-based approaches in HAR.
+Paper
+Model
+Dataset
+Novelty
+Donahue
+et al. (2015)
+CNN-RNN,
+(LRCN)
+UCF-101,
+HMDB-51
+Combined CNNs for spatial feature extraction with
+LSTMs for temporal dynamics.
+Yue-Hei Ng
+et al. (2015)
+CNN-RNN
+Sports-1M,
+UCF-101
+Integrated deep CNNs with LSTMs to handle
+longer video sequences, capturing extended
+temporal dependencies.
+Srivastava
+et al. (2015)
+CNN-RNN,
+(Unsuper-
+vised LSTM)
+UCF-101
+Explored unsupervised learning of video
+representations using LSTMs, leveraging
+spatiotemporal features.
+Wu et al.
+(2015)
+CNN-RNN
+UCF-101,
+HMDB-51
+Modeled spatial-temporal clues by combining CNNs
+for spatial features with RNNs for temporal
+sequence modeling.
+Li et al.
+(2016)
+CNN-RNN
+J-HMDB,
+UCF-101
+Applied CNN-RNN architectures to real-time
+scenarios for online human action detection.
+Li et al.
+(2018)
+CNN-RNN
+(VideoL-
+STM)
+UCF-101,
+HMDB-51
+Integrated convolutions, attention mechanisms, and
+optical flow within a recurrent framework.
+Carreira and
+Zisserman
+(2017)
+3D
+CNN-RNN
+Kinetics,
+UCF101,
+HMDB51
+Inflated 2D CNN architectures into 3D, and
+combined them with RNNs for temporal modeling.
+Ullah et al.
+(2017)
+CNN-RNN,
+(CNN-
+BiLSTM)
+UCF101,
+HMDB51
+Combined CNNs with bi-directional LSTMs to
+utilize both spatial and temporal information.
+Xia et al.
+(2020)
+CNN-RNN
+WISDM,
+UCI,
+OPPORTU-
+NITY
+Captured both temporal dependencies and local
+feature patterns for human activity recognition
+using sensor data.
+Mutegeki
+and Han
+(2020)
+CNN-RNN
+UCI
+Developed a CNN-LSTM approach for smartphone
+sensor-based activity recognition, and demonstrated
+high accuracy.
+Muhammad
+et al. (2021)
+CNN-RNN,
+(CNN-
+Attention-
+LSTM)
+UCF-101,
+HMDB-51
+Improved recognition accuracy with attention-based
+LSTM network combined with dilated CNN
+features.
+Malik et al.
+(2023)
+CNN-RNN
+MCAD,
+IXMAS
+Achieved high accuracy in multiview HAR by
+cascading pose features using a CNN-LSTM
+architecture.
+3.2 ViT-Based Approaches in HAR
+In 2020, the ViT was conceptualized and introduced in the academic domain through the paper authored by
+Dosovitskiy et al. (2020). The ViT marked a paradigm shift in still image recognition methodologies, applying
+the Transformer model, predominantly known for its success in NLP, to the realm of computer vision. The
+application of ViTs in action recognition, a more specific and complex task within the field of computer
+vision, followed the initial introduction of ViT. Specifically, in 2021 and beyond, subsequent research and
+publications have explored and expanded the use of ViTs for action recognition tasks, demonstrating their
+15
+efficacy in capturing spatial-temporal features within video data. They employ attention mechanisms to
+minimize redundant information and to model interactions over long distances in both space and time (Koot
+et al. 2021). The adaptation of ViT to action recognition signifies the model’s versatility and its potential
+for broader applications in computer vision beyond static image analysis.
+Recent advancements in action recognition have seen a significant shift towards ViT, highlighting their
+efficacy in video understanding tasks. Arnab et al. (2021) introduced ViViT, extending the vision Trans-
+former architecture to handle video sequences. They demonstrated its potential on datasets like Kinetics-400
+and Something-Something-V2, marking a substantial improvement in video action recognition capabilities.
+Building on this, Bertasius et al. (2021) proposed a space-time Transformer that models temporal informa-
+tion innovatively, and achieved competitive results on similar datasets. The efficiency of multiscale ViTs was
+further illustrated by Fan et al. (2021), who showed that such architectures could effectively capture fine-
+grained video details and enhance classification performance on comprehensive video datasets. Moreover,
+Liu et al. (2022) presented the Swin Transformer, utilizing a shifted window mechanism to model long-
+range dependencies more efficiently, and leading to significant improvements in action recognition accuracy.
+Together, these works underscore the transformative impact of ViTs in advancing the field of HAR. Addi-
+tionally, Wang et al. (2021) introduced ActionCLIP, leveraging the CLIP model for enhanced video action
+recognition on multiple standard video datasets, including Kinetics-400 and HMDB-51. This novel approach
+integrated visual and linguistic representations.
+Chen and Ho (2022) introduced Mm-ViT, a multi-modal video Transformer designed for compressed
+video action recognition, and demonstrated high performance by leveraging multi-modal inputs on com-
+pressed video datasets such as HACS and UCF101. Sharir et al. (2021) explored the extension of ViT to
+video data, showing its potential in capturing temporal dynamics effectively across several standard video
+datasets including Kinetics-400 and HMDB-51. Furthermore, Xing et al. (2023) developed SVFormer, a
+semi-supervised video Transformer that leverages both labeled and unlabeled data to bridge the gap between
+supervised and unsupervised learning, and achieved significant improvements in action recognition tasks on
+various standard HAR datasets such as Kinetics-400 and UCF101. Together, these works underscore the
+transformative impact of ViTs in advancing the field of HAR.
+Table 4 presents the works discussed in this section that utilized ViTs.
+Table 4: ViT-based approaches in HARs.
+Paper
+Model
+Dataset
+Novelty
+Arnab et al.
+(2021)
+ViViT
+Kinetics-400,
+Something-
+Something-
+V2
+Extended ViT to video sequences.
+Bertasius
+et al. (2021)
+Space-Time
+Transformer
+Kinetics-400
+Innovative temporal information modeling.
+Fan et al.
+(2021)
+Multiscale
+ViT
+Kinetics-400,
+Something-
+Something-
+V2
+Efficient capture of fine-grained video details.
+Liu et al.
+(2022)
+Swin
+Transformer
+Kinetics-400,
+Something-
+Something-
+V2
+Shifted window mechanism for long-range
+dependency modeling.
+Wang et al.
+(2021)
+ActionCLIP
+Kinetics-400,
+HMDB-51
+Leveraged CLIP for enhanced video action
+recognition.
+Chen and
+Ho (2022)
+Mm-ViT
+HACS,
+UCF101
+Multi-modal inputs for compressed video action
+recognition.
+Sharir et al.
+(2021)
+ViT
+Kinetics-400,
+HMDB-51
+Applied ViT to video data.
+Xing et al.
+(2023)
+SVFormer
+Kinetics-400,
+UCF101
+Semi-supervised learning for action recognition.
+16
+3.3 CNN-ViT Hybrid Architectures
+The integration of ViTs with CNNs has significantly advanced HAR tasks. Zhang et al. (2021) proposed a
+two-stream hybrid CNN-Transformer network (THCT-Net), which demonstrated enhanced generalization
+ability and convergence speed on the NTU RGB+D dataset by combining CNNs for low-level context
+sensitivity and Transformers for capturing global information. Following this, Jegham et al. (2022) applied
+a similar hybrid model to driver action recognition, leveraging multi-view data to achieve high accuracy
+through the integration of CNNs for spatial feature extraction and Transformers for temporal dependencies.
+Kalfaoglu et al. (2022) extended this approach by integrating 3D CNNs with Transformers for late temporal
+modeling, and achieved substantial improvements in action recognition accuracy on the HMDB-51 and
+UCF101 datasets. Moreover, Yu et al. (2023) proposed Swin-Fusion, which combines Swin Transformers
+with CNN-based feature fusion to achieve state-of-the-art performance on datasets like Kinetics-400 and
+Something-Something-V2, demonstrating the robustness and superior performance of hybrid models in HAR
+tasks.
+Djenouri and Belbachir (2022) proposed a hybrid visual Transformer model that integrates CNNs and
+Transformers for efficient and accurate human activity recognition. They demonstrated its capability on
+datasets like Kinetics-400 and UCF101, and showed that the hybrid approach leverages the local feature
+extraction of CNNs with the global context modeling of Transformers. Following this, Surek et al. (2023)
+provided a comprehensive review of deep learning approaches for video-based human activity recognition,
+emphasizing the potential of hybrid models. This review underscored the effectiveness of such hybrid models
+in capturing both spatial and temporal features from video data, and evaluated on various human activity
+datasets including NTU RGB+D and UTD-MHAD. Ahmadabadi et al. (2023) explored the use of knowledge
+distillation techniques to enhance the performance of hybrid CNN-Transformer models. Their approach
+was validated on datasets such as HMDB-51 and Kinetics-400, showing significant improvements in HAR
+by effectively transferring knowledge from complex models to more efficient ones. Together, these works
+highlight the evolving landscape of hybrid models in human activity recognition, showcasing their robustness
+and efficiency in handling complex video data.
+Table 2 presents the works discussed in this section that utilized CNN-ViT approaches.
+Table 5: CNN-ViT hybrid approaches in HARs.
+Paper
+Model
+Datase
+Novelty
+Zhang et al.
+(2021)
+The
+two-stream
+hybrid CNN-
+Transformer
+network
+(THCT-Net)
+NTU
+RGB+D
+Combined CNNs and Transformers for improved
+generalization and convergence speed.
+Jegham
+et al. (2022)
+Multi-view
+vision
+Transformer
+Custom
+driver action
+datasets
+Leveraged multi-view data for spatial and temporal
+feature integration.
+Kalfaoglu
+et al. (2022)
+3D CNN-
+Transformer
+HMDB-51,
+UCF101
+Integrated 3D CNNs with Transformers for late
+temporal modeling.
+Yu et al.
+(2023)
+Swin-Fusion
+Kinetics-400,
+Something-
+Something-
+V2
+Combined Swin Transformers with CNN-based
+feature fusion for state-of-the-art performance
+Djenouri and
+Belbachir
+(2022)
+Hybrid
+visual
+Transformer
+Kinetics-400,
+UCF101
+Efficient and accurate human activity recognition
+leveraging strengths of CNNs and Transformers
+Surek et al.
+(2023)
+Various deep
+learning
+models
+including
+hybrid
+models
+NTU
+RGB+D,
+UTD-
+MHAD
+Comprehensive review highlighting the potential of
+hybrid models.
+Continued on next page
+17
+Table 5 – continued from previous page
+Paper
+Model
+Datase
+Novelty
+Ahmadabadi
+et al. (2023)
+Hybrid
+CNN-
+Transformer
+HMDB-51,
+Kinetics-400
+Knowledge distillation from CNN-Transformer
+models for enhanced performance.
+3.4 Discussion
+In the field of HAR, the choice of models – whether CNN-based, ViT-based, or a hybrid of CNN and ViT
+– significantly influences the outcome and efficiency of the task. CNN-based models are particularly adept
+at extracting local features due to their convolutional nature (LeCun et al. 2015), making them highly
+effective in pattern recognition within images and videos. Their computational efficiency is a boon for real-
+time applications (Howard et al. 2017), and their robustness to input variations is notable (Simonyan and
+Zisserman 2014b). However, CNNs often struggle with global contextual understanding (Szegedy et al. 2015)
+and are prone to overfitting. Moreover, their ability to model long-range temporal dependencies (Karpathy
+et al. 2014), which is crucial in action recognition, is somewhat limited.
+ViT-based models, in contrast, excel in capturing global dependencies (Carion et al. 2020; Dosovitskiy
+et al. 2020), thanks to their self-attention mechanism. This attribute makes them particularly suited for
+understanding complex actions that require a broader view beyond local features. ViTs are scalable with
+data, benefiting significantly from larger datasets, and are flexible in processing inputs of various sizes
+(Touvron et al. 2021). The adaptability in processing various input sizes is a byproduct of the patch-
+based approach and the global receptive field of the ViTs. However, these models are computationally more
+intensive and require substantial training data to achieve optimal performance (Khan et al. 2022). Unlike
+CNNs, ViTs are not as efficient in extracting detailed local features, which can be a critical drawback in
+certain action recognition scenarios.
+Hybrid models that combine CNNs and ViTs aim to harness the strengths of both architectures. They
+offer the local feature extraction capabilities of CNNs along with the global context awareness of ViTs,
+potentially providing a more balanced approach to action recognition. These models can be more efficient and
+versatile, adapting well to a range of tasks. However, this combination brings its own challenges, including
+increased architectural complexity, higher resource demands, and the need for careful tuning to balance the
+contributions of both CNN and ViT components. The choice among these models depends on the specific
+requirements of the action recognition task, such as the available computational resources, the nature and
+size of the dataset, and the types of actions that need to be recognized.
+For a summary of the advantages and disadvantages of these three architectural variations, see Table 6.
+4 Proposed CNN-ViT Hybrid Architecture
+In this section, we present our proposed CNN-ViT architecture for HAR, leveraging the benefits of both
+approaches described in previous sections, see Figure 6. The architecture incorporates a TimeDistributed
+layer with a CNN backbone, followed by a ViT model to classify actions in video sequences.
+Spatial component. Let X be a collection of N frames, i.e., X = {Xi}N
+i=1. The CNN backbone (i.e.
+MobileNet in Howard et al. 2017) in the TimeDistributed layer (see Figure 6) processes the indifivual frames
+Xi and outputs the spatial features vector vi = pθ(Xi) ∈RL, where pθ is the CNN model (e.g. MobileNet
+or VGG16) with parameters in θ wrapped by the TimeDistributed layer.
+Temporal component. In the proposed hybrid CNN-ViT model, ViT is engineered to process the sequence

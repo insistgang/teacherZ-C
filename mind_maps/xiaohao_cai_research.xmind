@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0.1">
+    <topic id="root" text="Xiaohao Cai 研究成果">
+        <topic id="var_seg" text="变分图像分割">
+            <topic id="rof" text="ROF模型">
+                <topic text="去噪与分割统一框架"/>
+                <topic text="凸优化快速求解"/>
+                <topic text="TV正则化理论"/>
+            </topic>
+            <topic id="ms" text="Mumford-Shah模型">
+                <topic text="区域竞争模型"/>
+                <topic text="水平集方法"/>
+                <topic text="多相分割"/>
+            </topic>
+            <topic id="slat" text="SLaT框架">
+                <topic text="Slice-by-Slice处理"/>
+                <topic text="局部-全局平衡"/>
+                <topic text="3D医学应用"/>
+            </topic>
+            <topic id="theory" text="理论联系">
+                <topic text="变分-贝叶斯桥梁"/>
+                <topic text="凸松弛技术"/>
+            </topic>
+        </topic>
+        <topic id="radio" text="射电天文">
+            <topic id="uq" text="不确定性量化">
+                <topic text="贝叶斯方法"/>
+                <topic text="置信区间估计"/>
+                <topic text="误差传播"/>
+            </topic>
+            <topic id="online" text="在线成像">
+                <topic text="实时处理"/>
+                <topic text="大规模数据流"/>
+                <topic text="增量更新"/>
+            </topic>
+            <topic id="bayes" text="贝叶斯推断">
+                <topic text="MCMC采样"/>
+                <topic text="变分推断"/>
+                <topic text="后验分布"/>
+            </topic>
+        </topic>
+        <topic id="medical" text="医学影像">
+            <topic id="vessel" text="血管分割">
+                <topic text="眼底图像分析"/>
+                <topic text="血管网络提取"/>
+                <topic text="糖尿病视网膜病变"/>
+            </topic>
+            <topic id="mri" text="MRI重建">
+                <topic text="压缩感知"/>
+                <topic text="加速成像"/>
+                <topic text="并行成像"/>
+            </topic>
+            <topic id="peft" text="高效微调">
+                <topic text="Parameter-Efficient"/>
+                <topic text="迁移学习"/>
+                <topic text="LoRA/Adapter"/>
+            </topic>
+        </topic>
+        <topic id="3d" text="3D视觉">
+            <topic id="pointcloud" text="点云处理">
+                <topic text="分割与检测"/>
+                <topic text="特征提取"/>
+                <topic text="实例分割"/>
+            </topic>
+            <topic id="rs" text="遥感应用">
+                <topic text="建筑物检测"/>
+                <topic text="变化检测"/>
+                <topic text="3D重建"/>
+            </topic>
+            <topic id="det" text="目标检测">
+                <topic text="3D目标框"/>
+                <topic text="多尺度融合"/>
+            </topic>
+        </topic>
+        <topic id="dl" text="深度学习">
+            <topic id="tensor" text="张量分解">
+                <topic text="CP分解"/>
+                <topic text="Tucker分解"/>
+                <topic text="参数压缩"/>
+            </topic>
+            <topic id="mm" text="多模态">
+                <topic text="图像-文本"/>
+                <topic text="特征融合"/>
+            </topic>
+            <topic id="personal" text="个性化检测">
+                <topic text="少样本学习"/>
+                <topic text="域自适应"/>
+            </topic>
+        </topic>
+    </topic>
+</map>

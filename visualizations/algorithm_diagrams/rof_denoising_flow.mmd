@@ -1,0 +1,12 @@
+flowchart LR
+    A[输入图像<br/>f] --> B[计算梯度<br/>∇u]
+    B --> C[TV正则化<br/>‖∇u‖₁]
+    C --> D[迭代优化<br/>∂u/∂t]
+    D --> E{收敛?}
+    E -->|否| B
+    E -->|是| F[输出图像<br/>u*]
+    
+    style A fill:#e1f5fe
+    style F fill:#c8e6c9
+    style C fill:#fff3e0
+    style D fill:#fce4ec

@@ -1,0 +1,20 @@
+Method,Image Segmentation,Object Detection,Image Reconstruction,Point Cloud Processing
+ROF,1,0,1,0
+SLaT,1,0,0,0
+Varifold,0,0,0,1
+U-Net,1,1,1,0
+DeepLab,1,0,0,0
+PointNet,0,1,0,1
+PointNet++,0,1,0,1
+V-Net,1,0,1,0
+3D U-Net,1,0,1,0
+DGCNN,0,1,0,1
+Mumford-Shah,1,0,1,0
+Chan-Vese,1,0,0,0
+Level Set,1,1,0,0
+Graph Cut,1,1,0,0
+CRF,1,1,0,0
+GAN,0,0,1,0
+VAE,0,0,1,0
+Transformer,1,1,1,1
+Diffusion,0,0,1,0

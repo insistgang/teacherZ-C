@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citation Network - Xiaohao Cai Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">XC</div>
+        <span>Research</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="papers.html">Papers</a>
+        <a href="network.html" class="active">Network</a>
+        <a href="methods.html">Methods</a>
+        <a href="demo.html">Demo</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <div class="container">
+      <h1>Citation Network</h1>
+      <p>Explore relationships and citations between publications</p>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 30px 20px;">
+    <div class="card" style="margin-bottom: 20px;">
+      <h3 style="margin-bottom: 15px;">How to Use</h3>
+      <p style="color: var(--text-light); font-size: 0.9rem;">
+        <strong>Drag</strong> nodes to rearrange | <strong>Scroll</strong> to zoom | <strong>Drag on background</strong> to pan | 
+        <strong>Hover</strong> over nodes to see paper titles
+      </p>
+    </div>
+
+    <div id="network-container">
+      <div id="network-svg"></div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #2196F3;"></div>
+        <span>Medical Imaging</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #4CAF50;"></div>
+        <span>Segmentation (SaT)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #9C27B0;"></div>
+        <span>3D / Remote Sensing</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #FF9800;"></div>
+        <span>Radio Astronomy</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #F44336;"></div>
+        <span>Machine Learning</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 30px;">
+      <h3 style="margin-bottom: 15px;">Key Citation Chains</h3>
+      <div style="display: grid; gap: 16px;">
+        <div style="padding: 16px; background: var(--light); border-radius: 8px; border-left: 4px solid #4CAF50;">
+          <strong>SaT Framework Evolution</strong>
+          <p style="color: var(--text-light); margin-top: 8px; font-size: 0.9rem;">
+            Two-Stage (2013) → SLaT (2015) → MS-ROF Linkage (2018) → Semantic Proportions (2023)
+          </p>
+        </div>
+        <div style="padding: 16px; background: var(--light); border-radius: 8px; border-left: 4px solid #F44336;">
+          <strong>Tensor Methods</strong>
+          <p style="color: var(--text-light); margin-top: 8px; font-size: 0.9rem;">
+            Tucker Sketching (2023) → Tensor Train (2023) → tCURLoRA (2025)
+          </p>
+        </div>
+        <div style="padding: 16px; background: var(--light); border-radius: 8px; border-left: 4px solid #2196F3;">
+          <strong>Medical Imaging</strong>
+          <p style="color: var(--text-light); margin-top: 8px; font-size: 0.9rem;">
+            Diffusion Brain MRI (2024) → HiFi-Mamba (2025) → HiFi-MambaV2 (2025)
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>Xiaohao Cai Research Portfolio | University of Southampton</p>
+    </div>
+  </footer>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

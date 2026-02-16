@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>研究仪表盘 - 论文分析</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>研究仪表盘</h1>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">📊 概览</a>
+      <a href="papers.html" class="nav-item active">📄 论文分析</a>
+      <a href="network.html" class="nav-item">🔗 引用网络</a>
+      <a href="timeline.html" class="nav-item">📅 时序分析</a>
+      <a href="collaborators.html" class="nav-item">👥 合作者分析</a>
+      <a href="heatmap.html" class="nav-item">🔥 热力图</a>
+      <a href="comparison.html" class="nav-item">⚖️ 对比分析</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header class="header">
+      <h2 class="page-title">论文分析</h2>
+      <div class="header-actions">
+        <div class="search-box">
+          <input type="text" placeholder="搜索论文...">
+        </div>
+        <div class="export-dropdown">
+          <button class="btn btn-outline">📥 导出</button>
+          <div class="export-menu">
+            <button data-export="csv">导出 CSV</button>
+            <button data-export="json">导出 JSON</button>
+          </div>
+        </div>
+        <button class="theme-toggle">🌙</button>
+      </div>
+    </header>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label>年份</label>
+        <select name="year" id="filterYear">
+          <option value="all">全部年份</option>
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+          <option value="2022">2022</option>
+          <option value="2020-2021">2020-2021</option>
+          <option value="2015-2019">2015-2019</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>领域</label>
+        <select name="field" id="filterField">
+          <option value="all">全部领域</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>排序</label>
+        <select name="sort" id="filterSort">
+          <option value="year">按年份</option>
+          <option value="citations">按引用</option>
+          <option value="impact">按影响因子</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3 class="chart-card-title">年份分布</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="yearChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3 class="chart-card-title">领域分布</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="fieldChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3 class="chart-card-title">期刊分布 (Top 10)</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="journalChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3 class="chart-card-title">引用分布</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="citationsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3 class="chart-card-title">论文列表</h3>
+        <span class="stat-card-title" id="paperCount">共 0 篇论文</span>
+      </div>
+      <table class="data-table" id="papersTable">
+        <thead>
+          <tr>
+            <th>标题</th>
+            <th>年份</th>
+            <th>领域</th>
+            <th>期刊</th>
+            <th>引用数</th>
+            <th>影响因子</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    let yearChart, fieldChart, journalChart, citationsChart;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      ResearchData.fields.forEach(f => {
+        document.getElementById('filterField').innerHTML += `<option value="${f}">${f}</option>`;
+      });
+
+      renderCharts(ResearchData.papers);
+      renderTable(ResearchData.papers);
+
+      ['filterYear', 'filterField', 'filterSort'].forEach(id => {
+        document.getElementById(id).addEventListener('change', applyFilters);
+      });
+
+      document.querySelector('.search-box input').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = ResearchData.papers.filter(p => 
+          p.title.toLowerCase().includes(query) || 
+          p.field.toLowerCase().includes(query) ||
+          p.journal.toLowerCase().includes(query)
+        );
+        renderTable(filtered);
+      });
+    });
+
+    function applyFilters() {
+      let papers = [...ResearchData.papers];
+      
+      const year = document.getElementById('filterYear').value;
+      if (year !== 'all') {
+        const range = year.split('-').map(Number);
+        if (range.length === 2) {
+          papers = papers.filter(p => p.year >= range[0] && p.year <= range[1]);
+        } else {
+          papers = papers.filter(p => p.year === range[0]);
+        }
+      }
+
+      const field = document.getElementById('filterField').value;
+      if (field !== 'all') {
+        papers = papers.filter(p => p.field === field);
+      }
+
+      const sort = document.getElementById('filterSort').value;
+      papers.sort((a, b) => b[sort] - a[sort]);
+
+      renderCharts(papers);
+      renderTable(papers);
+    }
+
+    function renderCharts(papers) {
+      if (yearChart) yearChart.destroy();
+      if (fieldChart) fieldChart.destroy();
+      if (journalChart) journalChart.destroy();
+      if (citationsChart) citationsChart.destroy();
+
+      const yearCounts = {};
+      papers.forEach(p => yearCounts[p.year] = (yearCounts[p.year] || 0) + 1);
+      yearChart = createYearDistributionChart('yearChart', yearCounts);
+      fieldChart = createFieldDistributionChart('fieldChart', papers);
+      journalChart = createJournalDistributionChart('journalChart', papers);
+
+      const ctx = document.getElementById('citationsChart');
+      citationsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: papers.slice(0, 10).map(p => p.title.slice(0, 15) + '...'),
+          datasets: [{
+            label: '引用数',
+            data: papers.slice(0, 10).map(p => p.citations),
+            backgroundColor: papers.slice(0, 10).map(p => getFieldColor(p.field)),
+            borderRadius: 6
+          }]
+        },
+        options: ChartConfigs.bar
+      });
+    }
+
+    function renderTable(papers) {
+      document.getElementById('paperCount').textContent = `共 ${papers.length} 篇论文`;
+      const tbody = document.querySelector('#papersTable tbody');
+      tbody.innerHTML = papers.map(p => `
+        <tr>
+          <td>${p.title}</td>
+          <td>${p.year}</td>
+          <td><span class="tag tag-blue">${p.field}</span></td>
+          <td>${p.journal}</td>
+          <td>${p.citations}</td>
+          <td>${p.impact}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.addEventListener('export', (e) => {
+      if (e.detail === 'csv') {
+        const data = ResearchData.papers.map(p => [p.title, p.year, p.field, p.journal, p.citations, p.impact]);
+        data.unshift(['标题', '年份', '领域', '期刊', '引用数', '影响因子']);
+        Utils.exportToCSV(data, 'papers.csv');
+      } else if (e.detail === 'json') {
+        Utils.exportToJSON(ResearchData.papers, 'papers.json');
+      }
+    });
+  </script>
+</body>
+</html>

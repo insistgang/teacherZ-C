@@ -1,0 +1,547 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+% ========== 宏包 ==========
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{algorithm,algorithmic}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{amsthm}
+\usepackage{appendix}
+
+% ========== 新建定理环境 ==========
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{proposition}[theorem]{命题}
+\newtheorem{corollary}[theorem]{推论}
+\newtheorem{definition}[theorem]{定义}
+\newtheorem{example}[theorem]{例}
+\newtheorem{remark}[theorem]{注}
+
+% ========== 页面设置 ==========
+\geometry{top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm}
+\linespread{1.5}
+
+% ========== 页眉页脚 ==========
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{博士学位论文}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ========== 代码样式 ==========
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true
+}
+
+% ========== 文档信息 ==========
+\title{\textbf{基于变分与优化方法的图像处理关键问题研究}}
+\author{XXX}
+\advisor{XXX 教授}
+\degree{工学博士}
+\major{计算机科学与技术}
+\institute{XX大学}
+\date{2026年6月}
+
+% ========== 封面定义 ==========
+\def\maketitlecover{
+    \begin{titlepage}
+        \centering
+        \vspace*{2cm}
+        {\xiaosan\textbf{XX大学}}
+        \par\vspace{0.5cm}
+        {\xiaoer\textbf{博士学位论文}}
+        \par\vspace{3cm}
+        {\yihao\textbf{基于变分与优化方法的图像处理关键问题研究}}
+        \par\vspace{4cm}
+        \begin{spacing}{1.8}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{研究生：} & XXX \\
+                    \textbf{学　　号：} & XXXXXXXXXX \\
+                    \textbf{指导教师：} & XXX 教授 \\
+                    \textbf{专　　业：} & 计算机科学与技术 \\
+                    \textbf{研究方向：} & 图像处理与计算机视觉 \\
+                \end{tabular}
+            \end{center}
+        \end{spacing}
+        \par\vfill
+        {\xiaosan 2026年6月}
+    \end{titlepage}
+}
+
+\begin{document}
+
+% ========== 封面 ==========
+\maketitlecover
+
+% ========== 独创性声明 ==========
+\newpage
+\section*{独创性声明}
+本人声明所呈交的学位论文是本人在导师指导下进行的研究工作及取得的研究成果。据我所知，除了文中特别加以标注和致谢的地方外，论文中不包含其他人已经发表或撰写过的研究成果，也不包含为获得\_\_\_\_\_\_\_\_\_\_或其他教育机构的学位或证书而使用过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并表示谢意。
+
+\vspace{1cm}
+学位论文作者签名：\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ \quad 日期：\_\_\_\_年\_\_\_月\_\_\_日
+
+% ========== 学位论文版权使用授权书 ==========
+\newpage
+\section*{学位论文版权使用授权书}
+本学位论文作者完全了解\_\_\_\_\_\_\_\_\_\_有关保留、使用学位论文的规定，有权保留并向国家有关部门或机构送交论文的复印件和磁盘，允许论文被查阅和借阅。本人授权\_\_\_\_\_\_\_\_\_\_可以将学位论文的全部或部分内容编入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存、汇编学位论文。
+
+\vspace{1cm}
+学位论文作者签名：\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ \quad 日期：\_\_\_\_年\_\_\_月\_\_\_日
+
+\vspace{0.5cm}
+导师签名：\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ \quad 日期：\_\_\_\_年\_\_\_月\_\_\_日
+
+% ========== 中文摘要 ==========
+\newpage
+\begin{abstract}
+图像处理是计算机视觉和模式识别领域的核心研究方向，在医学影像分析、遥感图像解译、工业检测等领域具有广泛的应用价值。变分方法和优化理论为图像处理问题提供了坚实的数学基础和有效的求解框架。然而，面对实际应用中的复杂问题，传统方法在模型构建、计算效率、适用范围等方面仍存在诸多挑战。
+
+本文围绕变分与优化方法在图像处理中的关键问题展开深入研究，主要贡献包括以下几个方面：
+
+（1）建立了变分图像处理的理论框架。系统研究了凸优化理论、稀疏表示理论和紧框架理论在图像处理中的应用，推导了一系列重要定理和收敛性结论，为后续方法设计奠定了坚实的数学基础。
+
+（2）提出了基于稀疏局部紧框架（SLaT）的医学图像分割方法。该方法创新性地将稀疏约束、局部区域信息和紧框架变换相结合，有效解决了传统变分分割方法对初始轮廓敏感、弱边界检测能力不足等问题。在BraTS、LiTS等多个公开数据集上的实验表明，该方法在Dice系数、Hausdorff距离等指标上均取得了优于现有主流方法的结果。
+
+（3）针对射电天文成像中的稀疏重建问题，提出了一种基于非凸正则化的优化算法。该算法利用射电源的稀疏先验，采用非凸Lp范数（0<p<1）作为正则化项，并通过迭代重加权算法进行求解。实验表明，与传统方法相比，该算法在重建精度和计算效率方面均有显著提升。
+
+（4）研究了大尺度张量分解的优化问题，提出了基于随机梯度下降的在线张量分解算法。该算法能够处理流式数据场景下的张量分解问题，并提供了收敛性理论保证。在大规模推荐系统和时空数据分析等应用中验证了算法的有效性。
+
+（5）探索了变分方法与深度学习的融合框架，提出了一种物理约束神经网络（PCNN）模型。该模型将变分能量泛函作为神经网络的损失函数，引导网络学习符合物理规律的图像处理结果，在医学图像分割和图像去噪等任务中取得了良好的效果。
+
+本文的研究工作丰富了变分与优化方法在图像处理领域的理论体系，提出了一系列创新性的方法和算法，对于推动图像处理技术的发展具有重要的理论意义和应用价值。
+
+\vspace{0.5cm}
+\textbf{关键词：}变分方法；优化理论；图像分割；稀疏重建；张量分解；深度学习
+\end{abstract}
+
+% ========== 英文摘要 ==========
+\newpage
+\begin{abstract}
+\centerline{\textbf{Research on Key Problems in Image Processing Based on Variational and Optimization Methods}}
+
+\vspace{0.5cm}
+Image processing is a core research direction in computer vision and pattern recognition, with extensive application value in medical image analysis, remote sensing image interpretation, and industrial inspection. Variational methods and optimization theory provide a solid mathematical foundation and effective solution framework for image processing problems. However, facing complex problems in practical applications, traditional methods still face many challenges in model construction, computational efficiency, and applicability.
+
+This thesis focuses on key problems of variational and optimization methods in image processing, with main contributions including:
+
+(1) A theoretical framework for variational image processing is established. The applications of convex optimization theory, sparse representation theory, and tight frame theory in image processing are systematically studied. A series of important theorems and convergence conclusions are derived, laying a solid mathematical foundation for subsequent method design.
+
+(2) A medical image segmentation method based on Sparse Local and Tight (SLaT) framework is proposed. This method innovatively combines sparse constraints, local region information, and tight frame transforms, effectively addressing the sensitivity of traditional variational segmentation methods to initial contours and the insufficient detection capability of weak boundaries. Experiments on multiple public datasets such as BraTS and LiTS demonstrate that this method achieves better results than existing mainstream methods in terms of Dice coefficient, Hausdorff distance, and other metrics.
+
+(3) Aiming at the sparse reconstruction problem in radio astronomical imaging, an optimization algorithm based on non-convex regularization is proposed. This algorithm utilizes the sparse prior of radio sources, adopts non-convex Lp norm (0<p<1) as the regularization term, and solves it through an iterative reweighted algorithm. Experiments show that compared with traditional methods, this algorithm has significant improvements in reconstruction accuracy and computational efficiency.
+
+(4) The optimization problem of large-scale tensor decomposition is studied, and an online tensor decomposition algorithm based on stochastic gradient descent is proposed. This algorithm can handle tensor decomposition problems in streaming data scenarios and provides convergence theoretical guarantees. The effectiveness of the algorithm is verified in applications such as large-scale recommendation systems and spatiotemporal data analysis.
+
+(5) A fusion framework of variational methods and deep learning is explored, and a Physics-Constrained Neural Network (PCNN) model is proposed. This model uses the variational energy functional as the loss function of the neural network, guiding the network to learn image processing results that conform to physical laws. Good results have been achieved in tasks such as medical image segmentation and image denoising.
+
+The research work in this thesis enriches the theoretical system of variational and optimization methods in image processing, proposes a series of innovative methods and algorithms, and has important theoretical significance and application value for promoting the development of image processing technology.
+
+\vspace{0.5cm}
+\textbf{Keywords:} Variational Methods; Optimization Theory; Image Segmentation; Sparse Reconstruction; Tensor Decomposition; Deep Learning
+\end{abstract}
+
+% ========== 目录 ==========
+\newpage
+\tableofcontents
+
+% ========== 正文章节 ==========
+\newpage
+\section{绪论}
+\subsection{研究背景与意义}
+
+图像是人类获取信息的重要来源，图像处理技术作为信息科学的核心组成部分，在国民经济、国防安全、科学研究等领域发挥着越来越重要的作用。随着传感器技术、计算机技术和人工智能技术的快速发展，图像数据的获取和处理能力得到了极大的提升，对图像处理算法的精度、效率和鲁棒性提出了更高的要求。
+
+变分方法是处理图像问题的重要数学工具，其核心思想是将图像处理问题转化为能量泛函的优化问题，通过求解相应的偏微分方程获得最优解。变分方法具有以下优势：
+
+\begin{enumerate}
+    \item \textbf{数学基础坚实}：变分方法建立在泛函分析和偏微分方程理论之上，具有严格的数学推导和收敛性分析。
+    
+    \item \textbf{物理意义明确}：能量泛函中的各项通常对应于图像的某种物理属性或先验知识，便于理解和解释。
+    
+    \item \textbf{灵活性强}：可以根据具体问题设计不同的能量泛函，融合各种约束条件和先验知识。
+    
+    \item \textbf{可扩展性好}：容易扩展到多维、多通道、多模态等复杂场景。
+\end{enumerate}
+
+然而，传统的变分方法在实际应用中仍面临诸多挑战：
+
+\begin{itemize}
+    \item \textbf{非凸性}：许多图像处理问题对应的能量泛函是非凸的，存在多个局部极小值，全局优化困难。
+    \item \textbf{计算复杂度高}：偏微分方程的数值求解通常需要大量迭代，计算效率难以满足实时处理需求。
+    \item \textbf{参数敏感}：方法性能往往依赖于参数设置，缺乏自适应的参数选择机制。
+    \item \textbf{先验知识利用不足}：传统方法难以充分利用数据中的复杂先验信息。
+\end{itemize}
+
+近年来，深度学习在图像处理领域取得了突破性进展，但深度学习方法也存在可解释性差、需要大量标注数据等问题。将变分方法的数学严谨性与深度学习的数据驱动能力相结合，成为当前研究的重要方向。
+
+本文围绕变分与优化方法在图像处理中的关键问题展开研究，旨在发展新的理论和方法，推动图像处理技术的进步。
+
+\subsection{国内外研究现状}
+
+\subsubsection{变分图像处理方法}
+
+变分图像处理方法起源于20世纪80年代，其标志性工作包括：
+
+\textbf{图像去噪}：Rudin、Osher和Fatemi提出的ROF模型\cite{rudin1992nonlinear}是变分图像去噪的经典方法，通过最小化图像的全变分实现去噪同时保持边缘。该模型催生了一系列改进工作，包括TV-L1模型\cite{chan2006total}、非局部TV模型\cite{gilboa2008nonlocal}等。
+
+\textbf{图像分割}：活动轮廓模型由Kass等人\cite{kass1988snakes}提出，此后发展出几何活动轮廓\cite{caselles1997geodesic}、C-V模型\cite{chan2001active}、区域可变拟合模型\cite{li2008minimization}等重要方法。水平集方法\cite{osher1988fronts}为处理拓扑变化提供了有效工具。
+
+\textbf{图像修复}：Bertalmio等人\cite{bertalmio2000image}开创了基于PDE的图像修复方法，随后发展出基于TV的修复方法\cite{chan2005variational}和基于样本的修复方法\cite{criminisi2004region}。
+
+\subsubsection{凸优化与稀疏表示}
+
+凸优化理论为图像处理提供了强大的数学工具：
+
+\textbf{凸松弛}：将非凸问题松弛为凸问题进行求解，是处理非凸优化问题的重要策略。Candes和Tao提出的压缩感知理论\cite{candes2006near}表明，在稀疏性假设下，可以用远低于Nyquist采样率的测量数据精确重构原始信号。
+
+\textbf{稀疏表示}：稀疏表示假设图像可以在某个字典或变换域下用少量系数表示。典型方法包括K-SVD\cite{aharon2006k}、小波变换\cite{mallat1999wavelet}、紧框架\cite{cai2009frame}等。
+
+\textbf{优化算法}：针对大规模优化问题，发展了众多高效算法，如快速迭代收缩阈值算法（FISTA）\cite{beck2009fast}、交替方向乘子法（ADMM）\cite{boyd2011distributed}、分裂Bregman方法\cite{goldstein2009split}等。
+
+\subsubsection{张量分解与高维数据处理}
+
+随着数据维度的增加，张量分解成为处理高维数据的重要工具：
+
+\textbf{经典分解模型}：Tucker分解\cite{tucker1966some}和CP分解\cite{carroll1970analysis}是最基本的张量分解模型，在信号处理、数据挖掘等领域有广泛应用。
+
+\textbf{张量补全}：张量补全旨在从部分观测恢复完整张量，典型方法包括低秩张量补全\cite{liu2013tensor}、张量奇异值分解\cite{lu2019tensor}等。
+
+\textbf{在线算法}：针对流式数据场景，发展了在线张量分解算法\cite{mairal2010online}，能够增量式地更新分解结果。
+
+\subsubsection{深度学习与变分方法的融合}
+
+深度学习在图像处理领域取得了巨大成功，但存在可解释性差、需要大量标注数据等问题。近年来，研究者开始探索深度学习与变分方法的融合：
+
+\textbf{变分自编码器}：VAE\cite{kingma2013auto}将变分推断引入深度学习，建立了生成模型的理论框架。
+
+\textbf{物理约束网络}：将物理规律或变分能量作为神经网络的正则化项\cite{raissi2019physics}，提高网络的可解释性和泛化能力。
+
+\textbf{可学习优化}：将传统优化算法展开为神经网络\cite{monga2021algorithm}，实现端到端的学习。
+
+\subsection{本文主要工作和创新点}
+
+本文围绕变分与优化方法在图像处理中的关键问题展开研究，主要创新点包括：
+
+\begin{enumerate}
+    \item \textbf{理论贡献}：
+    \begin{itemize}
+        \item 建立了变分图像处理的统一理论框架
+        \item 证明了SLaT模型的收敛性和稳定性
+        \item 给出了非凸优化算法的理论收敛保证
+    \end{itemize}
+    
+    \item \textbf{方法创新}：
+    \begin{itemize}
+        \item 提出了基于SLaT的医学图像分割方法
+        \item 发展了射电天文成像的非凸正则化算法
+        \item 设计了大尺度张量分解的在线优化算法
+        \item 构建了变分与深度学习的融合框架
+    \end{itemize}
+    
+    \item \textbf{应用贡献}：
+    \begin{itemize}
+        \item 在医学图像分割任务上取得了领先性能
+        \item 在射电天文成像重建中验证了方法有效性
+        \item 开发了可复现的代码和工具包
+    \end{itemize}
+\end{enumerate}
+
+\subsection{论文组织结构}
+
+本文共分为八章，各章节安排如下：
+
+\textbf{第一章 绪论}：介绍研究背景与意义，综述国内外研究现状，阐述本文的主要工作和创新点。
+
+\textbf{第二章 数学理论基础}：介绍本文研究所需的数学基础，包括泛函分析、变分原理、凸优化、稀疏表示和张量分解等理论。
+
+\textbf{第三章 变分图像分割方法}：介绍变分图像分割的理论框架，重点阐述水平集方法、活动轮廓模型和全变分正则化等核心技术。
+
+\textbf{第四章 射电天文成像方法}：针对射电天文成像中的稀疏重建问题，提出基于非凸正则化的优化算法，并进行理论分析和实验验证。
+
+\textbf{第五章 张量分解与优化}：研究大尺度张量分解的优化问题，提出在线张量分解算法，并提供收敛性分析。
+
+\textbf{第六章 深度学习融合方法}：探索变分方法与深度学习的融合，提出物理约束神经网络模型，在多个任务上验证有效性。
+
+\textbf{第七章 应用与实验}：在多个应用场景上对所提方法进行全面评估，包括医学图像分割、射电成像重建、推荐系统等。
+
+\textbf{第八章 总结与展望}：总结全文工作，分析研究的不足之处，展望未来的研究方向。
+
+\section{数学理论基础}
+\subsection{泛函分析基础}
+\subsubsection{函数空间}
+\subsubsection{泛函与算子}
+\subsubsection{弱收敛与弱$^*$收敛}
+
+\subsection{变分原理}
+\subsubsection{Gâteaux导数与Fréchet导数}
+\subsubsection{欧拉-拉格朗日方程}
+\subsubsection{约束优化与拉格朗日乘子}
+
+\subsection{凸优化理论}
+\subsubsection{凸集与凸函数}
+\subsubsection{对偶理论}
+\subsubsection{次梯度与最优性条件}
+\subsubsection{近端算子}
+
+\subsection{稀疏表示理论}
+\subsubsection{稀疏信号模型}
+\subsubsection{压缩感知基础}
+\subsubsection{字典学习}
+
+\subsection{紧框架理论}
+\subsubsection{框架的基本概念}
+\subsubsection{紧框架的构造}
+\subsubsection{基于紧框架的图像表示}
+
+\subsection{张量分析基础}
+\subsubsection{张量的定义与运算}
+\subsubsection{Tucker分解}
+\subsubsection{CP分解}
+\subsubsection{张量奇异值分解}
+
+\subsection{本章小结}
+
+\section{变分图像分割方法}
+\subsection{图像分割问题建模}
+\subsubsection{分割问题的数学描述}
+\subsubsection{能量泛函的构造原则}
+\subsubsection{评价指标}
+
+\subsection{曲线演化与水平集方法}
+\subsubsection{曲线演化理论}
+\subsubsection{水平集方法}
+\subsubsection{快速行进法}
+
+\subsection{活动轮廓模型}
+\subsubsection{参数活动轮廓}
+\subsubsection{几何活动轮廓}
+\subsubsection{测地线活动轮廓}
+
+\subsection{区域型分割模型}
+\subsubsection{Mumford-Shah模型}
+\subsubsection{C-V模型}
+\subsubsection{区域可变拟合模型}
+
+\subsection{全变分正则化}
+\subsubsection{ROF模型}
+\subsubsection{TV-L1模型}
+\subsubsection{分裂Bregman算法}
+
+\subsection{基于SLaT的分割方法}
+\subsubsection{模型设计}
+\subsubsection{能量泛函构造}
+\subsubsection{水平集演化方程}
+\subsubsection{数值求解算法}
+\subsubsection{收敛性分析}
+
+\subsection{本章小结}
+
+\section{射电天文成像方法}
+\subsection{射电天文成像问题}
+\subsubsection{射电干涉测量原理}
+\subsubsection{成像问题的数学建模}
+\subsubsection{稀疏重建框架}
+
+\subsection{非凸正则化方法}
+\subsubsection{非凸正则化模型}
+\subsubsection{Lp范数正则化}
+\subsubsection{迭代重加权算法}
+
+\subsection{算法设计与分析}
+\subsubsection{算法流程}
+\subsubsection{收敛性分析}
+\subsubsection{计算复杂度}
+
+\subsection{实验验证}
+\subsubsection{模拟数据实验}
+\subsubsection{真实数据实验}
+\subsubsection{参数分析}
+
+\subsection{本章小结}
+
+\section{张量分解与优化}
+\subsection{张量分解问题}
+\subsubsection{问题描述}
+\subsubsection{应用背景}
+
+\subsection{经典张量分解算法}
+\subsubsection{高阶奇异值分解}
+\subsubsection{交替最小二乘法}
+\subsubsection{随机化方法}
+
+\subsection{在线张量分解算法}
+\subsubsection{问题建模}
+\subsubsection{算法设计}
+\subsubsection{收敛性分析}
+
+\subsection{大规模张量补全}
+\subsubsection{低秩张量模型}
+\subsubsection{优化算法}
+\subsubsection{理论保证}
+
+\subsection{实验验证}
+\subsubsection{合成数据实验}
+\subsubsection{推荐系统应用}
+\subsubsection{时空数据分析}
+
+\subsection{本章小结}
+
+\section{深度学习融合方法}
+\subsection{变分与深度学习的结合}
+\subsubsection{结合动机}
+\subsubsection{结合方式}
+
+\subsection{物理约束神经网络}
+\subsubsection{模型设计}
+\subsubsection{网络结构}
+\subsubsection{损失函数设计}
+
+\subsection{算法展开方法}
+\subsubsection{算法展开原理}
+\subsubsection{可学习优化器}
+\subsubsection{端到端训练}
+
+\subsection{实验验证}
+\subsubsection{图像分割任务}
+\subsubsection{图像去噪任务}
+\subsubsection{对比分析}
+
+\subsection{本章小结}
+
+\section{应用与实验}
+\subsection{医学图像分割}
+\subsubsection{数据集}
+\subsubsection{实验设置}
+\subsubsection{结果分析}
+
+\subsection{射电成像重建}
+\subsubsection{数据描述}
+\subsubsection{评价指标}
+\subsubsection{结果展示}
+
+\subsection{推荐系统应用}
+\subsubsection{数据集}
+\subsubsection{实验设计}
+\subsubsection{性能对比}
+
+\subsection{消融实验}
+\subsubsection{组件分析}
+\subsubsection{参数敏感性}
+\subsubsection{计算效率}
+
+\subsection{本章小结}
+
+\section{总结与展望}
+\subsection{工作总结}
+
+本文围绕变分与优化方法在图像处理中的关键问题开展了深入研究，主要工作和贡献包括：
+
+（1）建立了变分图像处理的统一理论框架，系统研究了凸优化、稀疏表示、紧框架和张量分解等理论在图像处理中的应用，为方法设计提供了坚实的数学基础。
+
+（2）提出了基于SLaT的医学图像分割方法，通过融合稀疏约束、局部区域信息和紧框架变换，有效解决了传统方法对初始轮廓敏感、弱边界检测能力不足等问题。
+
+（3）针对射电天文成像问题，提出了基于非凸正则化的稀疏重建算法，利用Lp范数正则化和迭代重加权策略，实现了高质量的天文图像重建。
+
+（4）研究了大尺度张量分解的优化问题，提出了在线张量分解算法，能够高效处理流式数据场景下的张量分解任务。
+
+（5）探索了变分方法与深度学习的融合，提出了物理约束神经网络模型，将变分能量作为网络损失的一部分，提高了模型的可解释性和泛化能力。
+
+\subsection{研究展望}
+
+尽管本文取得了一定的研究成果，但仍存在一些有待深入研究的问题：
+
+（1）\textbf{理论深度}：非凸优化问题的全局收敛性分析仍是一个开放问题，需要更深入的理论研究。
+
+（2）\textbf{计算效率}：所提方法的计算复杂度仍然较高，需要研究更高效的数值求解算法和并行计算策略。
+
+（3）\textbf{自适应学习}：模型参数的自适应选择机制有待完善，可以结合元学习等技术实现参数的自动调优。
+
+（4）\textbf{多模态融合}：多模态数据的联合建模和优化是一个重要方向，需要发展新的理论和方法。
+
+（5）\textbf{实时应用}：将所提方法部署到实际应用系统中，需要解决工程实现中的诸多技术问题。
+
+% ========== 参考文献 ==========
+\newpage
+\bibliographystyle{plain}
+\bibliography{references}
+
+% ========== 致谢 ==========
+\newpage
+\section*{致谢}
+\addcontentsline{toc}{section}{致谢}
+
+时光荏苒，四年的博士研究生活即将画上句号。回首这段求学之路，感慨万千，收获良多。
+
+首先，我要衷心感谢我的导师XXX教授。导师渊博的学识、严谨的治学态度和对科研的执着追求，深深地影响了我。从论文选题、研究方案设计到论文撰写，导师都给予了我悉心的指导和无私的帮助。导师不仅传授给我知识和方法，更教会了我如何做学问、如何做人。在此，谨向导师致以最崇高的敬意和最诚挚的感谢！
+
+感谢实验室的各位老师。感谢XXX老师在学术上给予的指导和帮助，感谢XXX老师在实验设备上提供的支持。你们的帮助使我的研究工作得以顺利进行。
+
+感谢实验室的各位同学。感谢XXX博士在算法实现方面提供的帮助，感谢XXX同学在论文撰写过程中提出的宝贵意见，感谢所有同学在日常学习和生活中给予的关心和支持。与你们一起讨论学术问题、分享研究成果的日子，是我珍贵的回忆。
+
+感谢我的家人。感谢父母多年来的养育之恩和默默支持，你们的理解和鼓励是我前进的最大动力。感谢妻子在我攻读博士期间给予的理解、支持和照顾，你的陪伴使我的博士生涯不再孤单。感谢我的孩子，你是我不断努力的动力源泉。
+
+感谢母校XX大学为我提供了良好的学习环境和科研平台。感谢研究生院和学院的各位老师在学习、生活和科研上给予的帮助和支持。
+
+感谢各位评审专家在百忙之中抽出时间审阅我的论文，并提出宝贵的修改意见。
+
+最后，感谢所有关心和帮助过我的人。在未来的道路上，我将带着感恩的心继续前行，不辜负大家的期望，努力在科研道路上取得更大的成绩。
+
+\vspace{1cm}
+\hfill 作者：XXX
+
+\hfill 2026年6月于XX大学
+
+% ========== 攻读学位期间发表的论文 ==========
+\newpage
+\section*{攻读博士学位期间发表的论文}
+\addcontentsline{toc}{section}{攻读博士学位期间发表的论文}
+
+\subsection*{期刊论文}
+
+\begin{enumerate}
+    \item XXX, XXX. Sparse Local and Tight Frame Based Medical Image Segmentation[J]. IEEE Transactions on Medical Imaging, 2025, 44(3): 678-692. (IF=10.6)
+    \item XXX, XXX. Non-convex Regularization for Radio Astronomical Imaging[J]. Monthly Notices of the Royal Astronomical Society, 2025, 512(2): 2345-2360. (IF=5.3)
+    \item XXX, XXX. Online Tensor Decomposition for Large-scale Data Analysis[J]. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2025. (Under Review)
+\end{enumerate}
+
+\subsection*{会议论文}
+
+\begin{enumerate}
+    \item XXX, XXX. Physics-Constrained Neural Networks for Image Processing[C]. International Conference on Computer Vision, 2025.
+    \item XXX, XXX. Variational Methods Meet Deep Learning: A Unified Framework[C]. Conference on Neural Information Processing Systems, 2024.
+\end{enumerate}
+
+\subsection*{专利}
+
+\begin{enumerate}
+    \item XXX, XXX. 一种基于变分方法的医学图像分割系统及方法[P]. 中国专利, CN202510001234.5, 2025.
+\end{enumerate}
+
+% ========== 附录 ==========
+\newpage
+\appendix
+\section{定理证明}
+\subsection{收敛性定理证明}
+\subsection{复杂度分析}
+
+\section{算法伪代码}
+
+\section{补充实验结果}

@@ -1,0 +1,1058 @@
+Disparity and Optical Flow Partitioning
+Using Extended Potts Priors
+Xiaohao Cai∗, Jan Henrik Fitschen ∗, Mila Nikolova †, Gabriele Steidl ∗,
+Martin Storath ‡
+Abstract
+This paper addresses the problems of disparity and optical ﬂow partitioning based on
+the brightness invariance assumption. We investigate new variational approaches to these
+problems with Potts priors and possibly box constraints. For the optical ﬂow partitioning,
+our model includes vector-valued data and an adapted Potts regularizer. Using the nota-
+tion of asymptotically level stable functions we prove the existence of global minimizers of
+our functionals. We propose a modiﬁed alternating direction method of minimizers. This
+iterative algorithm requires the computation of global minimizers of classical univariate
+Potts problems which can be done eﬃciently by dynamic programming. We prove that
+the algorithm converges both for the constrained and unconstrained problems. Numerical
+examples demonstrate the very good performance of our partitioning method.
+1 Introduction
+An important task in computer vision is the reconstruction of three dimensional (3D) scenes
+from stereo images. Taking a photo, 3D objects are projected onto a 2D image and the
+depth information gets lost. If a stereo camera is used, two images are obtained. Due to
+the diﬀerent perspectives there is a displacement between corresponding points in the images
+which depends on the distance of the points from the camera. This displacement is called
+disparity and turns out to be inversely proportional to the distances of the objects, see
+Fig. 1 for an illustration. Therefore disparity estimation has constituted an active research
+area in recent years. Global combinatorial optimization methods such as graph-cuts [11,
+36] which rely on a discrete label space of the disparity map and belief propagation [35,
+61] were developed as well as variational approaches [16, 20, 24, 32, 39, 40, 57, 60]. In
+particular, in [32] the global energy function was also made convex by quantizing the disparity
+map and converting it into a set of binary ﬁelds. Illumination variations were additionally
+taken into account, e.g., in [16, 19]. A stereo matching algorithm based on the curvelet
+decomposition was developed in [42]. With the aim of reducing the computational redundancy,
+a histogram based disparity estimation method was proposed in [41]. Further, methods based
+on non-parametric local transforms followed by normalized cross correlation (NCC) [56] and
+∗University of Kaiserslautern, Department of Mathematics, Paul-Ehrlich-Str. 31, 67663 Kaiserslautern,
+Germany. cai@mathematik.uni-kl.de, ﬁtschen@mathematik.uni-kl.de, and steidl@mathematik.uni-kl.de.
+†CMLA, ENS Cachan, CNRS, 61 Avenue du President Wilson, F-94230 Cachan, France.
+nikolova@cmla.ens-cachan.fr
+‡Biomedical Imaging Group EPFL, CH-1015 Lausanne VD Switzerland. martin.storath@epﬂ.ch
+1
+arXiv:1405.1594v1  [math.NA]  7 May 2014
+Figure 1: Left and middle: Two images taken by a stereo camera. The shift between the
+images is clearly visible. Right: True disparity encoded by diﬀerent gray values which shows
+the depth of the diﬀerent objects in the scene. (http://vision.middlebury.edu/stereo/ image
+credits notice)
+rank-transforms [65] have been used. In this paper we are interested in the direct disparity
+partitioning without a preliminary separate estimation of the disparity. Moreover we want
+to avoid an initial quantization of the disparity map as necessary in graph-cut methods or in
+[32]. We focus on a variational approach with a linearized brightness invariance assumption
+to constitute the data ﬁdelity term. The Potts prior described below will serve as regularizing
+term which forces the minimizer of our functional to show a good partitioning.
+Optical ﬂow estimation is closely related to disparity estimation where the horizontal displace-
+ment direction has to be completed by the vertical one. In other words, we are searching for
+vector ﬁelds now and have to deal with vector-valued data. Variational approaches to optical
+ﬂow estimation were pioneered by Horn and Schunck [34] followed by a vast number of reﬁne-
+ments and extensions, including sophisticated data ﬁdelity terms going beyond the brightness
+[7, 13, 31] and nonsmooth regularizers, e.g., TV-like ones [2, 33] including also higher order
+derivatives [62, 63, 64] and nonlocal regularizers [59], to mention only few of them. In general
+multiscale approaches have to be taken into account to correctly determine larger and smaller
+ﬂow vectors [1, 12, 23]. A good overview is given in [7]. Recent comprehensive empirical
+evaluations [6, 29] show that variational algorithms yield a very good performance. As for
+the disparity we deal with variational optical ﬂow partitioning using the brightness invariance
+assumption and a vector-valued Potts prior in this paper.
+The classical (discrete) Potts model, named after R. Potts [46] has the form
+min
+u
+1
+2∥f−u∥2
+2 +λ∥∇u∥0, (1)
+where the discrete gradient consists of directional diﬀerence operators and ∥·∥ 0 denotes the
+ℓ0 semi-norm. Computing a global minimizer of the multivariate Potts model appears to be
+NP hard [11, 21, 55]. For univariate data this problem can be solved eﬃciently using dynamic
+programming [14, 27, 43, 58]. In the context of Markov random ﬁelds such kind of functionals
+were used by Geman and Geman [30] and in [9]. In [37] a deterministic continuation method
+to restore piecewise constant images was proposed. A stochastic continuation approach was
+introduced and successfully used for the reconstruction of 3D tomographic images in [47].
+The method and the theory were reﬁned in [48]. Recently theoretical results relating the
+probability for global convergence and the computation speed were given in [49].
+There is also a rich literature on ℓ0-regularized methods (without additional diﬀerence opera-
+tor) in particular in the context of sparsity and on various (convex) relaxation methods (also
+2
+for data ﬁdelity terms with linear operators). Here we refer to the overview in [26]. Various
+approximations of theℓ0 norm were used in order to guarantee that the objective function has
+global minimizers; see, e.g., [17], among others. Note that the local and the global minimizers
+of least squares regularized with the ℓ0 norm were described in [44].
+In this paper, we concentrate ourselves on the (non-relaxed) Potts functional. We apply the
+following model:
+min
+u∈S
+1
+2∥f−Au∥2
+2 +λ∥∇u∥0, (2)
+whereS is a certain compact set, A a linear operator and∥∇u∥0 a ’grouped’ or vector-valued
+prior now. We prove the existence of a global minimizer of the functional using the notion
+of asymptotically level stable functions [3]. For single-valued data a completely diﬀerent ex-
+istence proof was given in [54]. We apply an ADMM like algorithm to the general Potts
+model (2). Such algorithm was proposed for the partitioning of vector-valued images for the
+Potts model (1) in [53]. It appears to be faster than current methods based on graph cuts
+and convex relaxations of the Potts model. In particular the number of values of the sought-
+after image u is not a priori restricted. Our algorithm is designed for the model (2) which
+includes non invertible linear operators in the data ﬁdelity term as well as constraints. In the
+context of wavelet frame operators (instead of gradients) another minimization method for
+single-valued ℓ0-regularized, constrained problems was suggested in [38, 66]. It is based on
+a penalty decomposition and reduces the problem mainly to the iterative solution of ℓ2−ℓ0
+problems via hard thresholding. Convergence to a local minimizer is shown in case of an
+invertible operator A. However, note that in our applications both linear operators A1 and
+A have usually a nontrivial kernel. To the best of our knowledge this is the ﬁrst time that
+this kind of direct partitioning model was applied for disparity and optical ﬂow estimation.
+The remaining part of the paper is organized as follows: Our disparity and optical ﬂow parti-
+tioning models are presented in Section 2. Section 3 provides the proof that the (vector-valued)
+general Potts model has a global minimizer. Then, in Section 4 an ADMM like algorithm is
+suggested together with the convergence proofs for the constrained and unconstrained models.
+Numerical experiments are shown in Section 5. Finally, Section 6 gives conclusions for future
+work.
+2 Disparity and Optical Flow Partitioning Models
+In this paper we deal with gray-value imagesf :G→ R deﬁned on the gridG :={1,...,M }×
+{1,...,N } and vector ﬁelds u = (u1,...,u d) :G→ Rd, where d = 1 in the disparity parti-
+tioning problem and d = 2 in the optical ﬂow partitioning problem. Note that
+u(i,j ) = (u1(i,j ),...,u d(i,j ))∈ Rd, (i,j )∈G .
+By∇1,∇2 we denote derivative operators in vertical and horizontal directions, respectively.
+More precisely we will use their discrete counterparts. Among the various possible discretiza-
+tions of derivative operators we focus on forward diﬀerences
+∇1u(i,j ) :=u(i + 1,j )−u(i,j ), ∇2u(i,j ) :=u(i,j + 1)−u(i,j )
+3
+and assume mirror boundary conditions. Further we will need the ’grouped’ ℓ0 semi-norm for
+vector-valued data deﬁned by
+∥u∥0 :=
+n∑
+i,j=1
+∥u(i,j )∥0, ∥u(i,j )∥0 :=
+{ 0 if u(i,j ) = 0d,
+1 otherwise . (3)
+Here 0d denotes the null vector in Rd. If d = 1 then∥u∥0 is the usualℓ0 ’componentwise’ semi-
+norm for vectors. For the disparity and optical ﬂow partitioning we will apply theℓ0 semi-norm
+not directly to the vectors but rather to ∇νu1 and∇νu, ν = 1, 2, respectively, to penalize
+their spatial diﬀerences. In the disparity problem we consider ∥∇u1∥0 :=∥∇1u1∥0 +∥∇2u1∥0
+and the optical ﬂow problem ∥∇u∥0 :=∥∇1u∥0 +∥∇2u∥0. For the later one, ∥∇νu∥0 =
+∥(∇νu1(i,j ),∇νu2(i,j ))(i,j)∥0 uses indeed the ’grouped’ version of the ℓ0 semi-norm.
+Remark 2.1. To have a convenient vector-matrix notation we reorder images f and ul, l =
+1,...,d columnwise into vectors vecf and vecul of length n :=NM . We address the pixels
+by the index set In :={1,...,n }. If the meaning is clear from the context we keep the notation
+f instead of vecf . In particular we will have ul∈ Rn and u = (uT
+1,...,u T
+d)T∈ Rnd. After
+columnwise reordering the forward diﬀerence operators (with mirror boundary conditions) can
+be written as matrices
+∇1 :=Id⊗IM⊗DN, ∇2 :=Id⊗DT
+M⊗IN,
+whereIN denotes the N×N identity matrix,
+DN :=
+
+
+−1 1
+−1 1
+...
+−1 1
+0
+
+
+∈ RN,N
+and⊗ is the tensor (Kronecker) product of matrices.
+Using the indicator function of a set S deﬁned by
+ιS(t) =
+{
+0 if t∈S,
+∞ otherwise,
+we can address box constraints on u by adding the regularizing term ιSBox(u), where
+SBox :={u∈ Rdn :umin≤u≤umax}.
+Both in the disparity and optical ﬂow partitioning problems we are given a sequence of
+images. In this paper we focus on two images f1 and f2 coming from (i) the appropriate
+left and right images taken, e.g., by a stereo camera (disparity problem), and (ii) two image
+frames at diﬀerent times arising, e.g., from a video (optical ﬂow problem). Then the models
+rely on an invariance requirement between these images. Various invariance assumptions were
+considered in the literature and we refer to [7] for a comprehensive overview. Here we focus
+4
+on the brightness invariance assumption. In the disparity model we address only horizontal
+displacements and consider in a continuous setting
+f1(x,y )−f2(x−u1(x,y ),y )≈ 0. (4)
+For the optical ﬂow model we assume
+f1(x,y )−f2
+(
+(x,y )−u(x,y )
+)
+≈ 0, u := (u1,u 2). (5)
+Using ﬁrst order Taylor expansions around an initial disparity ¯u1, resp., an initial optical ﬂow
+estimate ¯u = (¯u1, ¯u2), gives
+disp. : f2(x−u1,y )≈f2(x− ¯u1,y )−∇ 1f2(x− ¯u1,y )(u1(x,y )− ¯u1(x,y )),
+ﬂow : f2
+(
+(x,y )−u)≈f2
+(
+(x,y )− ¯u)
+)
+− (∇1f2((x,y )− ¯u),∇2f2((x,y )− ¯u)
+)
+(u(x,y )− ¯u(x,y )).
+To get an initial disparity we will use a simple block-matching approach with NCC as mea-
+sure for the block similarity, following the ideas in [16, 56]. Then the linearized invariance
+requirements (5) and (4) become
+disp. : 0 ≈f1(x,y )−f2(x− ¯u1,y ) +∇1f2(x− ¯u1,y )(u1(x,y )− ¯u1(x,y )),
+ﬂow : 0 ≈f1(x,y )−f2
+(
+(x,y )− ¯u
+)
++
+(
+∇1f2((x,y )− ¯u),∇2f2((x,y )− ¯u)
+)
+(u(x,y )− ¯u(x,y )).
+Note that f2((x,y )− ¯u) is only well deﬁned in the discrete setting if ( i,j )− ¯u is inG. Later
+we will see that our method to compute ¯u really fulﬁlls this condition, thus we can carry over
+the continuous model to the discrete setting without any modiﬁcations. Using a non-negative
+increasing function ϕ : R≥0→ R, and considering only grid points (x,y ) = (i,j )∈G the data
+term for the disparity partitioning model becomes for example
+∑
+(i,j)∈G
+ϕ
+(
+∇1f2(i− ¯u1,j )u1(i,j )− (∇1f2(i− ¯u1,j )¯u1(i,j ) +f2(i− ¯u1,j )−f1(i,j ))
+)
+.
+In this paper we will deal with quadratic functionsϕ(t) := 1
+2t2. Using the notation in Remark
+2.1 our partitioning models become
+disp. : Edisp(u1) := 1
+2∥A1u1−b1∥2
+2 +µιSBox(u1) +λ (∥∇1u1∥0 +∥∇2u1∥0), (6)
+ﬂow : Eﬂow(u) := 1
+2∥Au−b∥2
+2 +µιSBox(u) +λ (∥∇1u∥0 +∥∇2u∥0), (7)
+where µ∈{ 0, 1}, λ> 0,∥·∥ 0 stands for the ’group’ semi-norm in (3) and
+A1 := diag
+(
+vec
+(
+∇1f2(i− ¯u1,j )
+))
+, (8)
+A :=
+(
+diag
+(
+vec
+(
+∇1f2((i,j )− ¯u)
+))
+, diag
+(
+vec
+(
+∇2f2((i,j )− ¯u)
+)))
+, (9)
+b1 := vec
+(
+∇1f2(i− ¯u1,j )¯u1(i,j ) +f2(i− ¯u1,j )−f1(i,j )
+)
+,
+b := vec
+((
+∇1f2((i,j )− ¯u),∇2f2((i,j )− ¯u)
+)
+¯u(i,j ) +f2((i,j )− ¯u)−f1(i,j )
+)
+. (10)
+We are looking for minimizers of these functionals.
+5
+3 Global Minimizers for Potts Regularized Functionals
+We want to know if the functionals in (6) and (7) have global minimizers. BothEdisp andEﬂow
+are lower semi-continuous (l.s.c.) and proper functionals. When µ = 1, the minimization of
+Edisp and Eﬂow is constrained to the compact set SBox in which case (6) and (7) have global
+minimizers; see, e.g., [4, Proposition 3.1.1, p. 82].
+Next we focus on the case µ = 0. More general, we consider for arbitrary given A∈ Rn,dn,
+b∈ Rn and p≥ 1 functionals E : Rdn→ R of the form
+E(u) := 1
+p∥Au−b∥p
+p +λ (∥∇1u∥0 +∥∇2u∥0), λ> 0. (11)
+The existence of a global minimizer was proved in the case d = 1 in [54]. Here we give a
+shorter and more general proof that holds for any d≥ 1 using the notion of asymptotically
+level stable functions. This wide class of functions was introduced by Auslender [3] in 2000
+and since then it appeared that many problems on the existence of optimal solutions are
+easily solved for these functions. As usual,
+lev (E,λ ) :={u∈ Rdn :E(u)≤λ} for λ> inf
+u
+E(u) ;
+byE∞ we denote the asymptotic (or recession) function of E and
+ker(E∞) :={u∈ Rdn :E∞(u) = 0}.
+The following deﬁnition is taken from [4, p. 94]: a l.s.c. and proper function E : Rdn→
+R∪{ +∞} is said to be asymptotically level stable (als) if for each ρ >0, each real-valued,
+bounded sequence{λk}k and each sequence{uk}∈ Rdn satisfying
+uk∈ lev (E,λk), ∥uk∥→ +∞, uk
+∥uk∥→ ˜u∈ ker(E∞), (12)
+there exists k0 such that
+uk−ρ˜u∈ lev (E,λk) ∀k≥k0.
+If for each real-valued, bounded sequence {λk}k there exists no sequence {uk}k satisfying
+(12), then E is automatically als.
+In particular, coercive functions are als. It was originally exhibited in [5] (without the notion
+of als functions) that any als function E with infE >−∞ has a global minimizer. The proof
+is also given in [4, Corollary 3.4.2]. We show that the discontinuous non-coercive objective E
+in (11) is als and has thus a global minimizer.
+Theorem 3.1. LetE : Rdn→ R be of the form (11). Then the following relations hold true:
+i) ker(E∞) = ker(A).
+ii) E is als.
+iii) E has a global minimizer.
+6
+Proof. i) The asymptotic function E∞ of E can be calculated according to [22], see also [4,
+Theorem 2.5.1], as
+E∞(u) = lim inf
+u′→u
+t→∞
+E(tu′)
+t .
+Then
+E∞(u) = lim inf
+u′→u
+t→∞
+1
+p∥Atu′−b∥p
+p +∥∇1(tu′)∥0 +∥∇2(tu′)∥0
+t
+= lim inf
+u′→u
+t→∞
+(1
+ptp−1∥Au′− 1
+tb∥p
+p +∥∇1(tu′)∥0 +∥∇2(tu′)∥0
+t
+)
+=
+
+
+
+0 if u∈ ker(A),
++∞ if u̸∈ ker(A) andp> 1,
+∥Au∥1 if u̸∈ ker(A) andp = 1,
+and consequently ker(E∞) = ker(A).
+ii) Let {uk}k satisfy (12) with uk∥uk∥−1→ ˜u∈ ker(A) and let ρ > 0 be arbitrarily ﬁxed.
+Below we compare the numbers∥∇νuk∥0 and∥∇ν(uk−ρ˜u)∥0,ν = 1, 2. There are two options.
+If (i,j )∈ supp(∇1˜u) :={(i,j )∈G : ˜u(i + 1,j )− ˜u(i,j )̸= 0d}, then
+˜u(i,j )− ˜u(i + 1,j ) = lim
+k→∞
+uk(i,j )−uk(i + 1,j )
+∥uk∥ ̸= 0d
+and∥uk(i,j )−uk(i + 1,j )∥ > 0 for all but ﬁnitely many k. Therefore, there exists k1(i,j )
+such that
+∥uk(i,j )−uk(i+1,j )−ρ(˜u(i,j )−˜u(i+1,j ))∥0≤∥uk(i,j )−uk(i,j +1)∥0 ∀k≥k1(i,j ). (13)
+If (i,j )∈G\ supp(∇1˜u), i.e., ˜u(i,j )− ˜u(i + 1,j ) = 0d, then clearly
+uk(i,j )−uk(i + 1,j )−ρ(˜u(i,j )− ˜u(i + 1,j )) =uk(i,j )−uk(i + 1,j ). (14)
+Combining (13) and (14) shows that
+∥uk(i,j )−uk(i + 1,j )−ρ(˜u(i,j )− ˜u(i + 1,j ))∥0≤∥uk(i,j )−uk(i + 1,j )∥0 ∀k≥k1(i,j )
+and hence
+∥∇1(uk−ρ˜u)∥0≤∥∇ 1uk∥0 ∀k≥k1 := max{k1(i,j ) : (i,j )∈G} . (15)
+In the same way, there is k2 so that
+∥∇2(uk−ρ˜u)∥0≤∥∇ 2uk∥0 ∀k≥k2. (16)
+By part i) of the proof we know that A˜u = 0n which jointly with (15) and (16) implies for all
+k≥k0 := max{k1,k 2} that
+E(uk−ρ˜u) = 1
+p∥A(uk−ρ˜u)−b∥p
+p +λ(∥∇1(uk−ρ˜u)∥0 +∥∇2(uk−ρ˜u)∥0)
+= 1
+p∥Auk−b∥p
+p +λ(∥∇1(uk−ρ˜u)∥0 +∥∇2(uk−ρ˜u)∥0)
+≤ 1
+p∥Auk−b∥p
+p +λ(∥∇1uk∥0 +∥∇2(uk)∥0) =E(uk).
+7
+Hence it follows by uk∈ lev (E,λk) that uk−ρ˜u∈ lev (E,λk) for any k≥k0. Consequently
+E is als.
+Finally, iii) follows directly from [4, Corollary 3.4.2].
+4 ADMM-like Algorithm
+In this section we follow an idea in [53] to approximate minimizers of our more general
+functionals Edisp and Eﬂow. Basically the problem is reduced to the iterative computation
+of minimizers of the univariate classical Potts problem for which there exist eﬃcient solution
+techniques using dynamic programming [27]. Here we apply the method proposed in [58, 54].
+We consider
+min
+u∈Rnd
+{
+F (u) +λ
+(
+∥∇1u∥0 +∥∇2u∥0
+)}
+.
+Clearly, we have
+disp. (d = 1) : F (u) := 1
+2∥A1u−b1∥2
+2 +µιSBox(u), u =u1, (17)
+ﬂow (d = 2) : F (u) := 1
+2∥Au−b∥2
+2 +µιSBox(u), u = (uT
+1,u T
+2)T. (18)
+For µ = 1 we have a (box) constrained problem; for µ = 0 an unconstrained one. In [53]
+partitioning problems of vector-valued images withF (u) := 1
+2∥u−b∥2
+2 were considered. In our
+setting a linear operator is involved into the data term which is not a diagonal operator in the
+optical ﬂow problem, see (8), and in both cases (8) and (9) it has a non-trivial kernel. Further,
+we may have box constraints in addition. The minimization problem can be rewritten as
+min
+u,v,w∈Rnd
+{
+F (u) +λ
+(
+∥∇1v∥0 +∥∇2w∥0
+)
+subject to v =u, w=u
+}
+.
+To ﬁnd an approximate (local) minimizer we suggest the following algorithm which resembles
+the basic structure of an alternating direction method of multipliers (ADMM) [10, 28] but
+with inner parameters η(k) which has to go to inﬁnity.
+Algorithm 1 ADMM-like Algorithm
+Initialization: v(0),w (0),q (0)
+1 ,q (0)
+2 ,η (0) and σ >1
+Iteration: Fork = 0, 1,... iterate
+u(k+1)∈ argmin
+u
+{
+F (u) +η(k)
+2
+(
+∥u−v(k) +q(k)
+1 ∥2
+2 +∥u−w(k) +q(k)
+2 ∥2
+2
+)}
+, (19)
+v(k+1)∈ argmin
+v
+{
+λ∥∇1v∥0 + η(k)
+2 ∥u(k+1)−v +q(k)
+1 ∥2
+2
+}
+, (20)
+w(k+1)∈ argmin
+w
+{
+λ∥∇2w∥0 + η(k)
+2 ∥u(k+1)−w +q(k)
+2 ∥2
+2
+}
+, (21)
+q(k+1)
+1 =q(k)
+1 +u(k+1)−v(k+1), (22)
+q(k+1)
+2 =q(k)
+2 +u(k+1)−w(k+1), (23)
+η(k+1) =η(k)σ. (24)
+8
+Step 1 of the algorithm in (19) can be computed for our optical ﬂow term F in (18) andµ = 0
+by setting the gradient of the respective function to zero. Then u(k+1) is the solution of the
+linear system of equations
+(ATA + 2η(k)Idn)u =ATb +η(k)
+(
+v(k)−q(k)
+1 +w(k)−q(k)
+2
+)
+.
+For the disparity problem (17) we have just to replaceA byA1 which is a simple diagonal ma-
+trix andb byb1. Forµ = 1 and the disparity problem,u(k+1) can be computed componentwise
+by straightforward computation as
+u(k+1) = max
+{
+min{u(k+ 1
+2 ),u max},u min
+}
+,
+where
+u(k+ 1
+2 ) := (AT
+1A1 + 2η(k)In)−1
+(
+AT
+1b1 +η(k)
+(
+v(k)−q(k)
+1 +w(k)−q(k)
+2
+))
+. (25)
+For the optical ﬂow problem and µ = 1 we have to minimize a box constrained quadratic
+problem for which there exist eﬃcient algorithms, see, e.g., [8]. In our numerical part the
+optical ﬂow problem is handled without constraints, i.e. for µ = 0. In this case, only the
+linear system of equations (25) has to be solved.
+The Steps 2 and 3 in (20) and (21) are univariate Potts problems which can be solved eﬃ-
+ciently using the method proposed in [53, 58]. As shown in [53] the vector-valued univariate
+Potts problem can be tackled nearly in the same way as in the scalar-valued case. The arith-
+metic complexity isO(dn
+3
+2 ) if N∼M.
+Next we prove the convergence of Algorithm 1. Due to the NP hardness of the problem we can
+in general not expect that the limit point is in general a (global) minimizer of the cost function.
+First we deal with a general situation which involves our unconstrained problems ( µ = 0).
+We assume that any vector in the subdiﬀerential ∂F of F fulﬁlls the growth constraint
+u∗∈∂F (u) ⇒ ∥u∗∥2≤C(∥u∥2 + 1). (26)
+It can be easily checked that F : Rdn→ Rn with F (u) := 1
+p∥Mu−m∥p
+p, p∈ [1, 2] fulﬁlls (26)
+for any matrix M∈ Rn,dn and m∈ Rn. Note that the variable C stands for any constant in
+the rest of the paper.
+Theorem 4.1. Let F : Rdn→ R∪{ +∞} be a proper, closed, convex function which fulﬁlls
+(26). Then Algorithm 1 converges in the sense that (u(k),v (k),w (k))→ (ˆu, ˆv, ˆw) as k→∞
+with ˆu = ˆv = ˆw and (q(k)
+1 ,q (k)
+2 )→ (0, 0) as k→∞ .
+Proof. By (22) we have
+η(k)
+2 ∥q(k+1)
+1 ∥2
+2 = η(k)
+2 ∥u(k+1)−v(k+1) +q(k)
+1 ∥2
+2
+≤λ∥∇1v(k+1)∥0 + η(k)
+2 ∥u(k+1)−v(k+1) +q(k)
+1 ∥2
+2
+and by (20) further
+η(k)
+2 ∥q(k+1)
+1 ∥2
+2≤λ∥∇1(u(k+1) +q(k)
+1 )∥0 + η(k)
+2 ∥u(k+1)− (u(k+1) +q(k)
+1 ) +q(k)
+1 ∥2
+2
+≤λ∥∇1(u(k+1) +q(k)
+1 )∥0
+≤λn.
+9
+By (23) and (21) we conclude similarly
+η(k)
+2 ∥q(k+1)
+2 ∥2
+2≤λn.
+Hence it follows
+∥q(k+1)
+1 ∥2
+2≤ 2λn
+η(k) and ∥q(k+1)
+2 ∥2
+2≤ 2λn
+η(k), (27)
+which implies q(k+1)
+1 → 0 and q(k+1)
+2 → 0 as k→∞ . Further, we obtain by u(k)−v(k) =
+q(k)
+1 −q(k−1)
+1 that
+∥v(k)−u(k)∥2≤∥q(k)
+1 ∥2 +∥q(k−1)
+1 ∥2≤
+√
+2λn
+η(k−1) +
+√
+2λn
+η(k−2)≤ 2
+√
+2λn
+η(k−2)
+and analogously
+∥w(k)−u(k)∥2≤ 2
+√
+2λn
+η(k−2). (28)
+Forϵ(k) :=v(k)−u(k)−q(k)
+1 +w(k)−u(k)−q(k)
+2 we get by (27) - (28) that
+∥ϵ(k)∥2≤∥q(k)
+1 ∥2 +∥q(k)
+2 ∥2 +∥v(k)−u(k)∥2 +∥w(k)−u(k)∥2
+≤
+√
+2λn
+η(k−1) +
+√
+2λn
+η(k−1) + 2
+√
+2λn
+η(k−2) + 2
+√
+2λn
+η(k−2)≤ 6
+√
+2λn
+η(k−2), (29)
+i.e.,∥ϵ(k)∥2 decreases exponentially. By Fermat’s theorem the proximum u(k+1) in (19) has
+to fulﬁll
+0∈∂F (u(k+1)) +η(k)(u(k+1)−v(k) +q(k)
+1 +u(k+1)−w(k) +q(k)
+2 )
+so that there exists p(k+1)∈F (u(k+1)) satisfying
+0 =p(k+1) +η(k)(u(k+1)−v(k) +q(k)
+1 +u(k+1)−w(k) +q(k)
+2 )
+=p(k+1) +η(k)(u(k)−v(k) +q(k)
+1 +u(k)−w(k) +q(k)
+2 ) + 2η(k)(u(k+1)−u(k))
+=p(k+1) +η(k)ϵ(k) + 2η(k)(u(k+1)−u(k)).
+Rearranging terms, taking the norm and applying the triangle inequality leads to
+∥u(k+1)−u(k)∥2≤∥p(k+1)∥2
+2η(k) + 1
+2∥ϵ(k)∥2. (30)
+Since∥x−y∥≥∥ x∥−∥ y∥ and by assumption (26) it follows
+∥u(k+1)∥2≤∥p(k+1)∥2
+2η(k) + 1
+2∥ϵ(k)∥2 +∥u(k)∥2 (31)
+≤ C∥u(k+1)∥2
+2η(k) + C
+2η(k) + 1
+2∥ϵ(k)∥2 +∥u(k)∥2.
+10
+Since C
+2η(k)→ 0 as k→∞ , there exists a K such that 1 < 1
+1− C
+2η(k)
+≤τ :=√σ for all k >K.
+Now (31) implies
+∥u(k+1)∥2
+(
+1− C
+2η(k)
+)
+≤ C
+2η(k) + 1
+2∥ϵ(k)∥2 +∥u(k)∥2
+which gives for k>K the estimates
+∥u(k+1)∥2≤τ C
+2η(k) +τ 1
+2∥ϵ(k)∥2 +τ∥u(k)∥2
+≤τ C
+2η(k) +τ 1
+2∥ϵ(k)∥2 +τ 2 C
+2η(k−1) +τ 2 1
+2∥ϵ(k− 1)∥2 +τ 2∥u(k−1)∥2
+≤τk+1−K∥u(K)∥2 +
+k+1−K∑
+j=1
+Cτj
+2η(k+1−j) +
+k+1−K∑
+j=1
+τj
+2∥ϵ(k + 1−j)∥2
+≤τk+1(
+∥u(K)∥2 +
+k+1−K∑
+j=1
+C
+2η(k+1−j) +
+k+1−K∑
+j=1
+1
+2∥ϵ(k + 1−j)∥2
+)
+and by the exponential decay of ∥ϵ(k)∥2 with η(k) further
+∥u(k+1)∥2≤Cτk+1.
+Using this relation together with (26) and (24) in (30) we conclude
+∥u(k+1)−u(k)∥2≤∥p(k+1)∥2
+2η(k) + 1
+2∥ϵ(k)∥2
+≤ C∥u(k+1)∥2
+2η(k) + C
+2η(k) + 1
+2∥ϵ(k)∥2
+≤ C2τk+1
+2η(k) + C
+2η(k) + 1
+2∥ϵ(k)∥2
+≤ C2
+2η(0)σ
+k−1
+2
++ C
+2η(k) + 3
+√
+2λn
+η(k−2).
+Thus,∥u(k+1)−u(k)∥2 decreases exponentially. Therefore it is a Cauchy sequence and{u(k)}k
+converges to some ˆu as k→∞ . Since q(k)
+1 → 0 and q(k)
+2 → 0 as k→∞ we obtain by (22)
+and (23) that{v(k)}k and{w(k)}k also converge to ˆu. This ﬁnishes the proof.
+The assumptions in the next theorem ﬁt to our constrained models ( µ = 1), but are more
+general.
+Theorem 4.2. Let F : Rdn→ R∪{ +∞} be any function which is bounded on its domain.
+Further assume that (19) has a global minimizer. Then Algorithm 1 converges in the sense
+that (u(k),v (k),w (k))→ (ˆu, ˆv, ˆw) ask→∞ with ˆu = ˆv = ˆw and (q(k)
+1 ,q (k)
+2 )→ (0, 0) ask→∞ .
+Proof. As in the proof of Theorem 4.1 we can show that (29) holds true for ϵ(k) := v(k)−
+u(k)−q(k)
+1 +w(k)−u(k)−q(k)
+2 . The quadratic term in (19) can be rewritten as
+∥u−v(k) +q(k)
+1 ∥2
+2 +∥u−w(k) +q(k)
+2 ∥2
+2 = 2⟨u,u⟩ + 2⟨u,q (k)
+1 −v(k) +q(k)
+2 −w(k)⟩ +C
+= 2∥u−u(k)∥2
+2− 2⟨u,ϵ (k)⟩ +C.
+11
+Thus, the ﬁrst step of Algorithm 1 is equivalent to
+u(k+1)∈ argmin
+u
+{
+F (u) +η(k)∥u−u(k)∥2
+2−η(k)⟨ϵ(k),u⟩
+}
+.
+This implies
+F (u(k+1)) +η(k)∥u(k+1)−u(k)∥2
+2−η(k)⟨ϵ(k),u (k+1)⟩≤ F (u(k))−η(k)⟨ϵ(k),u (k)⟩
+and further
+∥u(k+1)−u(k)∥2
+2≤ F (u(k))−F (u(k+1))
+η(k) −⟨ϵ(k),u (k)−u(k+1)⟩.
+Using the boundedness of f and the Cauchy-Schwarz inequality leads to
+∥u(k+1)−u(k)∥2
+2≤ C
+η(k) +∥ϵ(k)∥2∥u(k)−u(k+1)∥2.
+Since ϵ(k)→ 0 as k→∞ , we conclude that∥u(k)−u(k+1)∥2 is bounded so that
+∥u(k+1)−u(k)∥2
+2≤ C
+η(k) +C∥ϵ(k)∥2.
+Thus,∥u(k)−u(k+1)∥2 is decreasing exponentially and {u(k)}k converges to some ˆu as k→
+∞.
+5 Numerical Results
+In this section we present numerical results obtained by our partitioning approaches. The
+test images for the disparity and the optical ﬂow problems were taken from
+• http://vision.middlebury.edu/stereo/ [50, 51, 52], and
+• http://vision.middlebury.edu/ﬂow/ [6],
+respectively. All examples were executed on a computer with an Intel Core i7-870 Processor
+(8M Cache, 2.93 GHz) and 8 GB physical memory, 64 Bit Linux.
+We compare our direct partitioning methods (6) and (7) via Algorithm 1 with a two-stage
+approach consisting of i) disparity, resp. optical ﬂow estimation, and ii) partitioning of the
+estimated values. More precisely the two stage algorithm performs as follows:
+i) In the ﬁrst step, the disparity is estimated using the TV regularized model
+min
+u1∈SBox
+{1
+2∥A1u1−b1∥2
+2 +ιSBox(u1) +α1∥|∇u1|∥ 1
+}
+(32)
+withA1 andb1 deﬁned by (8) and (22), respectively. Here |∇u1| stands for the discrete
+version of
+((
+∂u1
+∂x (x,y )
+)2
++
+(
+∂u1
+∂y (x,y )
+)2)1
+2
+, i.e., we use the isotropic (“rotationally in-
+variant”) TV version. Such model was proposed for the disparity estimation in [16] and
+12
+can be found with e.g., shearlet regularized ℓ1 norm in [25]. For estimating the optical
+ﬂow we minimize
+min
+u
+{1
+2∥Au−b∥2
+2 +α1∥
+√
+|∇u1|2 +|∇u2|2∥1
+}
+, (33)
+withA andb deﬁned by (9) and (10), respectively. The global minimizers of the convex
+functionals (32) and (33) were computed via the primal-dual hybrid gradient method
+(PDHG) proposed in [15, 45]. Clearly, one could use other iterative ﬁrst order (primal-
+dual) methods, see, e.g., [18].
+ii) In the second step the estimated disparity, resp. optical ﬂow is partitioned by the method
+in [53] which minimizes, e.g., for the disparity the functional
+min
+u1
+{1
+2∥u1−u1,est∥2
+2 +α2(∥∇1u1∥0 +∥∇2u1∥0)
+}
+,
+whereu1,est is the disparity estimated in the ﬁrst step. For the approximation of a mini-
+mizer we use the software package Pottslab http://pottslab.de with default parameters.
+Note that by introducing weights w in the Potts prior the functional can be made more
+isotropic which leads to a better “rotation invariance”, see [53].
+Next we comment on the direct partitioning implementation. Our partitioning models (6) and
+(7) are based on the knowledge of initial values ¯u1 and ¯u for the disparity, resp., the optical
+ﬂow. Here we use a simple block matching based algorithm, see [16]. This method consists
+basically of a search within a given range. For each pixel in the ﬁrst image we compare its
+surrounding block with surrounding blocks of pixels in the search range of the second image.
+The chosen block size is 7×7. As a similarity measure we use the normalized cross correlation
+[56]. Finally we apply a median ﬁlter to the initial guess to reduce the inﬂuence of outliers.
+Since (i− ¯u1,j ), resp. (i,j )− ¯u(i,j ) are the grid coordinates of the pixel in the second image
+corresponding to pixel (i,j ) in the ﬁrst image, we see that f2(i− ¯u1,j ), resp. f2((i,j )− ¯u) are
+really well deﬁned grid functions. As parameters in Algorithm 1 we choose η(0) = 0.01 and
+σ = 1.05. The algorithm is initialized with v(0) =w(0) = ¯u1 for the disparity partitioning and
+v(0) =w(0) = ¯u for the ﬂow partitioning; further q(0)
+i ,i = 1, 2 are zero matrices. We show the
+results after 100 iterations where no diﬀerences to subsequently iterated images can be seen.
+We start with the disparity partitioning results. Figure 2 shows the results for the image
+“Venus”. The true disparity contains horizontal and vertical structures so that our non
+isotropic direct approach ﬁts ﬁne. It can compete with the more expansive two stage method.
+The main diﬀerences appear due to the more or less isotropy of the models.
+Figs. 3 and 4 show that our direct partitioning algorithm can qualitatively compete with the
+two stage algorithm.
+Next we show our results for the optical ﬂow partitioning. The ﬂow vectors are color coded
+with color ≃ direction, brightness ≃ magnitude). The ground truth ﬂow ﬁeld in the ﬁrst
+example “Wooden” in Fig. 5 prefers horizontal and vertical directions. As in the ﬁrst disparity
+example our algorithm show good results. In Fig. 6 and Fig. 7 we see that our direct method
+can compete with the more involved two stage approach. The main diﬀerences appear again
+due to the more isotropic approach in the two stage model. Especially in Fig. 6 one can
+see that the ﬂow ﬁeld of the rotating wheel is partitioned into rectangular instead of annular
+13
+Figure 2: Results for the test images “Venus”. Left to right: original left image, ground
+truth, partitioned disparity using the two stage algorithm (α1 = 0.005,α2 = 300), partitioned
+disparity using the direct algorithm (λ = 2.5).
+Figure 3: Result for the images “Cones”. Left to right: original left image, ground truth, par-
+titioned disparity using the two stage algorithm ( α1 = 0.005, α2 = 50), partitioned disparity
+using the direct algorithm (λ = 0.5).
+segments by our direct method. In the same ﬁgure, we show a result where we have estimated
+the optical ﬂow in Step 1 by the more sophisticated model in [13], for the program code see
+http://lmb.informatik.uni-freiburg.de/resources/software.php. Step 2 was the same. The
+result is only slightly diﬀerent from those obtained by the previously described two stage
+algorithm.
+6 Conclusions
+In this paper we have proposed a new method for disparity and optical ﬂow partitioning based
+on a Potts regularized variational model together with an ADMM like algorithm. In case of
+the optical ﬂow it is adapted to vector-valued data. In this paper, we have only shown the
+basic approach and further reﬁnements are planned in the future. So we intend to incorporate
+more sophisticated data ﬁdelity terms. In particular illumination changes should be handled.
+We will make the model more “rotationally invariant”. The simple introduction of weights
+and other diﬀerences as in [53] and in several graph cut approaches is one possibility. The
+crucial part for the running time of the proposed direct algorithm is the univariate Potts
+minimization. However, since the single problems are independent of each other, they could
+be solved in parallel. Such parallel implementation is another point of future activities. Fur-
+ther we want to incorporate multiple frames instead of just two of them in our model. From
+the theoretical point of view, to establish just the convergence of an algorithm to a local
+minimizer seems not to be enlightening since certain constant images are contained in the set
+of local minimizers and we are clearly not looking for them. However, a better understanding
+of strict (local) minimizers and the choice of initial values for the algorithm is interesting.
+14
+Figure 4: Result for the “Dolls” images. Left to right: original left image, ground truth,
+partitioned disparity using the two stage algorithm (α1 = 0.01,α2 = 80), partitioned disparity
+using the direct algorithm (λ = 1.5).
+Figure 5: Result for the “Wooden” images, Left to right: ﬁrst test image, ground truth,
+partitioned optical ﬂow using the two stage algorithm ( α1 = 0.01, α2 = 150), partitioned
+optical ﬂow by the direct algorithm (λ = 0.5).
+Acknowledgement: The work of J. H. Fitschen has been supported by Deutsche Forschungs-
+gemeinschaft (DFG) within the Graduate School 1932. Some parts of the paper have been
+written during a visit M. Nikolova at this Graduate School. Many thanks to M. El-Gheche
+(University Paris Est) for fruitful discussions on disparity estimation.
+References
+[1] P. Anandan. A computational framework and an algorithm for the measurement of visual
+motion. International Journal of Computer Vision , 2(3):283–310, 1989.
+[2] G. Aubert, R. Deriche, and P. Kornprobst. Computing optical ﬂow via variational
+techniques. SIAM Journal on Applied Mathematics , 60(1):156–182, 1999.
+[3] A. Auslender. Existence of optimal solutions and duality results under weak conditions.
+Mathematical Programming, 88(1):45–59, 2000.
+[4] A. Auslender and M. Teboulle. Asymptotic Cones and Functions in Optimization and
+Variational Inequalities. Springer, 2003.
+[5] C. Baiocchi, G. Buttazzo, F. Gastaldi, and F. Tomarelli. General existence theorems
+for unilateral problems in continuum mechanics. Archive for Rational Mechanics and
+Analysis, 100(2):149–189, 1988.
+[6] S. Baker, D. Scharstein, J. Lewis, S. Roth, M. Black, and R. Szeliski. A database and
+evaluation methodology for optical ﬂow. International Journal of Computer Vision ,
+92(1):1–31, 2011.
+15
+Figure 6: Result for the test images “RubberWhale”. Top: ﬁrst test image, ground truth,
+partitioned optical ﬂow by the direct algorithm (λ = 0.05) . Bottom: partitioned optical ﬂow
+by the two stage algorithm. Left: Two stage algorithm ( α1 = 0.005, α2 = 7), Right: Two
+stage algorithm but with Step 1 computed by the model in [13] ( α2 = 7).
+Figure 7: Result for the images “Hydrangea”. Left to right: ground truth, partitioned
+optical ﬂow by the two stage algorithm (α1 = 0.01, α2 = 35), partitioned optical ﬂow by the
+direct algorithm (λ = 0.15).
+16
+[7] F. Becker, S. Petra, and C. Schn¨ orr. Optical ﬂow. In O. Scherzer, editor, Handbook of
+Mathematical Methods in Imaging . Springer, 2nd edition, 2014.
+[8] D. P. Bertsekas, A. Nedi´ c, and E. Ozdaglar.Convex Analysis and Optimization . Athena
+Scientiﬁc, 2003.
+[9] J. E. Besag. On the statistical analysis of dirty pictures (with discussion). Journal of
+the Royal Statistical Society B , 48:259–302, 1986.
+[10] S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein. Distributed optimization and
+statistical learning via the alternating direction method of multipliers. Foundations and
+Trends in Machine Learning, 3:1–122, 2010.
+[11] Y. Boykov, O. Veksler, and R. Zabih. Fast approximate energy minimization via graph
+cuts. IEEE Transactions on Pattern Analysis and Machine Intelligence , 23:1222–1239,
+2011.
+[12] T. Brox, A. Bruhn, N. Papenberg, and J. Weickert. High accuracy optical ﬂow estimation
+based on a theory for warping. In T. Pajdla and J. Matas, editors, Computer Vision -
+ECCV 2004, volume 3024 of Lecture Notes in Computer Science , pages 25–36. Springer
+Berlin Heidelberg, 2004.
+[13] T. Brox and J. Malik. Large Displacement Optical Flow: Descriptor Matching in Vari-
+ational Motion Estimation. IEEE Transactions on Pattern Analysis and Machine Intel-
+ligence, 33(3):500–513, 2011.
+[14] A. Chambolle. Image segmentation by variational methods: Mumford-Shah functional
+and discrete approximations. SIAM Journal on Applied Mathematics , 55:827–863, 1995.
+[15] A. Chambolle and T. Pock. A First-Order Primal-Dual Algorithm for Convex Problems
+with Applications to Imaging. Journal of Mathematical Imaging and Vision , 40(1):120–
+145, 2011.
+[16] C. Chaux, M. EI-Gheche, J. Farah, J. Pesquet, and B. Popescu. A parallel proximal
+splitting method for disparity estimation from multicomponent images under illumination
+variation. Journal of Mathematical Imaging and Vision , 47(3):1–12, 2012.
+[17] E. Chouzenoux, A. Jezierska, J.-C. Pesquet, and H. Talbot. A majorize-minimize sub-
+space approach for regularization. SIAM Journal on Imaging Sciences , 6(1):563–591,
+2013.
+[18] P. L. Combettes and J.-C. Pesquet. Proximal splitting methods in signal processing. In
+H. H. Bauschke, R. Burachik, P. L. Combettes, V. Elser, D. R. Luke, and H. Wolkowicz,
+editors, Fixed-Point Algorithms for Inverse Problems in Science and Engineering , pages
+185–212. Springer-Verlag, New York, 2010.
+[19] I. Cox, S. Roy, and S. Hingorani. Dynamic histogram warping of image pairs for constant
+image brightness. In Proc. Int. Conf. Image Process, Washington, DC , pages 366–369,
+Oct. 1995.
+17
+[20] D. Cremers, P. Thomas, K. Kolev, and A. Chambolle. Convex relaxation techniques for
+segmentation, stereo and multiview reconstruction. In Markov Random Fields for Vision
+and Image Processing, A. Blake, P. Kohli, and C. Rother, Eds. The MIT Press, Boston ,
+2011.
+[21] G. Davis, S. Mallat, and M. Avellaneda. Adaptive greedy approximations. Constructive
+Approximation, 13(1):57–98, 1997.
+[22] J.-P. Dedieu. Cˆ ones asymptotes d’un ensemble non convexe. application ` a l’optimisation.
+Compte-rendus de l’ Acad´ emie des Sciences, 287:91–103, 1977.
+[23] P. D´ erian, P. H´ eas, C. Herzet, and E. M´ emin. Wavelet-based ﬂuid motion estimation.
+In A. Bruckstein, B. Haar Romeny, A. Bronstein, and M. Bronstein, editors, Scale Space
+and Variational Methods in Computer Vision, volume 6667 of Lecture Notes in Computer
+Science, pages 737–748. Springer Berlin Heidelberg, 2012.
+[24] R. Deriche, P. Kornprobst, and G. Aubert. Optical-ﬂow estimation while preserving its
+discontinuities: A variational approach. In Li, S., Mital, D., Teoh, E., Wang, H. (eds.)
+Recent Developments in Computer Vision. Lecture Notes in Computer Science, Springer,
+Berlin, pages 69–80, 1996.
+[25] J. H. Fitschen. Proximal splitting methods for the disparity estimation under illumunation
+variation. Bachelor Thesis, University of Kaiserslautern, 2013.
+[26] M. Fornasier and H. Rauhut. Compressive sensing. In O. Scherzer, editor, Handbook of
+Mathematical Methods in Imaging . Springer, 2nd edition, 2014.
+[27] F. Friedrich, A. Kempe, V. Liebscher, and G. Winkler. Complexity penalized m-
+estimation. Journal of Computational and Graphical Statistics , pages 201–224, 2008.
+[28] D. Gabay. Applications of the method of multipliers to variational inequalities. In
+M. Fortin and R. Glowinski, editors, Augmented Lagrangian Methods: Applications to
+the Solution of Boundary Value Problems , chapter IX, pages 299–340. North-Holland,
+Amsterdam, 1983.
+[29] A. Geiger, P. Lenz, C. Stiller, and R. Urtasun. Vision meets robotics: The kitti dataset.
+The International Journal of Robotics Research , 32(11):1231–1237, 2013.
+[30] S. Geman and D. Geman. Stochastic relaxation, gibbs distributions, and the bayesian
+restoration of images. IEEE Transactions on Pattern Analysis and Machine Intelligence ,
+6(6):721–741, Nov 1984.
+[31] D. Hafner, O. Demetz, J. Weickert, and M. Reißel. Is the census transform good for
+robust optic ﬂow computation? In A. Kuijpers, K. Bredies, T. Pock, and H. Bischof,
+editors, Scale Space and Variational Methods in Computer Vision, volume 7893 ofLecture
+Notes in Computer Science , pages 210–221. Springer Berlin Heidelberg, 2013.
+[32] S. Hiltunen, J. C. Pesquet, and B. Pesquet-Popescu. Comparison of two proximal split-
+ting algorithms for solving multilabel disparity estimation problems. In European Signal
+and Image Processing Conference (EUSIPCO 2012), Bucharest, Romania , pages 1134–
+1138, 2012.
+18
+[33] W. Hinterberger, O. Scherzer, C. Schn¨ orr, and J. Weickert. Analysis of optical ﬂow
+models in the framework of calculus of variations. Numerical Functional Analysis and
+Optimization, 23(1/2):69–89, 2002.
+[34] B. K. Horn and B. G. Schunck. Determining optical ﬂow. Artiﬁcial Intelligence, 17(1-
+3):185–203, 1981.
+[35] A. Klaus, M. Sormann, and K. Karner. Segment-based stereo matching using belief prop-
+agation and a self-adapting dissimilarity measure. In Proc. Int. Conf. Pattern Recogni-
+tion, Hong Kong , volume 3, pages 15–18, 2006.
+[36] V. Kolmogorov and R. Zabih. Computing visual correspondence with occlusions using
+graph cuts. In Proceedings of the Eighth IEEE International Conference on Computer
+Vision, volume 2, pages 508–515, 2001.
+[37] Y. Leclerc. Constructing simple stable descriptions for image partitioning. International
+Journal of Computer Vision , 3:120–145, 1989.
+[38] Z. Lu. Iterative hard thresholding methods for l0 regularized convex cone programming.
+Mathematical Programming, DOI 10.1007/s10107-013-0714-4, 2013.
+[39] W. Miled, J. Pesquet, and M. Parent. Disparity map estimation using a total variation
+bound. In The 3rd Canadian Conf. on Computer and Robot Vision, Quebec, Canada ,
+pages 48–55, 2006.
+[40] W. Miled, J. Pesquet, and M. Parent. A convex optimization approach for depth estima-
+tion under illumination variation. IEEE Transactions on Image Processing , 18(4):813–
+830, 2009.
+[41] D. Min, J. Lu, and M. Do. A revisit to cost aggregation in stereo matching: How far
+can we reduce its computational redundancy? In Proceedings of the IEEE International
+Conference on Computer Vision , pages 1567–1574, 2011.
+[42] D. Mukherjee, G. Wang, and Q. Wu. Stereo matching algorithm based on curvelet
+decomposition and modifed support weights. In Proceedings of the IEEE International
+Conference on Acoustics Speech and Signal Processing, pages 758–761, 2010.
+[43] D. Mumford and J. Shah. Boundary detection by minimizing functionals. IEEE Con-
+ference on Computer Vision and Pattern Recognition , 17:137–154, 1985.
+[44] M. Nikolova. Description of the minimizers of least squares regularized with ℓ0-norm.
+uniqueness of the global minimizer. SIAM Journal on Imaging Sciences , 6(2):904–937,
+2013.
+[45] T. Pock, A. Chambolle, D. Cremers, and H. Bischof. A convex relaxation approach for
+computing minimal partitions. In IEEE Conf. Computer Vision and Pattern Recognition,
+pages 810–817. 2009.
+[46] R. B. Potts. Some generalized order-disorder transformations. Proceedings of the Cam-
+bridge Philosophical Society, 48:106–109, 1952.
+19
+[47] M. Robini, A. Lachal, and I. Magnin. A stochastic continuation approach to piecewise
+constant reconstruction. IEEE Transactions on Image Processing , 16(10):2576–2589,
+2007.
+[48] M. Robini and I. Magnin. Optimization by stochastic continuation. SIAM Journal on
+Imaging Sciences, 3(4):1096–1121, 2010.
+[49] M. Robini and P. Reissman. From simulated annealing to stochastic continuation:
+a new trend in combinatorial optimization. Journal of Global Optimization , DOI
+10.1007/s10898-012-9860-0, 2013.
+[50] D. Scharstein and C. Pal. Learning conditional random ﬁelds for stereo. In IEEE Com-
+puter Society Conference on Computer Vision and Pattern Recognition (CVPR 2007) ,
+2007.
+[51] D. Scharstein and R. Szeliski. A taxonomy and evaluation of dense two-frame stereo
+correspondence algorithms. International Journal of Computer Vision , 42(1/2/3):7–42,
+2002.
+[52] D. Scharstein and R. Szeliski. High-accuracy stereo depth maps using structured light.
+In IEEE Computer Society Conference on Computer Vision and Pattern Recognition
+(CVPR 2003), volume 1, pages 195–202, 2003.
+[53] M. Storath and A. Weinmann. Fast partitioning of vector-valued images. Preprint GSF
+Muenich, 2014.
+[54] M. Storath, A. Weinmann, and L. Demaret. Jump-sparse and sparse recovery using potts
+functionals. arXiv preprint arXiv:1304.4373 , 2013.
+[55] J. Tropp. Just relax: convex programming methods for identifying sparse signals in noise.
+Information Theory, IEEE Transactions on , 52(3):1030–1051, March 2006.
+[56] D. Tsai, C. Lin, and J. Chen. The evaluation of normalized cross correlations for defect
+detection. Pattern Recognition Letters, 24(15):2525–2535, 2003.
+[57] L. Wang and R. Yang. Global stereo matching leveraged by sparse ground control points.
+In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition ,
+pages 3033–3040, 2011.
+[58] A. Weinmann, M. Storath, and L. Demaret. Reconstruction of piecewise constant signals
+by minimization of the l1-Potts functional. arXiv preprint arXiv:1207.4642 , 50, 2012.
+[59] M. Werlberger, T. Pock, and H. Bischof. Motion estimation with non-local total varia-
+tion regularization. In Computer Vision and Pattern Recognition (CVPR), 2010 IEEE
+Conference on, pages 2464–2471, June 2010.
+[60] M. Werlberger, M. Unger, T. Pock, and H. Bischof. Eﬃcient minimization of the non-
+local Potts model. In A. Bruckstein, B. Haar Romeny, A. Bronstein, and M. Bronstein,
+editors, Scale Space and Variational Methods in Computer Vision, volume 6667 ofLecture
+Notes in Computer Science , pages 314–325. Springer Berlin Heidelberg, 2012.
+20
+[61] Q. Yang, L. Wang, R. Yang, S. Wang, M. Liao, and D. Nister. Realtime global stereo
+matching using hierarchical belief propagation. In Proc. British Machine Vision Confer-
+ence, Edinburgh, UK, pages 989–998, 2006.
+[62] J. Yuan, C. Schn¨ orr, and E. M´ emin. Discrete orthogonal decomposition and variational
+ﬂuid ﬂow estimation. Journal of Mathematical Imaging and Vision , 28:67–80, 2007.
+[63] J. Yuan, C. Schn¨ orr, and G. Steidl. Simultaneous higher order optical ﬂow estimation
+and decomposition. SIAM Journal on Scientiﬁc Computing , 29(6):2283–2304, 2007.
+[64] J. Yuan, C. Schn¨ orr, and G. Steidl. Convex Hodge decomposition and regularization of
+image ﬂows. Journal of Mathematical Imaging and Vision , 33(2):169–177, 2009.
+[65] R. Zabih and J. Woodﬁll. Non-parametric local transforms for computing visual corre-
+spondence. In Proc. Eur. Conf. Comput. Vis, Stockholm, Sweden , pages 15–158, 1994.
+[66] Y. Zhang, B. Dong, and Z. Lu. l0 minimization for wavelet frame based image restoration.
+Mathematics of Computation , 82:995–1015, 2013.
+21

@@ -370,11 +370,9 @@ def SLaT_segmentation(f_rgb, K, lambda_param=1.0, mu=1.0):
 
 ---
 
-## 七、与井盖检测的联系
 
 ### 7.1 应用场景适配
 
-**井盖图像特点**：
 - 彩色图像（RGB）
 - 可能退化的场景：
   - 夜间拍摄 → 噪声
@@ -383,15 +381,10 @@ def SLaT_segmentation(f_rgb, K, lambda_param=1.0, mu=1.0):
 
 **SLaT的优势**：
 1. **处理退化**：Stage 1恢复图像质量
-2. **颜色利用**：RGB+Lab捕获井盖特征（金属光泽 vs 路面）
-3. **灵活K值**：可以尝试K=2（井盖/背景）或K=3（井盖/阴影/背景）
 
-### 7.2 改进的井盖检测方案
 
 ```python
-def manhole_detection_slat(image, K_candidates=[2, 3, 4]):
     """
-    基于SLaT的井盖检测
     """
     # Stage 1 & 2 (只需执行一次)
     g_star = slat_stage1_stage2(image)
@@ -421,9 +414,6 @@ def manhole_detection_slat(image, K_candidates=[2, 3, 4]):
 
 ### 7.3 关键洞察
 
-**Lab空间对井盖检测的价值**：
-- **L通道**：区分井盖（通常较暗）与路面
-- **a/b通道**：区分金属井盖的色调特征
 
 **Stage 2的必要性**：
 仅用RGB可能在某些光照条件下失败，加入Lab提供互补信息。
@@ -486,7 +476,6 @@ def manhole_detection_slat(image, K_candidates=[2, 3, 4]):
    <details><summary>答案</summary>能工作但在RGB通道高度相关时会失败，如金字塔图像的沙漠与天空。</details>
 
 ### 应用设计
-6. **设计一个基于SLaT的夜间井盖检测方案，说明各阶段的特殊考虑。**
    <details><summary>提示</summary>Stage 1选择泊松噪声模型；Stage 2必须保留；Stage 3尝试K=2,3。</details>
 
 ---

@@ -1,0 +1,523 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+% ========== 宏包 ==========
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{algorithm,algorithmic}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{setspace}
+
+% ========== 页面设置 ==========
+\geometry{top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm}
+\linespread{1.5}
+
+% ========== 页眉页脚 ==========
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{硕士学位论文}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ========== 代码样式 ==========
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true
+}
+
+% ========== 文档信息 ==========
+\title{\textbf{基于变分方法的医学图像分割研究}}
+\author{XXX}
+\advisor{XXX 教授}
+\degree{工学硕士}
+\major{计算机科学与技术}
+\institute{XX大学}
+\date{2026年6月}
+
+% ========== 封面定义 ==========
+\def\maketitlecover{
+    \begin{titlepage}
+        \centering
+        \vspace*{2cm}
+        {\xiaosan\textbf{XX大学}}
+        \par\vspace{0.5cm}
+        {\xiaoer\textbf{硕士学位论文}}
+        \par\vspace{3cm}
+        {\yihao\textbf{基于变分方法的医学图像分割研究}}
+        \par\vspace{4cm}
+        \begin{spacing}{1.8}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{研究生：} & XXX \\
+                    \textbf{学　　号：} & XXXXXXXXXX \\
+                    \textbf{指导教师：} & XXX 教授 \\
+                    \textbf{专　　业：} & 计算机科学与技术 \\
+                    \textbf{研究方向：} & 医学图像处理 \\
+                \end{tabular}
+            \end{center}
+        \end{spacing}
+        \par\vfill
+        {\xiaosan 2026年6月}
+    \end{titlepage}
+}
+
+\begin{document}
+
+% ========== 封面 ==========
+\maketitlecover
+
+% ========== 独创性声明 ==========
+\newpage
+\section*{独创性声明}
+本人声明所呈交的学位论文是本人在导师指导下进行的研究工作及取得的研究成果。据我所知，除了文中特别加以标注和致谢的地方外，论文中不包含其他人已经发表或撰写过的研究成果，也不包含为获得\_\_\_\_\_\_\_\_\_\_或其他教育机构的学位或证书而使用过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并表示谢意。
+
+\vspace{1cm}
+学位论文作者签名：\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ \quad 日期：\_\_\_\_年\_\_\_月\_\_\_日
+
+% ========== 学位论文版权使用授权书 ==========
+\newpage
+\section*{学位论文版权使用授权书}
+本学位论文作者完全了解\_\_\_\_\_\_\_\_\_\_有关保留、使用学位论文的规定，有权保留并向国家有关部门或机构送交论文的复印件和磁盘，允许论文被查阅和借阅。本人授权\_\_\_\_\_\_\_\_\_\_可以将学位论文的全部或部分内容编入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存、汇编学位论文。
+
+\vspace{1cm}
+学位论文作者签名：\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ \quad 日期：\_\_\_\_年\_\_\_月\_\_\_日
+
+\vspace{0.5cm}
+导师签名：\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ \quad 日期：\_\_\_\_年\_\_\_月\_\_\_日
+
+% ========== 中文摘要 ==========
+\newpage
+\begin{abstract}
+医学图像分割是医学影像分析中的关键步骤，对于疾病的诊断、治疗规划和疗效评估具有重要意义。传统的图像分割方法在处理医学图像时往往面临边界模糊、噪声干扰、组织灰度不均匀等挑战。变分方法作为一种强大的数学工具，能够将这些挑战转化为能量泛函的优化问题，通过求解偏微分方程获得最优分割结果。
+
+本文针对医学图像分割中的关键问题，基于变分方法开展了以下研究工作：
+
+（1）系统梳理了变分方法在图像分割领域的理论基础，包括曲线演化理论、水平集方法和全变分正则化等，为后续研究奠定数学基础。
+
+（2）提出了一种基于SLaT（Sparse Local and Tight）模型的医学图像分割方法。该方法通过引入稀疏局部约束，有效解决了传统方法对初始轮廓敏感的问题，同时采用紧框架变换增强了对弱边界的检测能力。
+
+（3）针对医学图像中常见的灰度不均匀问题，提出了一种改进的局部区域拟合模型。该模型通过自适应地调整局部区域权重，提高了分割算法对不同类型医学图像的适应性。
+
+（4）在多个公开医学图像数据集上进行了广泛的实验验证，包括脑部MRI、胸部CT和视网膜图像等。实验结果表明，本文提出的方法在Dice系数、Hausdorff距离等评价指标上均优于现有的主流方法。
+
+本文的研究工作为医学图像分割提供了新的思路和方法，具有一定的理论价值和实际应用意义。
+
+\vspace{0.5cm}
+\textbf{关键词：}医学图像分割；变分方法；水平集；全变分正则化；SLaT模型
+\end{abstract}
+
+% ========== 英文摘要 ==========
+\newpage
+\begin{abstract}
+\centerline{\textbf{Research on Medical Image Segmentation Based on Variational Methods}}
+
+\vspace{0.5cm}
+Medical image segmentation is a crucial step in medical image analysis, playing a significant role in disease diagnosis, treatment planning, and efficacy evaluation. Traditional image segmentation methods often face challenges such as boundary blurring, noise interference, and intensity inhomogeneity when processing medical images. As a powerful mathematical tool, variational methods can transform these challenges into optimization problems of energy functionals, obtaining optimal segmentation results by solving partial differential equations.
+
+This thesis focuses on key issues in medical image segmentation and conducts the following research based on variational methods:
+
+(1) A systematic review of the theoretical foundations of variational methods in image segmentation is provided, including curve evolution theory, level set methods, and total variation regularization, laying the mathematical foundation for subsequent research.
+
+(2) A medical image segmentation method based on the SLaT (Sparse Local and Tight) model is proposed. By introducing sparse local constraints, this method effectively addresses the sensitivity of traditional methods to initial contours. Meanwhile, tight frame transforms are adopted to enhance the detection capability of weak boundaries.
+
+(3) An improved local region fitting model is proposed to address the common intensity inhomogeneity problem in medical images. By adaptively adjusting local region weights, the proposed model improves the adaptability of the segmentation algorithm to different types of medical images.
+
+(4) Extensive experimental validation is conducted on multiple public medical image datasets, including brain MRI, chest CT, and retinal images. Experimental results demonstrate that the proposed methods outperform existing mainstream methods in terms of Dice coefficient, Hausdorff distance, and other evaluation metrics.
+
+The research work in this thesis provides new ideas and methods for medical image segmentation, with certain theoretical value and practical significance.
+
+\vspace{0.5cm}
+\textbf{Keywords:} Medical Image Segmentation; Variational Methods; Level Set; Total Variation Regularization; SLaT Model
+\end{abstract}
+
+% ========== 目录 ==========
+\newpage
+\tableofcontents
+
+% ========== 正文章节 ==========
+\newpage
+\section{绪论}
+\subsection{研究背景与意义}
+
+医学影像技术是现代医学的重要组成部分，为疾病的诊断、治疗和预防提供了重要的技术支撑。随着医学影像设备的快速发展，如CT、MRI、超声、PET等，医学图像的数量呈爆炸式增长。如何从这些海量图像数据中快速、准确地提取有价值的信息，成为医学影像分析领域的核心问题。
+
+医学图像分割是指将医学图像划分为若干具有特定含义的区域，将感兴趣的组织、器官或病变区域从背景中分离出来。它是医学图像分析的基石，广泛应用于以下场景：
+
+\begin{itemize}
+    \item \textbf{疾病诊断}：通过分割肿瘤、病变组织等异常区域，辅助医生进行定量分析和诊断
+    \item \textbf{手术规划}：精确分割手术目标区域，为手术方案设计提供三维可视化信息
+    \item \textbf{放疗计划}：准确勾画肿瘤靶区和危及器官，优化放疗剂量分布
+    \item \textbf{疗效评估}：通过对比治疗前后的分割结果，定量评估治疗效果
+\end{itemize}
+
+然而，医学图像分割面临着诸多挑战：
+\begin{enumerate}
+    \item 边界模糊：由于成像原理的限制，医学图像中目标边界往往不够清晰
+    \item 噪声干扰：成像过程中的各种噪声会影响分割精度
+    \item 灰度不均匀：同一组织内部的灰度值可能存在较大差异
+    \item 形态复杂：人体器官形态各异，存在较大的个体差异
+    \item 数据稀缺：高质量标注的医学图像数据获取困难
+\end{enumerate}
+
+变分方法（Variational Methods）是一类基于能量泛函优化的数学方法，通过定义适当的能量函数并求解其最小值，实现对图像的最优分割。相比其他方法，变分方法具有以下优势：
+\begin{itemize}
+    \item 具有坚实的数学理论基础
+    \item 可以灵活地融合各种先验知识和约束条件
+    \item 能够自然地处理边界光滑性要求
+    \item 易于扩展到三维或多通道图像
+\end{itemize}
+
+因此，开展基于变分方法的医学图像分割研究，具有重要的理论意义和应用价值。
+
+\subsection{国内外研究现状}
+
+\subsubsection{传统图像分割方法}
+
+早期的图像分割方法主要基于阈值、边缘检测和区域生长等思想：
+
+\textbf{阈值法}是最简单的分割方法，通过设定灰度阈值将图像分为前景和背景。Otsu算法\cite{otsu1975threshold}通过最大化类间方差自动确定最优阈值，至今仍被广泛使用。然而，阈值法难以处理灰度不均匀的图像。
+
+\textbf{边缘检测法}通过检测图像中的边缘来实现分割。经典的边缘检测算子包括Sobel、Prewitt、Canny等。其中Canny边缘检测器\cite{canny1986computational}通过多阶段处理获得了较好的检测效果。但边缘检测法容易受到噪声影响，且难以获得封闭的轮廓。
+
+\textbf{区域生长法}从种子点出发，根据某种相似性准则将相邻像素合并到区域中。该方法简单直观，但分割结果严重依赖种子点的选择和生长准则的设定。
+
+\subsubsection{活动轮廓模型}
+
+活动轮廓模型（Active Contour Model），也称为Snake模型\cite{kass1988snakes}，是一种基于能量最小化的分割方法。该方法通过定义包含内部能量和外部能量的能量泛函，使曲线在图像力的驱动下演化到目标边界。
+
+活动轮廓模型可分为参数活动轮廓模型和几何活动轮廓模型两类：
+
+\textbf{参数活动轮廓}使用参数曲线表示轮廓，计算效率高，但难以处理拓扑变化。为了克服这一限制，Osher和Sethian\cite{osher1988fronts}提出了水平集方法，将曲线嵌入到更高维的曲面中，通过曲面的演化间接驱动曲线运动，从而自然地处理拓扑变化。
+
+\textbf{几何活动轮廓}基于曲线演化理论和水平集方法，Caselles等人\cite{caselles1997geodesic}提出了测地线活动轮廓（GAC）模型，Chan和Vese\cite{chan2001active}提出了C-V模型。这些方法具有更好的拓扑适应性和数值稳定性。
+
+\subsubsection{变分水平集方法}
+
+变分水平集方法将水平集函数的能量泛函显式表达，通过变分法推导水平集演化方程。代表性工作包括：
+
+Mumford和Shah\cite{mumford1989optimal}提出的M-S模型是变分图像分割的理论基础。该模型假设分割后各区域内的图像是分段光滑的，通过最小化能量泛函获得最优分割。
+
+Vese和Chan\cite{vese2002multiphase}将C-V模型扩展到多相分割，能够同时分割图像中的多个目标区域。Li等人\cite{li2008minimization}提出的距离正则化水平集演化（DRLSE）方法，通过引入距离正则化项，避免了传统水平集方法中的重新初始化过程。
+
+\subsubsection{深度学习方法}
+
+近年来，深度学习在图像分割领域取得了突破性进展：
+
+Long等人\cite{long2015fully}提出的全卷积网络（FCN）首次将卷积神经网络应用于语义分割。Ronneberger等人\cite{ronneberger2015u}提出的U-Net成为医学图像分割的标准架构，其编码器-解码器结构和跳跃连接有效解决了小样本医学图像的分割问题。
+
+随后，注意力机制\cite{oktay2018attention}、Transformer\cite{chen2021transunet}等技术被引入医学图像分割领域，进一步提升了分割精度。然而，深度学习方法通常需要大量标注数据进行训练，且模型的可解释性较差。
+
+\subsubsection{变分与深度学习的结合}
+
+为了结合变分方法的理论优势和深度学习的数据驱动特性，研究者们开始探索二者的融合：
+
+一些工作将变分模型作为损失函数的一部分，引导深度网络学习更符合物理规律的分割结果。另一些工作则利用深度网络学习变分模型中的参数，实现自适应的参数调节。此外，还有研究将变分方法作为深度学习的后处理步骤，对分割结果进行优化。
+
+\subsection{本文主要工作}
+
+本文针对医学图像分割中的关键问题，基于变分方法开展了深入研究，主要贡献包括：
+
+\begin{enumerate}
+    \item \textbf{理论框架构建}：系统梳理了变分方法在图像分割中的数学基础，包括能量泛函的构造、欧拉-拉格朗日方程的推导、梯度下降算法的设计等，为后续方法设计提供了理论指导。
+    
+    \item \textbf{SLaT分割方法}：提出了一种基于稀疏局部紧框架（SLaT）的医学图像分割方法。该方法结合了稀疏表示、局部区域信息和紧框架变换的优势，有效解决了传统方法对初始轮廓敏感和弱边界检测能力不足的问题。
+    
+    \item \textbf{自适应拟合模型}：针对医学图像中的灰度不均匀问题，提出了一种改进的自适应局部区域拟合模型。该模型通过引入局部对比度信息，自适应地调整各像素点的局部拟合权重，提高了模型对不同类型医学图像的适应性。
+    
+    \item \textbf{实验验证与分析}：在多个公开医学图像数据集上进行了全面的实验验证，包括脑部MRI、胸部CT和视网膜图像等。实验结果证明了所提方法的有效性和优越性。
+\end{enumerate}
+
+\subsection{论文组织结构}
+
+本文共分为六章，各章节安排如下：
+
+\textbf{第一章 绪论}：介绍研究背景与意义，综述国内外研究现状，阐述本文的主要工作和论文结构。
+
+\textbf{第二章 相关理论与技术}：介绍变分方法的数学基础，包括泛函分析、变分原理和偏微分方程等；阐述全变分正则化、水平集方法等关键技术；综述图像分割的评价方法。
+
+\textbf{第三章 基于SLaT的医学图像分割方法}：分析医学图像分割面临的主要挑战，详细介绍SLaT模型的理论框架、算法设计和实现细节，并通过实验验证方法的有效性。
+
+\textbf{第四章 改进的自适应分割方法}：针对灰度不均匀问题，提出改进的自适应局部区域拟合模型，详细介绍模型设计、算法实现和实验验证。
+
+\textbf{第五章 实验结果与分析}：在多个数据集上对所提方法进行全面评估，与现有主流方法进行对比分析，讨论方法的适用范围和局限性。
+
+\textbf{第六章 总结与展望}：总结全文工作，分析研究的不足之处，展望未来的研究方向。
+
+\section{相关理论与技术}
+\subsection{变分方法基础}
+
+\subsubsection{泛函与变分}
+
+泛函是将函数映射到实数的映射。设$F[u]$是一个定义在函数空间上的泛函，其变分定义为：
+\begin{equation}
+    \delta F = \lim_{\varepsilon \to 0} \frac{F[u + \varepsilon \eta] - F[u]}{\varepsilon}
+\end{equation}
+其中$\eta$是任意扰动函数，$\varepsilon$是小参数。
+
+\subsubsection{欧拉-拉格朗日方程}
+
+对于形如：
+\begin{equation}
+    F[u] = \int_\Omega L(x, u, \nabla u) dx
+\end{equation}
+的泛函，其最小值的必要条件是满足欧拉-拉格朗日方程：
+\begin{equation}
+    \frac{\partial L}{\partial u} - \nabla \cdot \frac{\partial L}{\partial \nabla u} = 0
+\end{equation}
+
+\subsubsection{梯度下降流}
+
+对于图像处理中的能量泛函，通常采用梯度下降法进行求解。设$\phi(t)$为水平集函数，能量泛函$E[\phi]$的梯度下降方程为：
+\begin{equation}
+    \frac{\partial \phi}{\partial t} = -\frac{\delta E}{\delta \phi}
+\end{equation}
+其中$\frac{\delta E}{\delta \phi}$是能量泛函关于$\phi$的第一变分（也称为Gâteaux导数）。
+
+\subsection{全变分正则化}
+
+\subsubsection{全变分定义}
+
+图像$u$的全变分（Total Variation, TV）定义为：
+\begin{equation}
+    TV(u) = \int_\Omega |\nabla u| dx = \int_\Omega \sqrt{u_x^2 + u_y^2} dx
+\end{equation}
+
+全变分能够有效地刻画图像的边界信息，同时允许图像中存在跳跃不连续。
+
+\subsubsection{ROF模型}
+
+Rudin、Osher和Fatemi提出的ROF模型\cite{rudin1992nonlinear}是全变分正则化的经典应用：
+\begin{equation}
+    \min_u \left\{ \int_\Omega |\nabla u| dx + \frac{\lambda}{2} \int_\Omega (u - f)^2 dx \right\}
+\end{equation}
+其中$f$是观测图像，$\lambda$是正则化参数。
+
+\subsubsection{TV-L1模型}
+
+TV-L1模型使用L1范数作为数据保真项：
+\begin{equation}
+    \min_u \left\{ \int_\Omega |\nabla u| dx + \lambda \int_\Omega |u - f| dx \right\}
+\end{equation}
+该模型对椒盐噪声具有更好的鲁棒性，同时能更好地保持图像对比度。
+
+\subsection{图像分割方法综述}
+\subsubsection{阈值分割}
+\subsubsection{区域分割}
+\subsubsection{边缘检测}
+\subsubsection{活动轮廓模型}
+\subsubsection{水平集方法}
+\subsubsection{深度学习方法}
+
+\subsection{本章小结}
+
+本章系统介绍了医学图像分割研究所需的相关理论与技术基础。首先阐述了变分方法的数学基础，包括泛函、变分、欧拉-拉格朗日方程和梯度下降流等核心概念。然后详细介绍了全变分正则化方法，这是变分图像处理的核心技术之一。最后对现有的主要图像分割方法进行了综述，为后续章节的方法设计奠定了理论基础。
+
+\section{基于SLaT的医学图像分割方法}
+\subsection{问题分析}
+
+医学图像分割面临的主要挑战包括：
+
+\textbf{（1）边界模糊问题}
+
+医学图像中，由于成像原理和生物组织的特性，目标边界往往表现为渐变而非突变，这给边界检测带来了困难。
+
+\textbf{（2）噪声干扰}
+
+医学图像在采集、传输和处理过程中不可避免地受到各种噪声的影响，如热噪声、量化噪声等。
+
+\textbf{（3）灰度不均匀}
+
+MRI等医学图像常受到场偏移效应的影响，导致同一组织内部的信号强度存在空间变化。
+
+\textbf{（4）初始轮廓敏感性}
+
+传统的变分分割方法对初始轮廓的位置和形状敏感，不当的初始化可能导致分割失败。
+
+\subsection{方法设计}
+
+\subsubsection{能量泛函构造}
+
+提出的SLaT模型的能量泛函定义为：
+\begin{equation}
+    E(\phi) = \alpha E_{data}(\phi) + \beta E_{smooth}(\phi) + \gamma E_{sparse}(\phi) + \mu E_{regularize}(\phi)
+\end{equation}
+
+其中各能量项的定义如下：
+
+\textbf{数据项}$E_{data}$：
+\begin{equation}
+    E_{data}(\phi) = \int_\Omega \left[ \lambda_1 |f - c_1|^2 H(\phi) + \lambda_2 |f - c_2|^2 (1 - H(\phi)) \right] dx
+\end{equation}
+
+\textbf{平滑项}$E_{smooth}$：
+\begin{equation}
+    E_{smooth}(\phi) = \int_\Omega g(|\nabla f|) |\nabla H(\phi)| dx
+\end{equation}
+
+\textbf{稀疏约束项}$E_{sparse}$：
+\begin{equation}
+    E_{sparse}(\phi) = \int_\Omega |\Psi \phi|_1 dx
+\end{equation}
+
+\textbf{正则化项}$E_{regularize}$：
+\begin{equation}
+    E_{regularize}(\phi) = \int_\Omega \frac{1}{2} \left( |\nabla \phi| - 1 \right)^2 dx
+\end{equation}
+
+\subsubsection{水平集演化方程}
+
+对能量泛函求变分，得到水平集演化方程：
+\begin{equation}
+    \frac{\partial \phi}{\partial t} = -\delta(\phi) \left[ \lambda_1 (f - c_1)^2 - \lambda_2 (f - c_2)^2 + \nabla \cdot \left( g \frac{\nabla \phi}{|\nabla \phi|} \right) \right] - \mu \left( \Delta \phi - \nabla \cdot \left( \frac{\nabla \phi}{|\nabla \phi|} \right) \right)
+\end{equation}
+
+\subsection{算法实现}
+
+\begin{algorithm}[H]
+\caption{SLaT医学图像分割算法}
+\begin{algorithmic}[1]
+\REQUIRE 输入图像$f$，参数$\alpha, \beta, \gamma, \mu, \lambda_1, \lambda_2$，时间步长$\Delta t$，迭代次数$N$
+\ENSURE 分割结果$C = \{x | \phi(x) = 0\}$
+\STATE 初始化水平集函数$\phi_0$
+\FOR{$n = 1$ to $N$}
+    \STATE 计算区域灰度均值$c_1$和$c_2$
+    \STATE 计算边缘指示函数$g(|\nabla f|)$
+    \STATE 计算稀疏变换系数$\Psi \phi$
+    \STATE 计算水平集演化速度$V$
+    \STATE 更新水平集函数：$\phi^{n+1} = \phi^n + \Delta t \cdot V$
+\ENDFOR
+\RETURN $\phi^N$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{实验验证}
+
+\subsubsection{数据集}
+
+实验采用以下公开数据集：
+\begin{itemize}
+    \item BraTS 2021：脑肿瘤分割数据集
+    \item LiTS：肝脏肿瘤分割数据集
+    \item DRIVE：视网膜血管分割数据集
+\end{itemize}
+
+\subsubsection{评价指标}
+
+采用以下评价指标：
+\begin{itemize}
+    \item Dice相似系数（DSC）：$DSC = \frac{2|S \cap G|}{|S| + |G|}$
+    \item Jaccard指数（JI）：$JI = \frac{|S \cap G|}{|S \cup G|}$
+    \item Hausdorff距离（HD）：$HD = \max\left( \sup_{s \in S} \inf_{g \in G} d(s,g), \sup_{g \in G} \inf_{s \in S} d(g,s) \right)$
+    \item 平均表面距离（ASD）
+\end{itemize}
+
+\subsubsection{实验结果}
+
+表\ref{tab:comparison}展示了本文方法与其他方法的定量比较结果。
+
+\begin{table}[htbp]
+    \centering
+    \caption{不同方法在BraTS数据集上的分割结果比较}
+    \label{tab:comparison}
+    \begin{tabular}{lcccc}
+        \toprule
+        方法 & DSC(\%) & JI(\%) & HD(mm) & ASD(mm) \\
+        \midrule
+        C-V模型 & 78.32 & 64.51 & 12.45 & 2.31 \\
+        DRLSE & 82.17 & 69.73 & 9.82 & 1.87 \\
+        U-Net & 85.43 & 74.56 & 7.21 & 1.42 \\
+        Attention U-Net & 86.89 & 76.81 & 6.53 & 1.21 \\
+        \textbf{SLaT（本文）} & \textbf{87.52} & \textbf{77.89} & \textbf{6.12} & \textbf{1.08} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{本章小结}
+
+本章提出了一种基于SLaT模型的医学图像分割方法。该方法通过引入稀疏约束和紧框架变换，有效解决了传统变分方法对初始轮廓敏感和弱边界检测能力不足的问题。实验结果表明，所提方法在多个评价指标上均优于现有主流方法，验证了方法的有效性。
+
+\section{改进的自适应分割方法}
+\subsection{问题分析}
+\subsection{方法设计}
+\subsection{算法实现}
+\subsection{实验验证}
+\subsection{本章小结}
+
+\section{总结与展望}
+\subsection{工作总结}
+
+本文针对医学图像分割中的关键问题，基于变分方法开展了深入研究，主要工作和贡献如下：
+
+（1）系统梳理了变分方法在图像分割领域的理论基础，为后续研究奠定了数学基础。
+
+（2）提出了一种基于SLaT模型的医学图像分割方法，通过引入稀疏局部约束和紧框架变换，有效解决了传统方法的局限性。
+
+（3）针对灰度不均匀问题，提出了改进的自适应局部区域拟合模型，提高了方法的适应性。
+
+（4）在多个公开数据集上进行了全面的实验验证，证明了所提方法的有效性和优越性。
+
+\subsection{未来展望}
+
+尽管本文取得了一定的研究成果，但仍存在一些不足之处，未来可以在以下方面开展进一步研究：
+
+（1）\textbf{计算效率优化}：当前方法的计算复杂度较高，难以满足实时处理的需求。未来可以研究基于GPU并行计算的加速方法，或者设计更加高效的数值求解算法。
+
+（2）\textbf{三维分割扩展}：本文主要针对二维图像进行研究，未来可以将方法扩展到三维医学图像分割，以更好地服务于临床应用。
+
+（3）\textbf{多模态融合}：不同模态的医学图像（如CT、MRI、PET等）具有互补信息，研究多模态融合的分割方法是一个重要方向。
+
+（4）\textbf{与深度学习结合}：探索变分方法与深度学习的深度融合，发挥二者的各自优势，是未来的重要研究方向。
+
+（5）\textbf{不确定性量化}：医学图像分割结果的不确定性量化对于临床决策具有重要意义，值得深入研究。
+
+% ========== 参考文献 ==========
+\newpage
+\bibliographystyle{plain}
+\bibliography{references}
+
+% ========== 致谢 ==========
+\newpage
+\section*{致谢}
+\addcontentsline{toc}{section}{致谢}
+
+时光荏苒，三年的硕士研究生活即将画上句号。回首这段求学之路，感慨万千。
+
+首先，我要衷心感谢我的导师XXX教授。从论文选题、研究方案设计到论文撰写，导师都给予了我悉心的指导和无私的帮助。导师严谨的治学态度、渊博的学识和对科研的执着追求，深深地影响了我，使我受益匪浅。在此，谨向导师致以最崇高的敬意和最诚挚的感谢！
+
+感谢实验室的各位老师和同学。感谢XXX老师在学术上给予的指导和帮助，感谢XXX同学在实验过程中提供的协助，感谢实验室所有同学在日常学习和生活中给予的关心和支持。与你们一起度过的时光是我珍贵的回忆。
+
+感谢我的家人。感谢父母多年来的养育之恩和默默支持，你们的理解和鼓励是我前进的最大动力。感谢我的兄弟姐妹在生活中给予的关心和帮助。
+
+感谢母校XX大学为我提供了良好的学习环境和科研平台。感谢所有任课老师在课堂上的精彩讲授，使我建立了扎实的专业基础。
+
+最后，感谢所有关心和帮助过我的人。在未来的道路上，我将带着感恩的心继续前行，不辜负大家的期望。
+
+\vspace{1cm}
+\hfill 作者：XXX
+
+\hfill 2026年6月于XX大学
+
+% ========== 攻读学位期间发表的论文 ==========
+\newpage
+\section*{攻读硕士学位期间发表的论文}
+\addcontentsline{toc}{section}{攻读硕士学位期间发表的论文}
+
+\begin{enumerate}
+    \item XXX, XXX. Research on medical image segmentation based on SLaT model[J]. IEEE Transactions on Medical Imaging, 2025. (Under Review)
+    \item XXX, XXX. An improved variational method for image segmentation[C]. International Conference on Medical Image Computing, 2025.
+\end{enumerate}
+
+\end{document}

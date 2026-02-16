@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Methods Evolution - Xiaohao Cai Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">XC</div>
+        <span>Research</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="papers.html">Papers</a>
+        <a href="network.html">Network</a>
+        <a href="methods.html" class="active">Methods</a>
+        <a href="demo.html">Demo</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <div class="container">
+      <h1>Method Evolution</h1>
+      <p>From variational methods to deep learning: a journey through algorithmic innovation</p>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 30px 20px;">
+    <div class="card" style="margin-bottom: 30px;">
+      <h2 style="margin-bottom: 20px;">Method Categories</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #dcfce7; border-radius: 20px;">
+          <span style="font-size: 1.2rem;">∫</span>
+          <span style="font-weight: 500; color: #16a34a;">Variational</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #dbeafe; border-radius: 20px;">
+          <span style="font-size: 1.2rem;">⊞</span>
+          <span style="font-weight: 500; color: #1d4ed8;">Segmentation</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #f3e8ff; border-radius: 20px;">
+          <span style="font-size: 1.2rem;">∿</span>
+          <span style="font-weight: 500; color: #9333ea;">Wavelet</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fef3c7; border-radius: 20px;">
+          <span style="font-size: 1.2rem;">⚡</span>
+          <span style="font-weight: 500; color: #d97706;">Optimization</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fee2e2; border-radius: 20px;">
+          <span style="font-size: 1.2rem;">▣</span>
+          <span style="font-weight: 500; color: #dc2626;">Tensor</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fce7f3; border-radius: 20px;">
+          <span style="font-size: 1.2rem;">◆</span>
+          <span style="font-weight: 500; color: #db2777;">Deep Learning</span>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-bottom: 20px; color: var(--dark);">Method Timeline</h2>
+    <div class="methods-timeline" id="methods-timeline"></div>
+
+    <div class="method-graph">
+      <h3>Method Relationships</h3>
+      <p style="color: var(--text-light); margin-bottom: 15px; font-size: 0.9rem;">
+        How methods build upon each other
+      </p>
+      <div style="display: grid; gap: 16px;">
+        <div style="padding: 20px; background: var(--light); border-radius: 8px;">
+          <h4 style="margin-bottom: 12px; color: var(--dark);">SaT Family</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <span style="padding: 6px 12px; background: #4CAF50; color: white; border-radius: 6px; font-size: 0.85rem;">SaT (2013)</span>
+            <span style="color: var(--text-light);">→</span>
+            <span style="padding: 6px 12px; background: #4CAF50; color: white; border-radius: 6px; font-size: 0.85rem;">T-ROF</span>
+            <span style="color: var(--text-light);">+</span>
+            <span style="padding: 6px 12px; background: #2196F3; color: white; border-radius: 6px; font-size: 0.85rem;">K-means</span>
+            <span style="color: var(--text-light);">→</span>
+            <span style="padding: 6px 12px; background: #4CAF50; color: white; border-radius: 6px; font-size: 0.85rem;">SLaT (2015)</span>
+          </div>
+        </div>
+        <div style="padding: 20px; background: var(--light); border-radius: 8px;">
+          <h4 style="margin-bottom: 12px; color: var(--dark);">Tensor Decomposition</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <span style="padding: 6px 12px; background: #F44336; color: white; border-radius: 6px; font-size: 0.85rem;">Tucker</span>
+            <span style="color: var(--text-light);">+</span>
+            <span style="padding: 6px 12px; background: #F44336; color: white; border-radius: 6px; font-size: 0.85rem;">Sketching</span>
+            <span style="color: var(--text-light);">→</span>
+            <span style="padding: 6px 12px; background: #F44336; color: white; border-radius: 6px; font-size: 0.85rem;">Tensor Train</span>
+            <span style="color: var(--text-light);">+</span>
+            <span style="padding: 6px 12px; background: #E91E63; color: white; border-radius: 6px; font-size: 0.85rem;">LoRA</span>
+            <span style="color: var(--text-light);">→</span>
+            <span style="padding: 6px 12px; background: #E91E63; color: white; border-radius: 6px; font-size: 0.85rem;">tCURLoRA</span>
+          </div>
+        </div>
+        <div style="padding: 20px; background: var(--light); border-radius: 8px;">
+          <h4 style="margin-bottom: 12px; color: var(--dark);">Graph Methods</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <span style="padding: 6px 12px; background: #FF9800; color: white; border-radius: 6px; font-size: 0.85rem;">Graph-Cut</span>
+            <span style="color: var(--text-light);">→</span>
+            <span style="padding: 6px 12px; background: #FF9800; color: white; border-radius: 6px; font-size: 0.85rem;">MCGC (Multi-Class)</span>
+            <span style="color: var(--text-light);">→</span>
+            <span style="padding: 6px 12px; background: #9C27B0; color: white; border-radius: 6px; font-size: 0.85rem;">3D Tree Segmentation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 30px;">
+      <h3 style="margin-bottom: 20px;">Core Innovations</h3>
+      <div class="grid grid-3">
+        <div style="padding: 20px; background: linear-gradient(135deg, #4CAF50 0%, #2196F3 100%); border-radius: 12px; color: white;">
+          <h4 style="margin-bottom: 10px;">SaT Paradigm</h4>
+          <p style="opacity: 0.9; font-size: 0.9rem;">Segmentation = Restoration + Thresholding. A novel paradigm that decouples smoothing from clustering.</p>
+        </div>
+        <div style="padding: 20px; background: linear-gradient(135deg, #F44336 0%, #E91E63 100%); border-radius: 12px; color: white;">
+          <h4 style="margin-bottom: 10px;">Tensor Methods</h4>
+          <p style="opacity: 0.9; font-size: 0.9rem;">Practical sketching for Tucker approximation enabling efficient tensor decomposition at scale.</p>
+        </div>
+        <div style="padding: 20px; background: linear-gradient(135deg, #9C27B0 0%, #FF9800 100%); border-radius: 12px; color: white;">
+          <h4 style="margin-bottom: 10px;">Neural Varifolds</h4>
+          <p style="opacity: 0.9; font-size: 0.9rem;">Neural representation for point cloud geometry quantification using varifold theory.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>Xiaohao Cai Research Portfolio | University of Southampton</p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

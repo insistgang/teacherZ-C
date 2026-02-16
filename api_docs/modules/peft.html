@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xcrai.peft - XCAI API 文档</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h1>XCAI</h1>
+            <p class="version">版本 0.1.0</p>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜索 API...">
+                <div id="search-results"></div>
+            </div>
+            
+            <nav>
+                <h3>开始</h3>
+                <ul>
+                    <li><a href="../index.html">概述</a></li>
+                    <li><a href="../examples/basic_usage.html">快速开始</a></li>
+                    <li><a href="../examples/advanced_usage.html">高级用法</a></li>
+                </ul>
+                
+                <h3>模块</h3>
+                <ul>
+                    <li><a href="denoising.html">xcrai.denoising</a></li>
+                    <li><a href="segmentation.html">xcrai.segmentation</a></li>
+                    <li><a href="tensor.html">xcrai.tensor</a></li>
+                    <li><a href="pointcloud.html">xcrai.pointcloud</a></li>
+                    <li><a href="peft.html" class="active">xcrai.peft</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="page-header">
+                <h1>xcrai.peft</h1>
+                <p class="breadcrumb">
+                    <a href="../index.html">Home</a> / <a href="peft.html">peft</a>
+                </p>
+            </header>
+            
+            <section class="section">
+                <h2>模块简介</h2>
+                <p><code>xcrai.peft</code> (Parameter-Efficient Fine-Tuning) 模块提供了参数高效微调的实现，包括 LoRA (Low-Rank Adaptation)、Adapter、Prefix Tuning 等技术。这些方法可以在只训练少量参数的情况下有效微调大型预训练模型。</p>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.peft <span class="keyword">import</span> LoRALayer, LoRAConfig
+
+<span class="comment"># 配置 LoRA</span>
+config = <span class="function">LoRAConfig</span>(
+    r=<span class="string">8</span>,
+    alpha=<span class="string">16</span>,
+    dropout=<span class="string">0.1</span>
+)
+
+<span class="comment"># 应用到模型</span>
+model = <span class="function">apply_lora</span>(base_model, config)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section" id="loraconfig">
+                <h2>LoRAConfig</h2>
+                
+                <div class="class-def">
+                    <code>
+class <strong>LoRAConfig</strong>(r=8, alpha=16, dropout=0.1, target_modules=None, bias='none')
+                    </code>
+                </div>
+                
+                <p>LoRA 配置类，用于定义 LoRA 适配器的参数。</p>
+                
+                <h3>参数</h3>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>类型</th>
+                            <th>默认值</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>r</code></td>
+                            <td>int</td>
+                            <td>8</td>
+                            <td>LoRA 的秩（低秩矩阵的维度）</td>
+                        </tr>
+                        <tr>
+                            <td><code>alpha</code></td>
+                            <td>int</td>
+                            <td>16</td>
+                            <td>缩放因子，实际缩放为 alpha/r</td>
+                        </tr>
+                        <tr>
+                            <td><code>dropout</code></td>
+                            <td>float</td>
+                            <td>0.1</td>
+                            <td>Dropout 概率</td>
+                        </tr>
+                        <tr>
+                            <td><code>target_modules</code></td>
+                            <td>list</td>
+                            <td>None</td>
+                            <td>要应用 LoRA 的模块名称列表</td>
+                        </tr>
+                        <tr>
+                            <td><code>bias</code></td>
+                            <td>str</td>
+                            <td>'none'</td>
+                            <td>偏置处理方式: 'none', 'all', 'lora_only'</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="note">
+                    <h5>参数选择建议</h5>
+                    <ul>
+                        <li><code>r</code>: 通常 4-64 之间，越大表达能力越强但参数越多</li>
+                        <li><code>alpha</code>: 通常设为 r 的 2 倍</li>
+                        <li><code>target_modules</code>: 通常选择 attention 层的 q, v 投影</li>
+                    </ul>
+                </div>
+                
+                <h3>示例</h3>
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.peft <span class="keyword">import</span> LoRAConfig
+
+<span class="comment"># 基本配置</span>
+config = <span class="function">LoRAConfig</span>(r=<span class="string">8</span>, alpha=<span class="string">16</span>)
+
+<span class="comment"># 指定目标模块</span>
+config = <span class="function">LoRAConfig</span>(
+    r=<span class="string">16</span>,
+    alpha=<span class="string">32</span>,
+    target_modules=[<span class="string">'q_proj'</span>, <span class="string">'v_proj'</span>],
+    dropout=<span class="string">0.05</span>
+)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section" id="loralayer">
+                <h2>LoRALayer</h2>
+                
+                <div class="class-def">
+                    <code>
+class <strong>LoRALayer</strong>(in_features, out_features, r=8, alpha=16, dropout=0.1)
+                    </code>
+                </div>
+                
+                <p>LoRA 适配层。在预训练权重旁边添加低秩分解矩阵。</p>
+                
+                <div class="note">
+                    <h5>数学表示</h5>
+                    <p>LoRA 将权重更新 ΔW 分解为两个低秩矩阵：</p>
+                    <p style="text-align:center; margin: 15px 0;">
+                        <code>ΔW = B × A</code>
+                    </p>
+                    <p>其中 B ∈ ℝᵈˣʳ, A ∈ ℝʳˣᵏ, r << min(d, k)。前向传播为：</p>
+                    <p style="text-align:center; margin: 15px 0;">
+                        <code>h = W₀x + (α/r) × B × A × x</code>
+                    </p>
+                </div>
+                
+                <h3>参数</h3>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>类型</th>
+                            <th>默认值</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>in_features</code></td>
+                            <td>int</td>
+                            <td>必填</td>
+                            <td>输入特征维度</td>
+                        </tr>
+                        <tr>
+                            <td><code>out_features</code></td>
+                            <td>int</td>
+                            <td>必填</td>
+                            <td>输出特征维度</td>
+                        </tr>
+                        <tr>
+                            <td><code>r</code></td>
+                            <td>int</td>
+                            <td>8</td>
+                            <td>低秩维度</td>
+                        </tr>
+                        <tr>
+                            <td><code>alpha</code></td>
+                            <td>int</td>
+                            <td>16</td>
+                            <td>缩放因子</td>
+                        </tr>
+                        <tr>
+                            <td><code>dropout</code></td>
+                            <td>float</td>
+                            <td>0.1</td>
+                            <td>Dropout 概率</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>属性</h3>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>属性名</th>
+                            <th>类型</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>lora_A</code></td>
+                            <td>Parameter</td>
+                            <td>低秩矩阵 A，形状 (r, in_features)</td>
+                        </tr>
+                        <tr>
+                            <td><code>lora_B</code></td>
+                            <td>Parameter</td>
+                            <td>低秩矩阵 B，形状 (out_features, r)</td>
+                        </tr>
+                        <tr>
+                            <td><code>scaling</code></td>
+                            <td>float</td>
+                            <td>缩放系数 alpha/r</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>示例</h3>
+                <div class="example-box">
+                    <pre>
+<span class="keyword">import</span> torch
+<span class="keyword">from</span> xcai.peft <span class="keyword">import</span> LoRALayer
+
+<span class="comment"># 创建 LoRA 层</span>
+lora = <span class="function">LoRALayer</span>(
+    in_features=<span class="string">768</span>,
+    out_features=<span class="string">768</span>,
+    r=<span class="string">8</span>,
+    alpha=<span class="string">16</span>
+)
+
+<span class="comment"># 前向传播</span>
+x = torch.<span class="function">randn</span>(<span class="string">32</span>, <span class="string">768</span>)
+output = <span class="function">lora</span>(x)
+                    </pre>
+                </div>
+                
+                <div class="method" id="forward">
+                    <div class="method-header">
+                        <span class="method-name">forward(x)</span>
+                    </div>
+                    
+                    <p>前向传播。</p>
+                    
+                    <div class="method-signature">
+forward(x)
+                    </div>
+                    
+                    <h4>参数</h4>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>参数名</th>
+                                <th>类型</th>
+                                <th>描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>x</code></td>
+                                <td>Tensor</td>
+                                <td>输入张量，形状 (batch, in_features)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="returns">
+                        <h5>返回值</h5>
+                        <p><code>Tensor</code> - LoRA 增量输出，形状 (batch, out_features)</p>
+                    </div>
+                </div>
+                
+                <div class="method">
+                    <div class="method-header">
+                        <span class="method-name">merge(base_weight)</span>
+                    </div>
+                    
+                    <p>将 LoRA 权重合并到基础权重中。</p>
+                    
+                    <h4>参数</h4>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>参数名</th>
+                                <th>类型</th>
+                                <th>描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>base_weight</code></td>
+                                <td>Tensor</td>
+                                <td>基础权重矩阵</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="returns">
+                        <h5>返回值</h5>
+                        <p><code>Tensor</code> - 合并后的权重</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section" id="adapterlayer">
+                <h2>AdapterLayer</h2>
+                
+                <div class="class-def">
+                    <code>
+class <strong>AdapterLayer</strong>(hidden_size, bottleneck_size=64, activation='relu', dropout=0.1)
+                    </code>
+                </div>
+                
+                <p>Adapter 层。在 Transformer 层中插入小型瓶颈网络进行适配。</p>
+                
+                <h3>参数</h3>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>类型</th>
+                            <th>默认值</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>hidden_size</code></td>
+                            <td>int</td>
+                            <td>必填</td>
+                            <td>隐藏层维度</td>
+                        </tr>
+                        <tr>
+                            <td><code>bottleneck_size</code></td>
+                            <td>int</td>
+                            <td>64</td>
+                            <td>瓶颈层维度</td>
+                        </tr>
+                        <tr>
+                            <td><code>activation</code></td>
+                            <td>str</td>
+                            <td>'relu'</td>
+                            <td>激活函数: 'relu', 'gelu', 'tanh'</td>
+                        </tr>
+                        <tr>
+                            <td><code>dropout</code></td>
+                            <td>float</td>
+                            <td>0.1</td>
+                            <td>Dropout 概率</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>示例</h3>
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.peft <span class="keyword">import</span> AdapterLayer
+
+adapter = <span class="function">AdapterLayer</span>(
+    hidden_size=<span class="string">768</span>,
+    bottleneck_size=<span class="string">64</span>,
+    activation=<span class="string">'gelu'</span>
+)
+
+<span class="comment"># 前向传播（残差连接）</span>
+output = hidden_state + <span class="function">adapter</span>(hidden_state)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section" id="apply_lora">
+                <h2>apply_lora()</h2>
+                
+                <div class="class-def">
+                    <code>
+<strong>apply_lora</strong>(model, config, freeze_base=True)
+                    </code>
+                </div>
+                
+                <p>将 LoRA 应用到模型。</p>
+                
+                <h3>参数</h3>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>类型</th>
+                            <th>默认值</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>model</code></td>
+                            <td>nn.Module</td>
+                            <td>必填</td>
+                            <td>要微调的基础模型</td>
+                        </tr>
+                        <tr>
+                            <td><code>config</code></td>
+                            <td>LoRAConfig</td>
+                            <td>必填</td>
+                            <td>LoRA 配置</td>
+                        </tr>
+                        <tr>
+                            <td><code>freeze_base</code></td>
+                            <td>bool</td>
+                            <td>True</td>
+                            <td>是否冻结基础模型参数</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="returns">
+                    <h5>返回值</h5>
+                    <p><code>nn.Module</code> - 应用了 LoRA 的模型</p>
+                </div>
+                
+                <h3>示例</h3>
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.peft <span class="keyword">import</span> LoRAConfig, apply_lora
+<span class="keyword">from</span> transformers <span class="keyword">import</span> AutoModelForCausalLM
+
+<span class="comment"># 加载基础模型</span>
+model = <span class="function">AutoModelForCausalLM.from_pretrained</span>(<span class="string">'model_name'</span>)
+
+<span class="comment"># 配置 LoRA</span>
+config = <span class="function">LoRAConfig</span>(
+    r=<span class="string">8</span>,
+    alpha=<span class="string">16</span>,
+    target_modules=[<span class="string">'q_proj'</span>, <span class="string">'v_proj'</span>]
+)
+
+<span class="comment"># 应用 LoRA</span>
+model = <span class="function">apply_lora</span>(model, config)
+
+<span class="comment"># 查看可训练参数</span>
+trainable_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters() <span class="keyword">if</span> p.requires_grad)
+<span class="function">print</span>(<span class="string">f'可训练参数: {trainable_params}'</span>)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section" id="get_peft_model">
+                <h2>get_peft_model()</h2>
+                
+                <div class="class-def">
+                    <code>
+<strong>get_peft_model</strong>(model, peft_config)
+                    </code>
+                </div>
+                
+                <p>根据配置创建 PEFT 模型的通用接口。</p>
+                
+                <h3>参数</h3>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>参数名</th>
+                            <th>类型</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>model</code></td>
+                            <td>nn.Module</td>
+                            <td>基础模型</td>
+                        </tr>
+                        <tr>
+                            <td><code>peft_config</code></td>
+                            <td>PEFTConfig</td>
+                            <td>PEFT 配置对象</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="returns">
+                    <h5>返回值</h5>
+                    <p><code>PeftModel</code> - PEFT 包装后的模型</p>
+                </div>
+            </section>
+            
+            <div class="references">
+                <h5>参考文献</h5>
+                <ol>
+                    <li>Hu, E. J., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models. <em>arXiv preprint arXiv:2106.09685</em>.</li>
+                    <li>Houlsby, N., et al. (2019). Parameter-Efficient Transfer Learning for NLP. <em>ICML 2019</em>.</li>
+                    <li>Li, X. L., & Liang, P. (2021). Prefix-Tuning: Optimizing Continuous Prompts for Generation. <em>ACL 2021</em>.</li>
+                </ol>
+            </div>
+            
+            <div class="seealso">
+                <h5>参见</h5>
+                <ul>
+                    <li><a href="tensor.html">xcrai.tensor</a> - 张量分解模块</li>
+                    <li><a href="../examples/advanced_usage.html">高级用法示例</a></li>
+                </ul>
+            </div>
+            
+            <footer class="footer">
+                <p>© 2024 XCAI Team. 基于 Sphinx 风格构建。</p>
+            </footer>
+        </main>
+    </div>
+    
+    <script src="../js/search.js"></script>
+</body>
+</html>

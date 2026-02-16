@@ -1,0 +1,467 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Benchmark Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        h1 { color: #333; }
+        h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        table { border-collapse: collapse; width: 100%; background: white; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        tr:hover { background-color: #ddd; }
+        .summary { background: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .chart { background: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        img { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <h1>Benchmark Test Report</h1>
+
+    <div class="summary">
+        <h2>Summary</h2>
+        <p><strong>Total Tests:</strong> 48</p>
+        <p><strong>Categories:</strong> 3D点云, 图像分割, 图像去噪</p>
+        <p><strong>Algorithms:</strong> BM3D, DGCNN, DeepLab, DnCNN, GraphCut, PointNet, ROF_chambolle, ROF_gradient_descent, ROF_primal_dual, SLaT, U-Net, Varifold</p>
+    </div>
+
+    <div class="chart">
+        <h2>3D点云</h2>
+        <table>
+            <tr>
+                <th>Algorithm</th>
+                <th>Input Size</th>
+                <th>Time (ms)</th>
+                <th>Memory (MB)</th>
+                <th>Accuracy</th>
+            </tr>
+
+            <tr>
+                <td>Varifold</td>
+                <td>500</td>
+                <td>341.24</td>
+                <td>1.45</td>
+                <td>0.2080</td>
+            </tr>
+
+            <tr>
+                <td>Varifold</td>
+                <td>500</td>
+                <td>373.27</td>
+                <td>1.45</td>
+                <td>0.3480</td>
+            </tr>
+
+            <tr>
+                <td>Varifold</td>
+                <td>1000</td>
+                <td>677.66</td>
+                <td>2.84</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Varifold</td>
+                <td>1000</td>
+                <td>601.93</td>
+                <td>2.84</td>
+                <td>0.1180</td>
+            </tr>
+
+            <tr>
+                <td>Varifold</td>
+                <td>2000</td>
+                <td>1342.29</td>
+                <td>5.62</td>
+                <td>0.1990</td>
+            </tr>
+
+            <tr>
+                <td>Varifold</td>
+                <td>2000</td>
+                <td>1357.69</td>
+                <td>5.62</td>
+                <td>0.1865</td>
+            </tr>
+
+            <tr>
+                <td>PointNet</td>
+                <td>500</td>
+                <td>10.57</td>
+                <td>1.45</td>
+                <td>0.2000</td>
+            </tr>
+
+            <tr>
+                <td>PointNet</td>
+                <td>500</td>
+                <td>8.60</td>
+                <td>1.45</td>
+                <td>0.2000</td>
+            </tr>
+
+            <tr>
+                <td>PointNet</td>
+                <td>1000</td>
+                <td>12.54</td>
+                <td>2.84</td>
+                <td>0.2000</td>
+            </tr>
+
+            <tr>
+                <td>PointNet</td>
+                <td>1000</td>
+                <td>10.84</td>
+                <td>2.84</td>
+                <td>0.2000</td>
+            </tr>
+
+            <tr>
+                <td>PointNet</td>
+                <td>2000</td>
+                <td>21.72</td>
+                <td>5.62</td>
+                <td>0.2000</td>
+            </tr>
+
+            <tr>
+                <td>PointNet</td>
+                <td>2000</td>
+                <td>21.78</td>
+                <td>5.62</td>
+                <td>0.2000</td>
+            </tr>
+
+            <tr>
+                <td>DGCNN</td>
+                <td>500</td>
+                <td>2140.76</td>
+                <td>3.95</td>
+                <td>0.1960</td>
+            </tr>
+
+            <tr>
+                <td>DGCNN</td>
+                <td>1000</td>
+                <td>19873.54</td>
+                <td>15.51</td>
+                <td>0.2140</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="chart">
+        <h2>图像分割</h2>
+        <table>
+            <tr>
+                <th>Algorithm</th>
+                <th>Input Size</th>
+                <th>Time (ms)</th>
+                <th>Memory (MB)</th>
+                <th>Accuracy</th>
+            </tr>
+
+            <tr>
+                <td>SLaT</td>
+                <td>128x128</td>
+                <td>25.16</td>
+                <td>2.13</td>
+                <td>0.4166</td>
+            </tr>
+
+            <tr>
+                <td>SLaT</td>
+                <td>128x128</td>
+                <td>24.24</td>
+                <td>2.13</td>
+                <td>0.4166</td>
+            </tr>
+
+            <tr>
+                <td>SLaT</td>
+                <td>256x256</td>
+                <td>157.42</td>
+                <td>8.50</td>
+                <td>0.4894</td>
+            </tr>
+
+            <tr>
+                <td>SLaT</td>
+                <td>256x256</td>
+                <td>152.52</td>
+                <td>8.50</td>
+                <td>0.4894</td>
+            </tr>
+
+            <tr>
+                <td>U-Net</td>
+                <td>128x128</td>
+                <td>348.29</td>
+                <td>0.51</td>
+                <td>0.1553</td>
+            </tr>
+
+            <tr>
+                <td>U-Net</td>
+                <td>256x256</td>
+                <td>1402.12</td>
+                <td>2.01</td>
+                <td>0.1684</td>
+            </tr>
+
+            <tr>
+                <td>DeepLab</td>
+                <td>128x128</td>
+                <td>36.83</td>
+                <td>0.24</td>
+                <td>0.1689</td>
+            </tr>
+
+            <tr>
+                <td>DeepLab</td>
+                <td>256x256</td>
+                <td>143.40</td>
+                <td>0.75</td>
+                <td>0.1633</td>
+            </tr>
+
+            <tr>
+                <td>GraphCut</td>
+                <td>128x128</td>
+                <td>5744.99</td>
+                <td>0.24</td>
+                <td>0.1586</td>
+            </tr>
+
+            <tr>
+                <td>GraphCut</td>
+                <td>128x128</td>
+                <td>5815.57</td>
+                <td>0.24</td>
+                <td>0.1586</td>
+            </tr>
+
+            <tr>
+                <td>GraphCut</td>
+                <td>256x256</td>
+                <td>23341.93</td>
+                <td>0.75</td>
+                <td>0.1629</td>
+            </tr>
+
+            <tr>
+                <td>GraphCut</td>
+                <td>256x256</td>
+                <td>35033.33</td>
+                <td>0.75</td>
+                <td>0.1629</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="chart">
+        <h2>图像去噪</h2>
+        <table>
+            <tr>
+                <th>Algorithm</th>
+                <th>Input Size</th>
+                <th>Time (ms)</th>
+                <th>Memory (MB)</th>
+                <th>Accuracy</th>
+            </tr>
+
+            <tr>
+                <td>ROF_gradient_descent</td>
+                <td>128x128</td>
+                <td>10.58</td>
+                <td>1.00</td>
+                <td>10.7007</td>
+            </tr>
+
+            <tr>
+                <td>ROF_gradient_descent</td>
+                <td>128x128</td>
+                <td>9.94</td>
+                <td>1.00</td>
+                <td>10.9192</td>
+            </tr>
+
+            <tr>
+                <td>ROF_gradient_descent</td>
+                <td>256x256</td>
+                <td>98.39</td>
+                <td>4.00</td>
+                <td>10.7393</td>
+            </tr>
+
+            <tr>
+                <td>ROF_gradient_descent</td>
+                <td>256x256</td>
+                <td>96.86</td>
+                <td>4.00</td>
+                <td>10.9399</td>
+            </tr>
+
+            <tr>
+                <td>ROF_gradient_descent</td>
+                <td>512x512</td>
+                <td>523.01</td>
+                <td>16.01</td>
+                <td>10.7273</td>
+            </tr>
+
+            <tr>
+                <td>ROF_gradient_descent</td>
+                <td>512x512</td>
+                <td>554.43</td>
+                <td>16.01</td>
+                <td>10.9352</td>
+            </tr>
+
+            <tr>
+                <td>ROF_chambolle</td>
+                <td>128x128</td>
+                <td>12.68</td>
+                <td>1.38</td>
+                <td>14.3810</td>
+            </tr>
+
+            <tr>
+                <td>ROF_chambolle</td>
+                <td>128x128</td>
+                <td>12.90</td>
+                <td>1.38</td>
+                <td>10.8898</td>
+            </tr>
+
+            <tr>
+                <td>ROF_chambolle</td>
+                <td>256x256</td>
+                <td>118.94</td>
+                <td>5.50</td>
+                <td>14.3456</td>
+            </tr>
+
+            <tr>
+                <td>ROF_chambolle</td>
+                <td>256x256</td>
+                <td>115.39</td>
+                <td>5.50</td>
+                <td>10.8095</td>
+            </tr>
+
+            <tr>
+                <td>ROF_chambolle</td>
+                <td>512x512</td>
+                <td>846.81</td>
+                <td>22.00</td>
+                <td>14.3418</td>
+            </tr>
+
+            <tr>
+                <td>ROF_chambolle</td>
+                <td>512x512</td>
+                <td>889.79</td>
+                <td>22.00</td>
+                <td>10.8002</td>
+            </tr>
+
+            <tr>
+                <td>ROF_primal_dual</td>
+                <td>128x128</td>
+                <td>14.08</td>
+                <td>1.50</td>
+                <td>10.6524</td>
+            </tr>
+
+            <tr>
+                <td>ROF_primal_dual</td>
+                <td>128x128</td>
+                <td>14.32</td>
+                <td>1.50</td>
+                <td>10.5056</td>
+            </tr>
+
+            <tr>
+                <td>ROF_primal_dual</td>
+                <td>256x256</td>
+                <td>89.51</td>
+                <td>6.00</td>
+                <td>10.6859</td>
+            </tr>
+
+            <tr>
+                <td>ROF_primal_dual</td>
+                <td>256x256</td>
+                <td>85.40</td>
+                <td>6.00</td>
+                <td>10.5337</td>
+            </tr>
+
+            <tr>
+                <td>ROF_primal_dual</td>
+                <td>512x512</td>
+                <td>793.57</td>
+                <td>24.01</td>
+                <td>10.6796</td>
+            </tr>
+
+            <tr>
+                <td>ROF_primal_dual</td>
+                <td>512x512</td>
+                <td>759.21</td>
+                <td>24.01</td>
+                <td>10.5292</td>
+            </tr>
+
+            <tr>
+                <td>BM3D</td>
+                <td>128x128</td>
+                <td>493.71</td>
+                <td>6.29</td>
+                <td>19.9543</td>
+            </tr>
+
+            <tr>
+                <td>BM3D</td>
+                <td>256x256</td>
+                <td>244.31</td>
+                <td>1.50</td>
+                <td>20.0075</td>
+            </tr>
+
+            <tr>
+                <td>DnCNN</td>
+                <td>128x128</td>
+                <td>524.81</td>
+                <td>0.63</td>
+                <td>16.6181</td>
+            </tr>
+
+            <tr>
+                <td>DnCNN</td>
+                <td>256x256</td>
+                <td>2095.97</td>
+                <td>2.51</td>
+                <td>16.6640</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="chart">
+        <h2>Performance Charts</h2>
+        <img src="benchmark_results.png" alt="Benchmark Results">
+    </div>
+    
+    <div class="chart">
+        <h2>Performance Heatmap</h2>
+        <img src="benchmark_heatmap.png" alt="Performance Heatmap">
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级用法 - XCAI API 文档</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h1>XCAI</h1>
+            <p class="version">版本 0.1.0</p>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜索 API...">
+                <div id="search-results"></div>
+            </div>
+            
+            <nav>
+                <h3>开始</h3>
+                <ul>
+                    <li><a href="../index.html">概述</a></li>
+                    <li><a href="basic_usage.html">快速开始</a></li>
+                    <li><a href="advanced_usage.html" class="active">高级用法</a></li>
+                </ul>
+                
+                <h3>模块</h3>
+                <ul>
+                    <li><a href="../modules/denoising.html">xcrai.denoising</a></li>
+                    <li><a href="../modules/segmentation.html">xcrai.segmentation</a></li>
+                    <li><a href="../modules/tensor.html">xcrai.tensor</a></li>
+                    <li><a href="../modules/pointcloud.html">xcrai.pointcloud</a></li>
+                    <li><a href="../modules/peft.html">xcrai.peft</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="page-header">
+                <h1>高级用法</h1>
+                <p class="breadcrumb">
+                    <a href="../index.html">Home</a> / <a href="advanced_usage.html">高级用法</a>
+                </p>
+            </header>
+            
+            <section class="section">
+                <h2>自定义去噪流水线</h2>
+                
+                <h3>级联去噪</h3>
+                
+                <p>对于复杂噪声，可以级联使用多种去噪方法：</p>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.denoising <span class="keyword">import</span> ROFDenoiser, NLMDenoiser
+
+<span class="keyword">def</span> <span class="function">cascaded_denoise</span>(noisy_image):
+    <span class="string">"""
+    级联去噪流水线：
+    1. 先用 ROF 去除大部分噪声
+    2. 再用 NLM 保留细节
+    """</span>
+    
+    <span class="comment"># 第一阶段：粗去噪</span>
+    rof = <span class="function">ROFDenoiser</span>(lambda_param=<span class="string">0.2</span>, n_iter=<span class="string">100</span>)
+    coarse_clean = rof.<span class="function">denoise</span>(noisy_image)
+    
+    <span class="comment"># 第二阶段：精细去噪</span>
+    nlm = <span class="function">NLMDenoiser</span>(h=<span class="string">0.05</span>, patch_size=<span class="string">5</span>, search_window=<span class="string">15</span>)
+    final_clean = nlm.<span class="function">denoise</span>(coarse_clean)
+    
+    <span class="keyword">return</span> final_clean
+
+<span class="comment"># 使用</span>
+result = <span class="function">cascaded_denoise</span>(noisy_image)
+                    </pre>
+                </div>
+                
+                <h3>自适应参数选择</h3>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> xcai.denoising <span class="keyword">import</span> ROFDenoiser
+
+<span class="keyword">def</span> <span class="function">adaptive_denoise</span>(image):
+    <span class="string">"""根据噪声水平自动选择参数"""</span>
+    
+    <span class="comment"># 估计噪声标准差</span>
+    noise_sigma = <span class="function">estimate_noise</span>(image)
+    
+    <span class="comment"># 根据噪声水平调整 lambda</span>
+    <span class="keyword">if</span> noise_sigma < <span class="string">0.05</span>:
+        lambda_param = <span class="string">0.05</span>  <span class="comment"># 低噪声，轻度处理</span>
+    <span class="keyword">elif</span> noise_sigma < <span class="string">0.15</span>:
+        lambda_param = <span class="string">0.1</span>   <span class="comment"># 中等噪声</span>
+    <span class="keyword">else</span>:
+        lambda_param = <span class="string">0.2</span>   <span class="comment"># 高噪声，强力处理</span>
+    
+    denoiser = <span class="function">ROFDenoiser</span>(lambda_param=lambda_param)
+    <span class="keyword">return</span> denoiser.<span class="function">denoise</span>(image)
+
+<span class="keyword">def</span> <span class="function">estimate_noise</span>(image):
+    <span class="string">"""使用 MAD 方法估计噪声水平"""</span>
+    <span class="keyword">from</span> scipy.ndimage <span class="keyword">import</span> median_filter
+    median = <span class="function">median_filter</span>(image, size=<span class="string">3</span>)
+    noise = image - median
+    <span class="keyword">return</span> np.<span class="function">median</span>(np.<span class="function">abs</span>(noise)) / <span class="string">0.6745</span>
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>高光谱图像分割流水线</h2>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> xcai.segmentation <span class="keyword">import</span> SLatSegmenter
+<span class="keyword">from</span> xcai.denoising <span class="keyword">import</span> ROFDenoiser
+<span class="keyword">from</span> xcai.tensor <span class="keyword">import</span> TuckerDecomposer
+
+<span class="keyword">class</span> <span class="function">HyperspectralSegmentationPipeline</span>:
+    <span class="string">"""高光谱图像分割完整流水线"""</span>
+    
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, n_clusters=<span class="string">5</span>, denoise=True, reduce_dim=True):
+        self.n_clusters = n_clusters
+        self.denoise = denoise
+        self.reduce_dim = reduce_dim
+        
+        <span class="keyword">if</span> denoise:
+            self.denoiser = <span class="function">ROFDenoiser</span>(lambda_param=<span class="string">0.05</span>)
+        
+        <span class="keyword">if</span> reduce_dim:
+            self.reducer = <span class="function">TuckerDecomposer</span>(rank=[<span class="string">-1</span>, <span class="string">-1</span>, <span class="string">10</span>])
+        
+        self.segmenter = <span class="function">SLatSegmenter</span>(
+            n_clusters=n_clusters,
+            spatial_weight=<span class="string">0.3</span>
+        )
+    
+    <span class="keyword">def</span> <span class="function">fit</span>(self, hyperspectral_image):
+        <span class="string">"""
+        训练流水线
+        
+        Parameters
+        ----------
+        hyperspectral_image : ndarray
+            形状为 (H, W, C) 的高光谱图像
+        """</span>
+        H, W, C = hyperspectral_image.shape
+        data = hyperspectral_image.<span class="function">copy</span>()
+        
+        <span class="comment"># 步骤1：去噪</span>
+        <span class="keyword">if</span> self.denoise:
+            <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(C):
+                data[:, :, c] = self.denoiser.<span class="function">denoise</span>(data[:, :, c])
+        
+        <span class="comment"># 步骤2：降维</span>
+        <span class="keyword">if</span> self.reduce_dim:
+            core, factors = self.reducer.<span class="function">decompose</span>(data)
+            data = core  <span class="comment"># 使用核心张量作为降维结果</span>
+        
+        <span class="comment"># 步骤3：分割</span>
+        self.segmenter.<span class="function">fit</span>(data)
+        
+        <span class="keyword">return</span> self
+    
+    <span class="keyword">def</span> <span class="function">predict</span>(self, hyperspectral_image):
+        <span class="string">"""预测分割结果"""</span>
+        <span class="keyword">return</span> self.segmenter.<span class="function">predict</span>(hyperspectral_image)
+
+<span class="comment"># 使用示例</span>
+pipeline = <span class="function">HyperspectralSegmentationPipeline</span>(n_clusters=<span class="string">7</span>)
+pipeline.<span class="function">fit</span>(hsi_data)
+labels = pipeline.<span class="function">predict</span>(hsi_data)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>大规模张量补全</h2>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.tensor <span class="keyword">import</span> TensorCompletion
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">def</span> <span class="function">incremental_tensor_completion</span>(tensor, mask, chunk_size=<span class="string">100</span>):
+    <span class="string">"""
+    增量式张量补全，适用于大规模张量
+    
+    Parameters
+    ----------
+    tensor : ndarray
+        带缺失值的张量
+    mask : ndarray
+        观测位置掩码 (True = 已观测)
+    chunk_size : int
+        处理块大小
+    """</span>
+    shape = tensor.shape
+    result = tensor.<span class="function">copy</span>()
+    
+    <span class="comment"># 使用全局统计初始化缺失值</span>
+    mean_val = np.<span class="function">nanmean</span>(tensor)
+    result[~mask] = mean_val
+    
+    <span class="comment"># 迭代优化</span>
+    completer = <span class="function">TensorCompletion</span>(
+        rank=[<span class="string">20</span>, <span class="string">20</span>, <span class="string">10</span>],
+        max_iter=<span class="string">50</span>
+    )
+    
+    <span class="keyword">for</span> iteration <span class="keyword">in</span> <span class="function">range</span>(<span class="string">10</span>):
+        <span class="comment"># 补全</span>
+        completed = completer.<span class="function">complete</span>(result)
+        
+        <span class="comment"># 只更新缺失位置</span>
+        result[~mask] = completed[~mask]
+        
+        <span class="comment"># 计算收敛指标</span>
+        <span class="keyword">if</span> iteration > <span class="string">0</span>:
+            diff = np.<span class="function">linalg.norm</span>(completed - prev_result)
+            <span class="function">print</span>(<span class="string">f'迭代 {iteration}: 变化 = {diff:.6f}'</span>)
+            <span class="keyword">if</span> diff < <span class="string">1e-4</span>:
+                <span class="keyword">break</span>
+        
+        prev_result = completed.<span class="function">copy</span>()
+    
+    <span class="keyword">return</span> result
+
+<span class="comment"># 使用示例</span>
+tensor = np.random.<span class="function">rand</span>(<span class="string">500</span>, <span class="string">500</span>, <span class="string">100</span>)
+mask = np.random.<span class="function">rand</span>(*tensor.shape) > <span class="string">0.7</span>  <span class="comment"># 30% 观测</span>
+tensor_with_missing = tensor.<span class="function">copy</span>()
+tensor_with_missing[~mask] = np.nan
+
+completed = <span class="function">incremental_tensor_completion</span>(tensor_with_missing, mask)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>点云配准与融合</h2>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.pointcloud <span class="keyword">import</span> PointCloudProcessor, ICPRegistrator, FeatureExtractor
+
+<span class="keyword">class</span> <span class="function">PointCloudFusionPipeline</span>:
+    <span class="string">"""多点云融合流水线"""</span>
+    
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, voxel_size=<span class="string">0.02</span>):
+        self.voxel_size = voxel_size
+        self.registrator = <span class="function">ICPRegistrator</span>(max_iter=<span class="string">50</span>)
+        self.feature_extractor = <span class="function">FeatureExtractor</span>(method=<span class="string">'fpfh'</span>)
+    
+    <span class="keyword">def</span> <span class="function">preprocess</span>(self, pcd):
+        <span class="string">"""预处理：下采样 + 法向量估计"""</span>
+        processor = <span class="function">PointCloudProcessor</span>()
+        processor.<span class="function">load</span>(pcd) <span class="keyword">if</span> <span class="function">isinstance</span>(pcd, str) <span class="keyword">else</span> processor.<span class="function">set_points</span>(pcd)
+        
+        <span class="comment"># 下采样</span>
+        downsampled = processor.<span class="function">voxel_downsample</span>(self.voxel_size)
+        
+        <span class="comment"># 估计法向量</span>
+        downsampled.<span class="function">estimate_normals</span>(radius=self.voxel_size * <span class="string">5</span>)
+        
+        <span class="keyword">return</span> downsampled
+    
+    <span class="keyword">def</span> <span class="function">pairwise_register</span>(self, source, target):
+        <span class="string">"""两两点云配准"""</span>
+        <span class="comment"># 特征匹配</span>
+        src_features = self.feature_extractor.<span class="function">extract</span>(source)
+        tgt_features = self.feature_extractor.<span class="function">extract</span>(target)
+        
+        <span class="comment"># 粗配准 (基于特征)</span>
+        <span class="comment"># ... 特征匹配代码 ...
+        
+        # 精配准 (ICP)</span>
+        result = self.registrator.<span class="function">register</span>(source, target)
+        
+        <span class="keyword">return</span> result
+    
+    <span class="keyword">def</span> <span class="function">fuse</span>(self, point_clouds):
+        <span class="string">"""
+        融合多个点云
+        
+        Parameters
+        ----------
+        point_clouds : list
+            点云文件路径列表或点云数组列表
+        """</span>
+        <span class="comment"># 预处理所有点云</span>
+        processed = [<span class="function">self.preprocess</span>(pcd) <span class="keyword">for</span> pcd <span class="keyword">in</span> point_clouds]
+        
+        <span class="comment"># 以第一个点云为参考</span>
+        reference = processed[<span class="string">0</span>]
+        fused = reference
+        
+        <span class="comment"># 依次配准并融合</span>
+        <span class="keyword">for</span> i, pcd <span class="keyword">in</span> <span class="function">enumerate</span>(processed[<span class="string">1</span>:], <span class="string">1</span>):
+            result = <span class="function">self.pairwise_register</span>(pcd, fused)
+            <span class="function">print</span>(<span class="string">f'配准点云 {i}: fitness={result.fitness:.4f}'</span>)
+            
+            <span class="comment"># 应用变换并合并</span>
+            transformed = pcd.<span class="function">transform</span>(result.transformation)
+            fused = fused.<span class="function">merge</span>(transformed)
+        
+        <span class="comment"># 最终下采样去除重复点</span>
+        fused = fused.<span class="function">voxel_downsample</span>(self.voxel_size)
+        
+        <span class="keyword">return</span> fused
+
+<span class="comment"># 使用示例</span>
+pipeline = <span class="function">PointCloudFusionPipeline</span>(voxel_size=<span class="string">0.02</span>)
+fused_pcd = pipeline.<span class="function">fuse</span>([<span class="string">'scan1.ply'</span>, <span class="string">'scan2.ply'</span>, <span class="string">'scan3.ply'</span>])
+fused_pcd.<span class="function">save</span>(<span class="string">'fused_result.ply'</span>)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>LoRA 微调最佳实践</h2>
+                
+                <h3>完整训练流程</h3>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">import</span> torch
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">from</span> transformers <span class="keyword">import</span> AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
+<span class="keyword">from</span> xcai.peft <span class="keyword">import</span> LoRAConfig, apply_lora, save_lora_weights, load_lora_weights
+
+<span class="keyword">def</span> <span class="function">train_with_lora</span>(
+    model_name,
+    train_dataset,
+    output_dir,
+    epochs=<span class="string">3</span>,
+    batch_size=<span class="string">8</span>,
+    learning_rate=<span class="string">1e-4</span>,
+    lora_r=<span class="string">8</span>,
+    lora_alpha=<span class="string">16</span>
+):
+    <span class="string">"""LoRA 微调完整流程"""</span>
+    
+    <span class="comment"># 加载模型</span>
+    model = <span class="function">AutoModelForCausalLM.from_pretrained</span>(
+        model_name,
+        torch_dtype=torch.float16,
+        device_map=<span class="string">'auto'</span>
+    )
+    tokenizer = <span class="function">AutoTokenizer.from_pretrained</span>(model_name)
+    
+    <span class="comment"># 配置 LoRA</span>
+    config = <span class="function">LoRAConfig</span>(
+        r=lora_r,
+        alpha=lora_alpha,
+        dropout=<span class="string">0.1</span>,
+        target_modules=[<span class="string">'q_proj'</span>, <span class="string">'v_proj'</span>],
+        bias=<span class="string">'none'</span>
+    )
+    
+    <span class="comment"># 应用 LoRA</span>
+    model = <span class="function">apply_lora</span>(model, config)
+    
+    <span class="comment"># 冻结非 LoRA 参数</span>
+    <span class="keyword">for</span> name, param <span class="keyword">in</span> model.named_parameters():
+        <span class="keyword">if</span> <span class="string">'lora'</span> <span class="keyword">not in</span> name.lower():
+            param.requires_grad = <span class="string">False</span>
+    
+    <span class="comment"># 打印可训练参数</span>
+    trainable = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters() <span class="keyword">if</span> p.requires_grad)
+    total = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+    <span class="function">print</span>(<span class="string">f'可训练参数: {trainable:,} / {total:,} ({100*trainable/total:.2f}%)'</span>)
+    
+    <span class="comment"># 数据加载器</span>
+    train_loader = <span class="function">DataLoader</span>(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=<span class="string">True</span>
+    )
+    
+    <span class="comment"># 优化器 (只优化 LoRA 参数)</span>
+    optimizer = torch.<span class="function">optim.AdamW</span>(
+        [p <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters() <span class="keyword">if</span> p.requires_grad],
+        lr=learning_rate
+    )
+    
+    <span class="comment"># 学习率调度器</span>
+    scheduler = <span class="function">get_linear_schedule_with_warmup</span>(
+        optimizer,
+        num_warmup_steps=<span class="string">100</span>,
+        num_training_steps=len(train_loader) * epochs
+    )
+    
+    <span class="comment"># 训练循环</span>
+    model.<span class="function">train</span>()
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(epochs):
+        total_loss = <span class="string">0</span>
+        <span class="keyword">for</span> batch <span class="keyword">in</span> train_loader:
+            optimizer.<span class="function">zero_grad</span>()
+            
+            outputs = model(**batch)
+            loss = outputs.loss
+            
+            loss.<span class="function">backward</span>()
+            optimizer.<span class="function">step</span>()
+            scheduler.<span class="function">step</span>()
+            
+            total_loss += loss.item()
+        
+        avg_loss = total_loss / len(train_loader)
+        <span class="function">print</span>(<span class="string">f'Epoch {epoch+1}: avg_loss = {avg_loss:.4f}'</span>)
+    
+    <span class="comment"># 保存 LoRA 权重</span>
+    <span class="function">save_lora_weights</span>(model, output_dir)
+    <span class="function">print</span>(<span class="string">f'LoRA 权重已保存到 {output_dir}'</span>)
+    
+    <span class="keyword">return</span> model
+                    </pre>
+                </div>
+                
+                <h3>多任务 LoRA</h3>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">from</span> xcai.peft <span class="keyword">import</span> LoRAConfig, MultiTaskLoRA
+
+<span class="comment"># 为不同任务配置不同的 LoRA</span>
+task_configs = {
+    <span class="string">'sentiment'</span>: <span class="function">LoRAConfig</span>(r=<span class="string">8</span>, alpha=<span class="string">16</span>),
+    <span class="string">'ner'</span>: <span class="function">LoRAConfig</span>(r=<span class="string">16</span>, alpha=<span class="string">32</span>),
+    <span class="string">'qa'</span>: <span class="function">LoRAConfig</span>(r=<span class="string">4</span>, alpha=<span class="string">8</span>)
+}
+
+<span class="comment"># 创建多任务 LoRA</span>
+multi_lora = <span class="function">MultiTaskLoRA</span>(base_model, task_configs)
+
+<span class="comment"># 推理时切换任务</span>
+output_sentiment = multi_lora.<span class="function">forward</span>(input_ids, task=<span class="string">'sentiment'</span>)
+output_ner = multi_lora.<span class="function">forward</span>(input_ids, task=<span class="string">'ner'</span>)
+                    </pre>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>性能优化技巧</h2>
+                
+                <h3>GPU 加速</h3>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">import</span> torch
+<span class="keyword">from</span> xcai.denoising <span class="keyword">import</span> ROFDenoiser
+
+<span class="comment"># 检查 GPU 可用性</span>
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+
+<span class="comment"># 使用 GPU 加速</span>
+denoiser = <span class="function">ROFDenoiser</span>(lambda_param=<span class="string">0.1</span>, device=device)
+
+<span class="comment"># 批量处理</span>
+<span class="keyword">def</span> <span class="function">batch_denoise</span>(images, batch_size=<span class="string">16</span>):
+    results = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="string">0</span>, len(images), batch_size):
+        batch = torch.<span class="function">tensor</span>(images[i:i+batch_size]).to(device)
+        <span class="keyword">with</span> torch.no_grad():
+            cleaned = denoiser.<span class="function">denoise_batch</span>(batch)
+        results.<span class="function">extend</span>(cleaned.cpu().numpy())
+    <span class="keyword">return</span> np.<span class="function">array</span>(results)
+                    </pre>
+                </div>
+                
+                <h3>内存优化</h3>
+                
+                <div class="example-box">
+                    <pre>
+<span class="keyword">import</span> gc
+
+<span class="keyword">def</span> <span class="function">memory_efficient_processing</span>(large_tensor):
+    <span class="string">"""内存高效的大张量处理"""</span>
+    
+    <span class="comment"># 分块处理</span>
+    chunk_size = <span class="string">100</span>
+    results = []
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="string">0</span>, large_tensor.shape[<span class="string">0</span>], chunk_size):
+        chunk = large_tensor[i:i+chunk_size]
+        
+        <span class="comment"># 处理块</span>
+        result = process_chunk(chunk)
+        results.<span class="function">append</span>(result)
+        
+        <span class="comment"># 清理内存</span>
+        <span class="keyword">del</span> chunk, result
+        gc.<span class="function">collect</span>()
+    
+    <span class="keyword">return</span> np.<span class="function">concatenate</span>(results, axis=<span class="string">0</span>)
+                    </pre>
+                </div>
+            </section>
+            
+            <footer class="footer">
+                <p>© 2024 XCAI Team. 基于 Sphinx 风格构建。</p>
+            </footer>
+        </main>
+    </div>
+    
+    <script src="../js/search.js"></script>
+</body>
+</html>
