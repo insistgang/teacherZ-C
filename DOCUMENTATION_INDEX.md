@@ -1,6 +1,6 @@
 # 项目文档主索引
 
-> 最后更新：2026年2月16日
+> 最后更新：2026年2月16日 19:30
 > 本项目：Xiaohao Cai 学术研究与复现
 
 ---
@@ -63,28 +63,34 @@
 
 ### 2.1 超精读笔记 (xiaohao_cai_ultimate_notes/)
 
-**状态**: 67篇模板已创建，2篇已完整填充
+**状态**: 67篇模板，**约40篇已填充** (约441K字)
 
-**已完成的精读笔记**:
+**已完成的精读笔记** (精选):
 
 | 论文 | 年份 | 笔记文件 |
 |:---|:---:|:---|
-| Mumford-Shah and ROF Linkage | 2018 | [Mumford-Shah_and_ROF_Linkage_超精读笔记.md](xiaohao_cai_ultimate_notes/Mumford-Shah_and_ROF_Linkage_超精读笔记.md) |
-| SLaT三阶段分割 | 2015 | [SLaT_Three-stage_Segmentation_超精读笔记.md](xiaohao_cai_ultimate_notes/SLaT_Three-stage_Segmentation_超精读笔记.md) |
+| Mumford-Shah and ROF Linkage | 2018 | [Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md) |
+| SLaT三阶段分割 | 2015 | [SLaT_Three-stage_Segmentation_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/SLaT_Three-stage_Segmentation_超精读笔记_已填充.md) |
+| Two-Stage分割 | 2013 | [Two-Stage_Segmentation_2013_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/Two-Stage_Segmentation_2013_超精读笔记_已填充.md) |
+| Tight-Frame血管分割 | 2011 | [Tight-Frame_Vessel_Segmentation_2011_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/Tight-Frame_Vessel_Segmentation_2011_超精读笔记_已填充.md) |
+| HiFi-Mamba MRI重建 | 2025 | [HiFi-Mamba_MRI_Reconstruction_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/HiFi-Mamba_MRI_Reconstruction_超精读笔记_已填充.md) |
+| tCURLoRA | 2025 | [tCURLoRA_Tensor_CUR_for_Medical_Imaging_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/tCURLoRA_Tensor_CUR_for_Medical_Imaging_超精读笔记_已填充.md) |
+| Talk2Radar | 2025 | [Talk2Radar_Language_Radar_Multimodal_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/Talk2Radar_Language_Radar_Multimodal_超精读笔记_已填充.md) |
+| CALM | 2026 | [CALM_Culturally_Aware_Language_Model_超精读笔记_已填充.md](xiaohao_cai_ultimate_notes/CALM_Culturally_Aware_Language_Model_超精读笔记_已填充.md) |
 
 **完整列表**: [查看全部67篇笔记](xiaohao_cai_ultimate_notes/00_分析报告汇总.md)
 
-### 2.2 多智能体精读报告 (xiaohao_cai_papers_final/)
+### 2.2 多智能体精读报告 (根目录)
 
-**状态**: 40+ 报告已生成
+**状态**: 20+ 报告已生成
 
 | 类别 | 数量 | 示例 |
 |:---|:---:|:---|
-| 变分分割 | 10篇 | [分割方法论总览](xiaohao_cai_papers_final/分割方法论总览_多智能体精读报告.md) |
-| 3D视觉 | 8篇 | [3D树木图割](xiaohao_cai_papers_final/3DTree_MCGC_多智能体精读报告.md) |
-| 医学影像 | 6篇 | [HiFi-Mamba](xiaohao_cai_papers_final/HiFiMamba_MRI_多智能体精读报告.md) |
-| 张量分解 | 5篇 | [tCURLoRA](xiaohao_cai_papers_final/tCURLoRA_多智能体精读报告.md) |
-| 大模型/多模态 | 8篇 | [Talk2Radar](xiaohao_cai_papers_final/Talk2Radar_多智能体精读报告.md) |
+| 变分分割 | 5篇 | [SLaT多智能体精读报告](SLaT三阶段多智能体精读报告.md) |
+| 3D视觉 | 4篇 | [3D树木图割](3D_Tree_Delineation_Graph_Cut_多智能体精读报告.md) |
+| 医学影像 | 5篇 | [HiFi-MambaV2](HiFi-MambaV2多智能体精读报告.md) |
+| 张量分解 | 3篇 | [GO-LDA](GO-LDA_多智能体精读报告.md) |
+| 大模型/多模态 | 5篇 | [CALM](CALM多智能体精读报告.md) |
 
 ### 2.3 根目录精读论文
 
@@ -202,7 +208,7 @@
 | 报告 | 大小 | 主题 |
 |:---|:---:|:---|
 | [SOTA方法深度对比报告.md](SOTA方法深度对比报告.md) | 24KB | 分割方法对比 |
-| [论文可复现性优先级排序报告_综合版.md](xiaohao_cai_papers/可复现性优先级排序报告_综合版.md) | - | 复现性分析 |
+| [论文可复现性优先级排序报告.md](论文可复现性优先级排序报告.md) | - | 复现性分析 |
 
 ### 7.2 落地分析报告
 

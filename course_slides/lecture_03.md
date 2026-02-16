@@ -1,236 +1,249 @@
-# 第三讲：全变分与图像处理
+# 第三讲: 全变分模型
 
-## Total Variation and Image Processing
+## 课程信息
+- 课程: 计算机视觉前沿方法
+- 讲次: 3/24
+- 学时: 2学时
 
----
+## 教学目标
+1. 理解全变分(TV)的数学定义
+2. 掌握TV正则化的物理意义
+3. 能够推导TV去噪模型的Euler-Lagrange方程
+4. 了解TV模型的优缺点
 
-### 📋 本讲大纲
+## 内容大纲
 
-1. 全变分(TV)的定义与性质
-2. ROF去噪模型
-3. TV正则化的特点
-4. 数值求解方法
-5. 变体与扩展
+### Part 1: 全变分的定义与性质 (25分钟)
 
----
+#### 1.1 有界变差函数空间
 
-### 3.1 全变分的定义
+**定义**: 函数 $u \in L^1(\Omega)$ 的全变分定义为：
+$$TV(u) = \sup\left\{\int_\Omega u \, \text{div} \phi \, dx : \phi \in C_c^1(\Omega, \mathbb{R}^n), |\phi(x)| \leq 1\right\}$$
 
-#### 有界变差函数空间
+**有界变差函数空间**:
+$$BV(\Omega) = \{u \in L^1(\Omega) : TV(u) < \infty\}$$
 
-函数 $u \in BV(\Omega)$ 的全变分定义为：
-$$\|u\|_{TV} = \sup \left\{ \int_\Omega u \, \text{div} \, \phi \, dx : \phi \in C_c^1(\Omega, \mathbb{R}^d), \|\phi\|_\infty \leq 1 \right\}$$
+#### 1.2 光滑函数的全变分
 
-#### 光滑函数的简化形式
+对于光滑函数 $u \in C^1(\Omega)$：
+$$TV(u) = \int_\Omega |\nabla u| dx = \int_\Omega \sqrt{u_x^2 + u_y^2} \, dx$$
 
-若 $u \in C^1$：
-$$\|u\|_{TV} = \int_\Omega |\nabla u| \, dx$$
+**解释**:
+- $|\nabla u|$ 是梯度幅值
+- TV是所有梯度幅值的积分
+- 度量图像"变化总量"
 
-**动画建议**：展示TV作为"总变化量"的几何意义
+#### 1.3 TV的几何解释
 
----
+**水平集**: 给定阈值 $t$，水平集 $L_t = \{x : u(x) = t\}$
 
-### 3.2 TV vs $\ell_2$正则化
+**Co-Area公式**:
+$$TV(u) = \int_{-\infty}^{+\infty} \text{Per}(L_t) \, dt$$
 
-#### 对比分析
+其中 $\text{Per}(L_t)$ 是水平集的周长。
 
-| 特性 | $\ell_2$正则化 | TV正则化 |
-|------|----------------|----------|
-| 公式 | $\int |\nabla u|^2$ | $\int |\nabla u|$ |
-| 平滑效果 | 过度平滑 | 边缘保持 |
-| 边缘处理 | 模糊 | 锐利保持 |
-| 计算复杂度 | 低（线性） | 高（非线性） |
+**意义**: 全变分等于所有水平集周长的积分。
 
-**动画建议**：同一噪声图像用两种方法去噪的效果对比
+#### 1.4 TV的性质
 
----
+**性质1: 旋转不变性**
+TV在坐标旋转下保持不变。
 
-### 3.3 ROF模型
+**性质2: 边缘保持**
+TV允许函数有跳跃（边缘），不同于 $H^1$ 范数。
 
-#### Rudin-Osher-Fatemi模型 (1992)
+**性质3: 凸性**
+$TV(u)$ 是 $u$ 的凸泛函。
 
-$$\boxed{\min_u \underbrace{\|u - f\|_2^2}_{\text{数据保真}} + \lambda \underbrace{\|u\|_{TV}}_{\text{TV正则}}}$$
+**性质4: 齐次性**
+$TV(cu) = |c| TV(u)$，一次齐次。
 
-#### 物理意义
+### Part 2: Rudin-Osher-Fatemi (ROF) 模型 (30分钟)
 
-- **数据项**：保持与观测数据的一致性
-- **正则项**：惩罚图像的"总变化"，抑制噪声
-- **参数λ**：平衡两者的权重
+#### 2.1 模型建立
 
----
+**ROF模型** (1992):
+$$\min_u \left\{ \int_\Omega |\nabla u| dx + \frac{\lambda}{2} \int_\Omega (u - f)^2 dx \right\}$$
 
-### 3.4 TV的性质
+其中：
+- $f$: 观测（噪声）图像
+- $u$: 待求（去噪）图像
+- $\lambda > 0$: 正则化参数
 
-#### 凸性
+**能量泛函**:
+$$J[u] = TV(u) + \frac{\lambda}{2}\|u - f\|_{L^2}^2$$
 
-TV范数是凸函数：
-$$\|\theta u + (1-\theta)v\|_{TV} \leq \theta \|u\|_{TV} + (1-\theta)\|v\|_{TV}$$
+#### 2.2 Euler-Lagrange方程推导
 
-#### 非光滑性
+**变分计算**:
+$$\delta J = \int_\Omega \left[ \frac{\nabla u}{|\nabla u|} \cdot \nabla \delta u + \lambda(u-f)\delta u \right] dx$$
 
-TV范数在 $u$ 为常数处不可微（但在分布意义下有次梯度）
+利用分部积分（散度定理）：
+$$\delta J = \int_\Omega \left[ -\text{div}\left(\frac{\nabla u}{|\nabla u|}\right) + \lambda(u-f) \right] \delta u \, dx$$
 
-#### 边缘保持性
+**Euler-Lagrange方程**:
+$$\boxed{-\text{div}\left(\frac{\nabla u}{|\nabla u|}\right) + \lambda(u - f) = 0}$$
 
-> **关键性质**：TV允许图像中的"跳跃"（边缘），而$\ell_2$惩罚会平滑掉这些跳跃
+#### 2.3 曲率流解释
 
-**动画建议**：展示一维信号的去噪效果对比
+记 $\kappa = \text{div}\left(\frac{\nabla u}{|\nabla u|}\right)$，这是水平集的**平均曲率**。
 
----
+**E-L方程改写**:
+$$u - f = \frac{1}{\lambda}\kappa$$
 
-### 3.5 TV的各向同性vs各向异性形式
+**物理意义**:
+- 曲率为正的区域（凸），$u < f$
+- 曲率为负的区域（凹），$u > f$
+- 曲率越大，偏离越明显
 
-#### 各向同性TV (Isotropic)
-$$\|u\|_{TV}^{iso} = \int_\Omega \sqrt{u_x^2 + u_y^2} \, dx$$
+#### 2.4 梯度下降流
 
-#### 各向异性TV (Anisotropic)
-$$\|u\|_{TV}^{aniso} = \int_\Omega (|u_x| + |u_y|) \, dx$$
+引入人工时间 $t$，梯度下降流：
+$$\frac{\partial u}{\partial t} = \text{div}\left(\frac{\nabla u}{|\nabla u|}\right) - \lambda(u - f)$$
 
-#### 比较
+**稳态**: $\frac{\partial u}{\partial t} = 0$ 即得到E-L方程。
 
+### Part 3: TV正则化的特点 (25分钟)
+
+#### 3.1 边缘保持能力
+
+**对比Tikhonov正则化**:
+
+| 正则化 | 形式 | 边缘处理 |
+|--------|------|----------|
+| Tikhonov | $\|\nabla u\|_2^2$ | 过度平滑边缘 |
+| TV | $\|\nabla u\|_1$ | 保持边缘 |
+
+**原因分析**:
+- $L^2$ 对大梯度惩罚重 → 边缘被平滑
+- $L^1$ 对大梯度惩罚轻 → 边缘被保留
+
+#### 3.2 阶梯效应 (Staircasing Effect)
+
+**问题**: TV正则化在平滑区域产生虚假边缘
+
+**原因**: TV偏好分段常数函数
+
+**示例**: 斜坡函数经TV去噪后变成阶梯状
+
+**解决方案**:
+- 高阶TV: $TV^2(u) = \int|\nabla^2 u|$
+- 广义TV: $\alpha TV(u) + \beta TV^2(u)$
+
+#### 3.3 对比度不变性
+
+**定理**: 设 $u^*$ 是ROF问题的解，则对任意单调递增函数 $g$，$g(u^*)$ 是以 $g(f)$ 为输入的ROF问题解。
+
+**意义**: TV去噪结果与图像对比度线性变换无关。
+
+#### 3.4 参数选择
+
+**Morozov偏差原理**: 选择 $\lambda$ 使得：
+$$\|u - f\|_{L^2} = \sigma\sqrt{|\Omega|}$$
+
+其中 $\sigma$ 是噪声标准差。
+
+**广义交叉验证(GCV)**:
+$$\lambda^* = \arg\min_\lambda \frac{\|u_\lambda - f\|^2}{(\text{trace}(I - A_\lambda))^2}$$
+
+### Part 4: TV模型的扩展 (20分钟)
+
+#### 4.1 加权TV
+
+**各向异性TV**:
+$$TV_{\alpha,\beta}(u) = \int_\Omega \sqrt{\alpha u_x^2 + \beta u_y^2} \, dx$$
+
+**加权TV**:
+$$TV_w(u) = \int_\Omega w(x)|\nabla u| dx$$
+
+其中 $w(x)$ 是空间权重函数。
+
+#### 4.2 非局部TV
+
+**非局部梯度**:
+$$(\nabla_{NL} u)(x,y) = u(y) - u(x), \quad y \in \text{邻域}(x)$$
+
+**非局部TV**:
+$$TV_{NL}(u) = \int_\Omega \sqrt{\int_\Omega w(x,y)(u(y)-u(x))^2 dy} \, dx$$
+
+**优势**: 利用图像的自相似性，更好地保持纹理。
+
+#### 4.3 向量值TV (Color TV)
+
+**彩色图像**: $u = (u_1, u_2, u_3)^T$
+
+**通道耦合TV**:
+$$TV(u) = \int_\Omega \sqrt{\sum_{i=1}^3 |\nabla u_i|^2} \, dx$$
+
+**意义**: 所有通道共享边缘，避免颜色边缘错位。
+
+#### 4.4 TV-L1模型
+
+**模型**:
+$$\min_u \left\{ TV(u) + \lambda \|u - f\|_{L^1} \right\}$$
+
+**特点**:
+- 对椒盐噪声更鲁棒
+- 更好的对比度保持
+- 更强的边缘保持
+
+## 核心公式汇总
+
+| 公式名称 | 表达式 | 说明 |
+|---------|--------|------|
+| TV定义 | $TV(u) = \int_\Omega \|\nabla u\| dx$ | 全变分 |
+| ROF模型 | $\min_u TV(u) + \frac{\lambda}{2}\|u-f\|^2$ | 经典去噪 |
+| E-L方程 | $-\text{div}(\nabla u/\|\nabla u\|) + \lambda(u-f) = 0$ | 最优性条件 |
+| 曲率流 | $\partial_t u = \text{div}(\nabla u/\|\nabla u\|)$ | 梯度下降 |
+| TV-L1 | $\min_u TV(u) + \lambda\|u-f\|_1$ | 鲁棒版本 |
+
+## 课后习题
+
+### 1. 证明题
+证明ROF模型能量泛函的凸性和下半连续性。
+
+### 2. 计算题
+验证下列函数的TV值：
+- $u(x) = ax + b$ on $[0,1]$
+- $u(x) = \begin{cases} 0, x < c \\ 1, x \geq c \end{cases}$ on $[0,1]$
+
+### 3. 推导题
+推导TV-L1模型的Euler-Lagrange方程（提示：需要引入辅助变量）。
+
+### 4. 编程题
+```python
+import numpy as np
+
+def tv_denoise(f, lambda_, n_iter=100):
+    """
+    TV去噪的梯度下降实现
+    f: 输入图像
+    lambda_: 正则化参数
+    n_iter: 迭代次数
+    """
+    u = f.copy()
+    dt = 0.1
+    
+    for _ in range(n_iter):
+        # 计算梯度
+        # 计算曲率项 div(grad_u/|grad_u|)
+        # 梯度下降更新
+        pass
+    return u
 ```
-各向同性：旋转不变，计算稍复杂
-各向异性：简单，但偏好水平/垂直边缘
-```
 
----
+## 扩展阅读
 
-### 3.6 Euler-Lagrange方程
+1. **经典论文**
+   - Rudin, Osher & Fatemi "Nonlinear Total Variation Based Noise Removal Algorithms", Physica D, 1992
+   - Chambolle "An Algorithm for Total Variation Minimization and Applications", JMIV, 2004
 
-#### ROF的变分形式
+2. **高阶TV**
+   - Bredies, Kunisch, Pock "Total Generalized Variation", SIAM J. Imaging Sci., 2010
 
-对ROF模型求变分得到：
-$$u - f - \lambda \nabla \cdot \left( \frac{\nabla u}{|\nabla u|} \right) = 0$$
+3. **应用**
+   - Compressive Sensing中的TV最小化
+   - 医学图像重建
 
-#### 正则化处理
-
-为避免 $|\nabla u| = 0$ 时的奇异性，引入小参数 $\epsilon$：
-$$\nabla \cdot \left( \frac{\nabla u}{\sqrt{|\nabla u|^2 + \epsilon^2}} \right)$$
-
----
-
-### 3.7 Chambolle投影算法
-
-#### 对偶形式
-
-ROF的对偶问题：
-$$\min_p \|f - \lambda \nabla^* p\|_2^2 \quad \text{s.t.} \quad |p| \leq 1$$
-
-#### Chambolle迭代 (2004)
-
-$$p^{n+1} = \frac{p^n + \tau \nabla(\nabla^* p^n - f/\lambda)}{1 + \tau |\nabla(\nabla^* p^n - f/\lambda)|}$$
-
-最终解：
-$$u = f - \lambda \nabla^* p^*$$
-
----
-
-### 3.8 离散TV
-
-#### 各向异性离散化
-
-$$\|u\|_{TV}^{aniso} = \sum_{i,j} |u_{i+1,j} - u_{i,j}| + |u_{i,j+1} - u_{i,j}|$$
-
-#### 各向同性离散化
-
-$$\|u\|_{TV}^{iso} = \sum_{i,j} \sqrt{(u_{i+1,j}-u_{i,j})^2 + (u_{i,j+1}-u_{i,j})^2}$$
-
----
-
-### 3.9 Split Bregman方法
-
-#### 辅助变量法
-
-引入 $d = \nabla u$，转化为：
-$$\min_{u,d} \|u - f\|_2^2 + \lambda \|d\|_1 \quad \text{s.t.} \quad d = \nabla u$$
-
-#### Bregman迭代
-
-```
-1. u子问题： (I - λΔ)u = f + div(b - d)
-2. d子问题： d = shrink(∇u + b, λ)
-3. b更新：  b = b + ∇u - d
-```
-
-其中软阈值：
-$$\text{shrink}(x, \lambda) = \frac{x}{|x|} \max(|x| - \lambda, 0)$$
-
----
-
-### 3.10 TV的变体
-
-#### 加权TV (Weighted TV)
-$$\|u\|_{WTV} = \int_\Omega w(x) |\nabla u| \, dx$$
-
-应用：空间自适应正则化
-
-#### 非局部TV (Nonlocal TV)
-$$\|u\|_{NLTV} = \int_\Omega \int_\Omega w(x,y) |u(x) - u(y)| \, dy \, dx$$
-
-应用：纹理保持
-
-#### TV-$\ell_1$模型
-$$\min_u \|u\|_{TV} + \lambda \|u - f\|_1$$
-
-应用：椒盐噪声去除
-
----
-
-### 📊 本讲总结
-
-```
-┌─────────────────────────────────────────────────┐
-│            TV正则化核心概念                       │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│   定义：‖u‖_TV = ∫|∇u|dx (总变化量)              │
-│                                                 │
-│   性质：                                        │
-│   • 凸性 → 全局最优                              │
-│   • 边缘保持 → 允许跳跃                          │
-│   • 非光滑 → 需要特殊求解器                      │
-│                                                 │
-│   ROF模型：min_u ‖u-f‖²_2 + λ‖u‖_TV             │
-│                                                 │
-│   求解：Chambolle / Split Bregman / ADMM        │
-│                                                 │
-└─────────────────────────────────────────────────┘
-```
-
----
-
-### 📚 课后作业
-
-1. **推导题**：证明TV范数是凸函数
-
-2. **实现题**：用梯度下降法实现ROF去噪（含正则化ε）
-
-3. **比较题**：对比$\ell_1$和$\ell_2$数据项在椒盐噪声下的表现
-
-4. **思考题**：为什么TV正则化会导致"阶梯效应"（staircasing）？
-
----
-
-### 📖 扩展阅读
-
-1. **经典论文**：
-   - Rudin, Osher, Fatemi, "Nonlinear total variation based noise removal algorithms", Physica D, 1992
-   - Chambolle, "An algorithm for total variation minimization and applications", JMIV, 2004
-
-2. **Cai相关论文**：
-   - Cai, Chan, Shen, "Convergence of split Bregman iteration", J. Imaging Sci.
-
-3. **扩展方法**：
-   - TV-L1模型、非局部TV、结构TV
-
----
-
-### 📖 参考文献
-
-1. Rudin, L.I., Osher, S., & Fatemi, E. (1992). Nonlinear total variation based noise removal algorithms. *Physica D*, 60(1-4), 259-268.
-
-2. Chambolle, A. (2004). An algorithm for total variation minimization and applications. *JMIV*, 20(1-2), 89-97.
-
-3. Goldstein, T. & Osher, S. (2009). The split Bregman method for L1-regularized problems. *SIAM J. Imaging Sci.*, 2(2), 323-343.
-
-4. Cai, X., Chan, R., & Shen, Z. (2008). A framelet-based image inpainting algorithm. *ACHA*.
+## 下节预告
+下一讲将介绍正则化方法，深入探讨各种正则化策略及其数学基础。

@@ -59,7 +59,8 @@
       "Bash(pip install:*)",
       "Bash(pip show:*)",
       "Bash(\"D:/Documents/zx/深度学习架构综述_多智能体精读报告.md\":*)",
-      "Bash(do basename:*)"
+      "Bash(do basename:*)",
+      "Bash(cat:*)"
     ]
   }
 }
