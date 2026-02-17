@@ -393,7 +393,11 @@ function openPDF() {
         alert('该论文暂无PDF文件');
         return;
     }
-    window.open('/00_papers/' + encodeURIComponent(currentPaper.pdfFile), '_blank');
+    // 获取当前路径的 base URL（兼容 GitHub Pages 子目录）
+    var basePath = window.location.pathname.split('/').slice(0, -1).join('/');
+    if (!basePath.endsWith('/')) basePath += '/';
+    var pdfUrl = basePath + '00_papers/' + encodeURIComponent(currentPaper.pdfFile);
+    window.open(pdfUrl, '_blank');
 }
 
 // ===== Network Page =====
