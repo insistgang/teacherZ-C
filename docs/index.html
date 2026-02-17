@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xiaohao Cai 论文精读系统</title>
+    <script src="lib/chart.js"></script>
+    <script src="lib/echarts.min.js"></script>
+    <script src="lib/marked.min.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">XC</span>
+                <span class="logo-text">论文精读系统</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">数据仪表盘</span>
+            </a>
+            <a href="#papers" class="nav-item" data-page="papers">
+                <span class="nav-icon">📚</span>
+                <span class="nav-text">论文列表</span>
+                <span class="nav-badge">49</span>
+            </a>
+            <a href="#network" class="nav-item" data-page="network">
+                <span class="nav-icon">🕸️</span>
+                <span class="nav-text">引用网络</span>
+            </a>
+            <a href="#timeline" class="nav-item" data-page="timeline">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">研究时间线</span>
+            </a>
+            <a href="pdfs.html" class="nav-item">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">PDF原文</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="progress-widget">
+                <div class="progress-header">
+                    <span>整体进度</span>
+                    <span class="progress-percent">100%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+                <p class="progress-text">49/49 篇已完成</p>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h1 class="page-title" id="pageTitle">数据仪表盘</h1>
+            <div class="top-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="搜索论文..." id="globalSearch">
+                </div>
+            </div>
+        </header>
+        <div class="content-container">
+            <div class="page active" id="dashboard">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-blue">📄</div>
+                        <div class="stat-info"><h3>论文总数</h3><p class="stat-value">49</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-green">✓</div>
+                        <div class="stat-info"><h3>已完成</h3><p class="stat-value">49</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-purple">🏷️</div>
+                        <div class="stat-info"><h3>研究领域</h3><p class="stat-value">6</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-orange">📅</div>
+                        <div class="stat-info"><h3>时间跨度</h3><p class="stat-value">15年</p></div>
+                    </div>
+                </div>
+                <div class="charts-row">
+                    <div class="chart-card"><h3>论文分类分布</h3><div class="chart-wrap"><canvas id="categoryChart"></canvas></div></div>
+                    <div class="chart-card"><h3>完成状态</h3><div class="chart-wrap"><canvas id="completionChart"></canvas></div></div>
+                </div>
+                <div class="chart-card full-width"><h3>各领域完成进度</h3><div class="progress-list" id="categoryProgress"></div></div>
+            </div>
+            <div class="page" id="papers">
+                <div class="filter-bar">
+                    <div class="filter-group"><label>分类:</label><select id="categoryFilter"><option value="all">全部</option><option value="基础理论">基础理论</option><option value="变分分割">变分分割</option><option value="深度学习">深度学习</option><option value="雷达与无线电">雷达与无线电</option><option value="医学图像">医学图像</option><option value="其他">其他</option></select></div>
+                    <div class="filter-group"><label>排序:</label><select id="sortFilter"><option value="id">按编号</option><option value="year">按年份</option></select></div>
+                </div>
+                <div class="papers-grid" id="papersGrid"></div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+            <div class="page" id="network">
+                <div class="network-info"><h3>📌 交互说明</h3><p>拖拽节点可重新排列 | 滚轮缩放 | 点击节点查看详情</p></div>
+                <div id="networkChart" style="height:600px"></div>
+            </div>
+            <div class="page" id="timeline">
+                <div class="timeline-filters">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="基础理论">基础理论</button>
+                    <button class="filter-btn" data-filter="变分分割">变分分割</button>
+                    <button class="filter-btn" data-filter="深度学习">深度学习</button>
+                    <button class="filter-btn" data-filter="雷达与无线电">雷达与无线电</button>
+                    <button class="filter-btn" data-filter="医学图像">医学图像</button>
+                    <button class="filter-btn" data-filter="其他">其他</button>
+                </div>
+                <div id="timelineChart" style="height:600px; max-height:70vh;"></div>
+            </div>
+        </div>
+    </main>
+    <div class="modal modal-large" id="paperModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-toolbar">
+                <div class="modal-title-section"><span class="paper-id-badge" id="modalPaperId"></span><h2 id="modalPaperTitle"></h2></div>
+                <button class="modal-close">✕</button>
+            </div>
+            <div class="modal-meta-bar"><span class="badge" id="modalPaperCategory"></span><span class="paper-year" id="modalPaperYear"></span><span class="badge" id="modalPaperStatus"></span></div>
+            <div class="modal-actions-bar">
+                <button class="btn btn-primary" id="btnReadNote"><span>📖</span> 查看精读笔记</button>
+                <button class="btn btn-secondary" id="btnViewPDF"><span>📄</span> 查看论文原文</button>
+            </div>
+            <div class="modal-body-full" id="notePreview"><p class="placeholder">点击上方按钮查看内容...</p></div>
+        </div>
+    </div>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
