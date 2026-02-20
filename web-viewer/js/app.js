@@ -216,6 +216,26 @@ const ChartManager = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 论文精读系统初始化...');
     
+    // 检查数据是否加载
+    if (typeof PAPERS_DATA === 'undefined') {
+        console.error('❌ PAPERS_DATA 未定义，等待数据加载...');
+        // 延迟初始化，等待数据脚本加载
+        setTimeout(() => {
+            if (typeof PAPERS_DATA !== 'undefined') {
+                console.log('✅ PAPERS_DATA 已加载，开始初始化');
+                initializeApp();
+            } else {
+                console.error('❌ PAPERS_DATA 仍然未定义');
+                showGlobalError('数据加载失败，请刷新页面重试');
+            }
+        }, 100);
+        return;
+    }
+    
+    initializeApp();
+});
+
+function initializeApp() {
     try {
         initNavigation();
         initDashboard();
@@ -228,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('❌ 初始化失败:', error);
         showGlobalError('系统初始化失败，请刷新页面重试');
     }
-});
+}
 
 // ===== 导航功能 =====
 function initNavigation() {
@@ -301,7 +321,10 @@ function initKeyboardShortcuts() {
 }
 
 function switchPage(page) {
-    if (state.currentPage === page) return;
+    if (state.currentPage === page) {
+        console.log(`📄 已经在 ${page} 页面`);
+        return;
+    }
     
     console.log(`📄 切换到页面: ${page}`);
     state.currentPage = page;
@@ -333,7 +356,14 @@ function switchPage(page) {
     // 关闭移动端菜单
     document.getElementById('sidebar')?.classList.remove('open');
     
-    // 初始化页面特定图表
+    // 初始化页面特定内容
+    if (page === 'papers') {
+        // 确保论文列表已渲染
+        if (state.filteredPapers.length === 0) {
+            state.filteredPapers = [...PAPERS_DATA.papers];
+        }
+        renderPapers();
+    }
     if (page === 'network' && !state.isInitialized.network) {
         setTimeout(initNetworkPage, 100);
     }
@@ -454,40 +484,68 @@ function initProgressBars(categories) {
     
     container.innerHTML = '';
     
-    Object.entries(categories).forEach(([name, data], index) => {
-        const percentage = (data.filled / data.count * 100).toFixed(1);
+    var index = 0;
+    for (var name in categories) {
+        if (!categories.hasOwnProperty(name)) continue;
+        var data = categories[name];
+        var percentage = (data.filled / data.count * 100).toFixed(1);
         
-        const item = document.createElement('div');
+        var item = document.createElement('div');
         item.className = 'progress-item';
-        item.innerHTML = `
-            <div class="progress-item-header">
-                <span class="progress-label">
-                    <span class="progress-color-dot" style="background:${data.color}"></span>
-                    ${name}
-                </span>
-                <span class="progress-value">${data.filled}/${data.count} (${percentage}%)</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width:0%;background:${data.color}"></div>
-            </div>
-        `;
+        item.innerHTML = 
+            '<div class="progress-item-header">' +
+                '<span class="progress-label">' +
+                    '<span class="progress-color-dot" style="background:' + data.color + '"></span>' +
+                    name +
+                '</span>' +
+                '<span class="progress-value">' + data.filled + '/' + data.count + ' (' + percentage + '%)</span>' +
+            '</div>' +
+            '<div class="progress-bar">' +
+                '<div class="progress-fill" style="width:0%;background:' + data.color + '"></div>' +
+            '</div>';
         
         container.appendChild(item);
         
         // 动画效果
-        setTimeout(() => {
-            item.querySelector('.progress-fill').style.width = `${percentage}%`;
-        }, 100 + index * 100);
-    });
+        (function(el, width, idx) {
+            setTimeout(function() {
+                el.querySelector('.progress-fill').style.width = width + '%';
+            }, 100 + idx * 100);
+        })(item, percentage, index);
+        
+        index++;
+    }
 }
 
 // ===== 论文列表页 =====
 function initPapersPage() {
+    console.log('📄 初始化论文列表页...');
+    
+    // 检查数据
+    if (!PAPERS_DATA?.papers?.length) {
+        console.error('❌ PAPERS_DATA 未加载或为空');
+        const grid = document.getElementById('papersGrid');
+        if (grid) Utils.showError(grid, '数据加载失败');
+        return;
+    }
+    
+    console.log(`✅ 加载了 ${PAPERS_DATA.papers.length} 篇论文`);
+    
     state.filteredPapers = [...PAPERS_DATA.papers];
     
     // 绑定筛选事件
-    document.getElementById('categoryFilter')?.addEventListener('change', filterPapers);
-    document.getElementById('sortFilter')?.addEventListener('change', filterPapers);
+    const categoryFilter = document.getElementById('categoryFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', filterPapers);
+        console.log('✅ 已绑定分类筛选事件');
+    }
+    
+    if (sortFilter) {
+        sortFilter.addEventListener('change', filterPapers);
+        console.log('✅ 已绑定排序事件');
+    }
     
     filterPapers();
 }
@@ -534,37 +592,50 @@ function searchPapers(query) {
 
 function renderPapers() {
     const grid = document.getElementById('papersGrid');
-    if (!grid) return;
+    if (!grid) {
+        console.error('❌ 找不到 papersGrid 元素');
+        return;
+    }
+    
+    console.log(`🔄 渲染论文列表: 共 ${state.filteredPapers.length} 篇, 当前页 ${state.currentPageNum}`);
     
     const start = (state.currentPageNum - 1) * CONFIG.ITEMS_PER_PAGE;
     const end = start + CONFIG.ITEMS_PER_PAGE;
     const pagePapers = state.filteredPapers.slice(start, end);
     
     if (pagePapers.length === 0) {
+        console.warn('⚠️ 没有论文需要渲染');
         Utils.showEmpty(grid, '没有找到匹配的论文');
         renderPagination();
         return;
     }
     
-    grid.innerHTML = pagePapers.map(paper => `
-        <article class="paper-card ${Utils.getCategoryClass(paper.category)}" 
-                 onclick="openPaperModalById('${paper.id}')"
-                 data-category="${paper.category}"
-                 data-year="${paper.year}">
-            <div class="paper-card-header">
-                <span class="paper-id-badge">[${paper.id}]</span>
-                <span class="paper-status ${paper.status}" title="${paper.status === 'filled' ? '已完成' : '待填充'}">
-                    ${paper.status === 'filled' ? '✓' : '○'}
-                </span>
-            </div>
-            <h3 class="paper-title">${escapeHtml(paper.title)}</h3>
-            <div class="paper-footer">
-                <span class="badge ${Utils.getCategoryClass(paper.category)}">${paper.category}</span>
-                <span class="paper-year">${paper.year}</span>
-                ${paper.noteFile ? '<span class="note-indicator" title="有精读笔记">📝</span>' : ''}
-            </div>
-        </article>
-    `).join('');
+    let html = '';
+    for (let i = 0; i < pagePapers.length; i++) {
+        const paper = pagePapers[i];
+        const categoryClass = Utils.getCategoryClass(paper.category);
+        const statusIcon = paper.status === 'filled' ? '✓' : '○';
+        const statusTitle = paper.status === 'filled' ? '已完成' : '待填充';
+        const noteIndicator = paper.noteFile ? '<span class="note-indicator" title="有精读笔记">📝</span>' : '';
+        
+        html += '<article class="paper-card ' + categoryClass + '" ' +
+                'onclick="openPaperModalById(\'' + paper.id + '\')" ' +
+                'data-category="' + paper.category + '" ' +
+                'data-year="' + paper.year + '">' +
+                '<div class="paper-card-header">' +
+                '<span class="paper-id-badge">[' + paper.id + ']</span>' +
+                '<span class="paper-status ' + paper.status + '" title="' + statusTitle + '">' + statusIcon + '</span>' +
+                '</div>' +
+                '<h3 class="paper-title">' + escapeHtml(paper.title) + '</h3>' +
+                '<div class="paper-footer">' +
+                '<span class="badge ' + categoryClass + '">' + paper.category + '</span>' +
+                '<span class="paper-year">' + paper.year + '</span>' +
+                noteIndicator +
+                '</div>' +
+                '</article>';
+    }
+    
+    grid.innerHTML = html;
     
     renderPagination();
 }
@@ -589,24 +660,27 @@ function renderPagination() {
     let html = '';
     
     // 上一页
-    html += `<button class="page-btn ${state.currentPageNum === 1 ? 'disabled' : ''}" 
-                     onclick="goToPage(${state.currentPageNum - 1})" 
-                     ${state.currentPageNum === 1 ? 'disabled' : ''}>←</button>`;
+    var prevDisabled = state.currentPageNum === 1 ? 'disabled' : '';
+    html += '<button class="page-btn ' + prevDisabled + '" ' +
+            'onclick="goToPage(' + (state.currentPageNum - 1) + ')" ' +
+            prevDisabled + '>←</button>';
     
     // 页码
-    for (let i = 1; i <= totalPages; i++) {
+    for (var i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= state.currentPageNum - 2 && i <= state.currentPageNum + 2)) {
-            html += `<button class="page-btn ${i === state.currentPageNum ? 'active' : ''}" 
-                             onclick="goToPage(${i})">${i}</button>`;
+            var activeClass = i === state.currentPageNum ? 'active' : '';
+            html += '<button class="page-btn ' + activeClass + '" ' +
+                    'onclick="goToPage(' + i + ')">' + i + '</button>';
         } else if (i === state.currentPageNum - 3 || i === state.currentPageNum + 3) {
-            html += `<span class="page-ellipsis">...</span>`;
+            html += '<span class="page-ellipsis">...</span>';
         }
     }
     
     // 下一页
-    html += `<button class="page-btn ${state.currentPageNum === totalPages ? 'disabled' : ''}" 
-                     onclick="goToPage(${state.currentPageNum + 1})" 
-                     ${state.currentPageNum === totalPages ? 'disabled' : ''}>→</button>`;
+    var nextDisabled = state.currentPageNum === totalPages ? 'disabled' : '';
+    html += '<button class="page-btn ' + nextDisabled + '" ' +
+            'onclick="goToPage(' + (state.currentPageNum + 1) + ')" ' +
+            nextDisabled + '>→</button>';
     
     container.innerHTML = html;
 }
@@ -1026,3 +1100,31 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
     console.error('未处理的 Promise 错误:', e.reason);
 });
+
+// ===== 暴露到全局作用域（供内联事件处理器使用）=====
+window.openPaperModalById = openPaperModalById;
+window.goToPage = goToPage;
+window.filterPapers = filterPapers;
+
+// ===== 调试工具 =====
+window.debugPapers = function() {
+    console.log('=== 论文列表调试信息 ===');
+    console.log('PAPERS_DATA:', typeof PAPERS_DATA);
+    console.log('论文总数:', PAPERS_DATA?.papers?.length);
+    console.log('当前筛选论文数:', state.filteredPapers.length);
+    console.log('当前页码:', state.currentPageNum);
+    
+    var grid = document.getElementById('papersGrid');
+    console.log('papersGrid 元素:', grid ? '存在' : '不存在');
+    if (grid) {
+        console.log('papersGrid 内容长度:', grid.innerHTML.length);
+    }
+    
+    // 尝试手动渲染
+    console.log('尝试手动渲染...');
+    state.filteredPapers = PAPERS_DATA.papers.slice();
+    renderPapers();
+    console.log('手动渲染完成');
+    
+    return '调试完成，请查看上面的日志';
+};

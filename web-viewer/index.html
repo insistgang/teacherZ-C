@@ -257,5 +257,16 @@
     <script src="lib/marked.min.js"></script>
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
+    
+    <!-- 测试脚本 -->
+    <script>
+        // 简单的测试，检查是否所有资源都加载成功
+        console.log('=== 页面加载测试 ===');
+        console.log('Chart.js:', typeof Chart !== 'undefined' ? '已加载' : '未加载');
+        console.log('ECharts:', typeof echarts !== 'undefined' ? '已加载' : '未加载');
+        console.log('Marked:', typeof marked !== 'undefined' ? '已加载' : '未加载');
+        console.log('PAPERS_DATA:', typeof PAPERS_DATA !== 'undefined' ? '已加载 (' + PAPERS_DATA.papers.length + '篇)' : '未加载');
+        console.log('papersGrid 元素:', document.getElementById('papersGrid') ? '存在' : '不存在');
+    </script>
 </body>
 </html>
