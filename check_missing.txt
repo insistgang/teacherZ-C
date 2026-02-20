@@ -1,0 +1,71 @@
+主要PDF文件(66个)及其笔记匹配状态:
+
+有笔记的论文(35个):
+1. 2019_Thylakoid_Electron_Tomography.pdf ✓
+2. 3D方向场变换 3D Orientation Field.pdf ✓
+3. 3D树木分割图 3D Tree Segmentation.pdf ✓
+4. 3D树木描绘图割 3D Tree Delineation.pdf ✓
+5. CornerPoint3D 3D检测新尺度 CornerPoint3D.pdf ✓
+6. GAMED虚假新闻检测 GAMED Fake News.pdf ✓
+7. HiFi-Mamba MRI重建 HiFi-Mamba MRI Reconstruction.pdf ✓
+8. HiFi-MambaV2分层MRI HiFi-MambaV2 Hierarchical MRI.pdf ✓
+9. MOGO 3D人体运动生成 MOGO Motion.pdf ✓
+10. SLaT三阶段分割 SLaT Segmentation.pdf ✓
+11. Talk2Radar 雷达语言多模态 Talk2Radar.pdf ✓
+12. TransNet动作识别 TransNet HAR.pdf ✓
+13. 变分分割基础Mumford-Shah与ROF Mumford-Shah ROF.pdf ✓
+14. 大模型高效微调CALM CALM Fine-tuning.pdf ✓
+15. 蛋白质结构网络图LL4G LL4G Graph.pdf ✓
+16. 点云神经表示 Neural Varifolds.pdf ✓
+17. 多功能传感器树木分类 Tree Species Classification.pdf ✓
+18. 非参数图像配准 Nonparametric Registration.pdf ✓
+19. 非负子空间小样本学习 Non-negative Subspace.pdf ✓
+20. 高效PEFT微调 Less but Better PEFT.pdf ✓
+21. 近端嵌套采样 Proximal Nested Sampling.pdf ✓
+22. 可见表面检测 Detect Closer Surfaces.pdf ✓
+23. 跨域LiDAR检测 Cross-Domain LiDAR.pdf ✓
+24. 扩散模型脑MRI Diffusion Brain MRI.pdf ✓
+25. 情感感知人格检测 EmoPerso Emotion-Aware.pdf ✓
+26. 球面小波分割 Wavelet Sphere.pdf ✓
+27. 深度学习架构综述 CNNs RNNs Transformers.pdf ✓
+28. 无线电干涉不确定性I Radio Interferometric I.pdf ✓
+29. 无线电干涉不确定性II Radio Interferometric II.pdf ✓
+30. 小波框架血管分割 Tight-Frame Vessel.pdf ✓
+31. 医学报告生成IIHT Medical Report IIHT.pdf ✓
+32. 医学图像小样本学习 Medical Few-Shot.pdf ✓
+33. 语义比例分割 Semantic Proportions.pdf ✓
+34. 在线无线电干涉成像 Online Radio Imaging.pdf ✓
+35. 张量CUR分解LoRA tCURLoRA.pdf ✓
+
+缺失笔记的论文(31个):
+1. 2017_VoxTox_CERN_Courier.pdf
+2. 2018_Colour_Spaces_Segmentation.pdf
+3. 2023_2307.00056_Proximal_Nested_Sampling.pdf (已有近端嵌套采样.md，可能重复)
+4. 2023_2307.12248_Bilevel_Peer_Review.pdf (已有双层同行评审.md)
+5. 2023_2308.01480_Tensor_Train_Approximation.pdf (已有张量Train近似.md)
+6. 2023_2311.14733_Equalizing_Protected_Attributes.pdf (已有平等化保护属性.md)
+7. 2023_Limpets_Computer_Vision_Frontiers.pdf (已有帽贝计算机视觉.md)
+8. 2023_Ship_Matching_Sensors.pdf (已有船舶匹配遥感.md)
+9. 2024_2405.04974_Diffusion_Brain_MRI.pdf (已有扩散模型脑MRI.md)
+10. 2025_2508.08117_GRASPTrack_MultiObject_Tracking.pdf (已有GRASPTrack多目标跟踪.md)
+11. 2025_2510.09893_HIPPD_Brain-Inspired_Personality_Detection.pdf (已有HIPPD人格检测.md)
+12. 2025_2511.02142_3D_Growth_Trajectory_Reconstruction.pdf (已有3D生长轨迹重建.md)
+13. 2025_2511.18209_MotionDuet_3D_Motion_Generation.pdf (已有MotionDuet 3D运动生成.md)
+14. 2025_CenSegNet_biorXiv.pdf (已有CenSegNet中心体.md)
+15. 2025_Explainable_AI_Applied_Sciences.pdf (可能有多层次可解释AI.md)
+16. 2025_Genes_Shells_AI_Scientific_Reports.pdf (已有基因贝壳AI.md)
+17. 3D生物雷达生长轨迹 3D Growth Trajectory.pdf (已有3D生长轨迹重建.md)
+18. MotionDuet运动生成 MotionDuet 3D Motion.pdf (已有MotionDuet 3D运动生成.md)
+19. 大规模张量分解 Two-Sided Sketching.pdf (已有双面Sketching张量.md)
+20. 低秩Tucker近似 sketching Tucker Approximation.pdf (已有Tucker近似.md)
+21. 多目标跟踪 GRASPTrack Multi-Object Tracking.pdf (已有GRASPTrack多目标跟踪.md)
+22. 分布式无线电优化 Distributed Radio Optimization.pdf (已有PURIFY分布式优化.md)
+23. 分割与恢复联合模型 Segmentation Restoration.pdf (已有分割恢复联合模型.md)
+24. 概念级可解释AI指标 Concept-Based XAI.pdf (已有概念级XAI指标.md)
+25. 高维不确定性性能 High-Dimensional Uncertainty.pdf (已有高维逆问题不确定性量化.md)
+26. 框架分割管状结构 Framelet Tubular.pdf (已有框架管状结构分割.md)
+27. 两阶段分类方法 Two-Stage Classification.pdf (已有两阶段分类.md)
+28. 脑启发的个性检测 HIPPD Brain-Inspired.pdf (已有HIPPD人格检测.md)
+29. 平衡受保护属性 Equalizing Protected Attributes.pdf (已有平等化保护属性.md)
+30. 双层同行评审问题 Bilevel Peer-Reviewing.pdf (已有双层同行评审.md)
+31. 张量列车近似 Tensor Train Approximation.pdf (已有张量Train近似.md)

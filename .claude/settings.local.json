@@ -60,7 +60,23 @@
       "Bash(pip show:*)",
       "Bash(\"D:/Documents/zx/深度学习架构综述_多智能体精读报告.md\":*)",
       "Bash(do basename:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(# 在当前目录查找 find . -maxdepth 2 -name \"\"*papers*\"\" -o -name \"\"*GRASPTrack*\"\")",
+      "Bash(md5sum:*)",
+      "Bash(/c/Users/Administrator/AppData/Local/Programs/Python/python312.exe:*)",
+      "Bash(/c/Python312/python.exe:*)",
+      "Bash(comm:*)",
+      "Bash(npx skills add:*)",
+      "Bash(npm root:*)",
+      "Bash(npm config get:*)",
+      "Bash(openclaw:*)",
+      "Bash(clawhub:*)",
+      "Bash(npx skills:*)",
+      "Bash(/lit-review:*)",
+      "Bash(git checkout:*)",
+      "Bash(do:*)",
+      "Bash(grep:*)",
+      "Bash(git rm:*)"
     ]
   }
 }

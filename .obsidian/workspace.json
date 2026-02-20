@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Xiaohao_Cai_5篇论文精读总结.md",
+                "file": "xiaohao_cai_ultimate_notes/3D_Tree_Segmentation_MCGC_超精读笔记_已填充.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Xiaohao_Cai_5篇论文精读总结"
+              "title": "3D_Tree_Segmentation_MCGC_超精读笔记_已填充"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 427.5
   },
   "right": {
     "id": "e5af3bc56de80092",
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Xiaohao_Cai_5篇论文精读总结.md",
+                "file": "剩余论文下载链接.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Xiaohao_Cai_5篇论文精读总结 的反向链接列表"
+              "title": "剩余论文下载链接 的反向链接列表"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Xiaohao_Cai_5篇论文精读总结.md",
+                "file": "剩余论文下载链接.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Xiaohao_Cai_5篇论文精读总结 的出链列表"
+              "title": "剩余论文下载链接 的出链列表"
             }
           },
           {
@@ -156,20 +156,21 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Xiaohao_Cai_5篇论文精读总结.md",
+                "file": "剩余论文下载链接.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Xiaohao_Cai_5篇论文精读总结 的大纲"
+              "title": "剩余论文下载链接 的大纲"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
-    "width": 300,
+    "width": 200,
     "collapsed": true
   },
   "left-ribbon": {
@@ -185,51 +186,51 @@
   },
   "active": "4a705ecbb71cee03",
   "lastOpenFiles": [
-    "blog_posts/blog_04.md",
-    "blog_posts/blog_03.md",
-    "visualizations/02_architecture_diagrams.py",
-    "visualizations/01_mermaid_flowcharts.md",
-    "blog_posts/blog_02.md",
-    "xaiho_cai_papers_final_reports/双视差光流Potts_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/两阶段分割_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/基因与形态学AI_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/分割方法论总览_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/多类分割迭代ROF_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/贝壳计算机视觉识别_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/WaveletSphere_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/Tucker_Sketching_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/TightFrame_血管分割_多智能体精读报告.md",
-    "xaiho_cai_papers_final_reports/TensorTrain_多智能体精读报告.md",
-    "blog_posts/blog_01.md",
-    "FINAL_REPORT.md",
-    "blog_posts",
-    "exam_bank",
-    "outputs/debate_simple_20260216_194624.json",
-    "outputs/debate_simple_20260216_194518.json",
-    "english_survey",
-    "interview_qa",
-    "anki_deck",
-    "outputs/debate_simple_20260216_194349.json",
-    "less_better_peft_extract.txt",
-    "xiaohao_cai_ultimate_notes/IIHT_Medical_Report_Generation_超精读笔记_已填充.md",
-    "xiaohao_cai_ultimate_notes/张量CUR分解LoRA_Tensor_CUR_LoRA_超精读笔记_已填充.md",
-    "xiaohao_cai_ultimate_notes/大规模张量分解_Large_Scale_Tensor_Decomposition_超精读笔记_已填充.md",
-    "xiaohao_cai_ultimate_notes/Equalizing_Protected_Attributes_超精读笔记_已填充.md",
-    "xiaohao_cai_ultimate_notes/多类分割迭代ROF_Multi_Class_Iterated_ROF_超精读笔记_已填充.md",
-    "benchmark/benchmark_3D点云.png",
+    "web-viewer/00_papers.rar",
+    "xiaohao_cai_ultimate_notes/3D_Tree_Delineation_Graph_Cut_超精读笔记_已填充.md",
+    "xiaohao_cai_ultimate_notes/3D_Orientation_Field_Transform_超精读笔记_已填充.md",
+    "xiaohao_cai_ultimate_notes/3D_Growth_Trajectory_Reconstruction_超精读笔记.md",
+    "xiaohao_cai_ultimate_notes/00_分析报告汇总.md",
+    "visualizer_complete/notes/00_分析报告汇总.md",
+    "visualizer_complete/00_papers/3D方向场变换 3D Orientation Field.pdf",
+    "web-viewer/00_papers/3D方向场变换 3D Orientation Field.pdf",
+    "xiaohao_cai_ultimate_notes_final/00_分析报告汇总.md",
+    "低秩Tucker近似_多智能体精读报告.md",
+    "论文精读_[2-06]_可见表面检测_详细版.md",
+    "visualizer_complete/notes/Non-negative_Subspace_Few-Shot_Learning_超精读笔记_已填充.md",
+    "visualizer_complete/notes/稀疏贝叶斯质量映射I Sparse Bayesian I.md",
+    "visualizer_complete/notes/数据增强综述 Data Augmentation.md",
+    "visualizer_complete/notes/双面Sketching张量 Two-Sided Sketching.md",
+    "visualizer_complete/notes/GO-LDA_Generalised_Optimal_LDA_超精读笔记_已填充.md",
+    "visualizer_complete/notes/GAMED_Multimodal_Fake_News_Detection_超精读笔记_已填充.md",
+    "visualizer_complete/notes/Few-shot_Medical_Imaging_Inference_超精读笔记_已填充.md",
+    "visualizer_complete/notes/Equalizing_Protected_Attributes_超精读笔记_已填充.md",
+    "visualizer_complete/notes/EmoPerso_Emotion-Aware_Personality_Detection_超精读笔记_已填充.md",
+    "visualizer_complete/notes/Disparity_OpticalFlow_Potts_超精读笔记_已填充.md",
+    "visualizer_complete/notes/Discrepancy-based_Diffusion_MRI_超精读笔记_已填充.md",
+    "visualizer_complete/notes/Detect_Closer_Surfaces_3D_Detection_超精读笔记_已填充.md",
+    "visualizer_complete/notes/Cross-Domain_LiDAR_Detection_超精读笔记_已填充.md",
+    "visualizer_complete/notes/CornerPoint3D_Nearest_Corner_3D_Detection_超精读笔记_已填充.md",
+    "visualizer_complete/notes/Concept-Based_XAI_Metrics_超精读笔记_已填充.md",
+    "visualizer_complete/notes/CNNs_RNNs_Transformers_HAR_Survey_超精读笔记_已填充.md",
+    "visualizer_complete/notes/CALM_Culturally_Aware_Language_Model_超精读笔记_已填充.md",
+    "visualizer_complete/notes",
+    "visualizer_complete/00_papers/数据增强综述 Data Augmentation.pdf",
+    "visualizer_complete/00_papers/生物启发迭代学习控制 ILC.pdf",
+    "visualizer_complete/00_papers/Biologically-Inspired_Iterative_Learning_Control_Design_A_Modular-Based_Approach.pdf",
+    "visualizer_complete/00_papers/多传感器树木制图 Multi-Sensor Trees.pdf",
+    "visualizer_complete/00_papers/可解释AI综述 XAI Survey.pdf",
+    "visualizer_complete/00_papers/高效变分分类 Efficient Variational.pdf",
+    "visualizer_complete/00_papers/高维逆问题不确定性量化 Uncertainty Quantification.pdf",
     "benchmark/benchmark_图像去噪.png",
     "benchmark/benchmark_图像分割.png",
-    "benchmark/benchmark_heatmap.png",
     "benchmark/benchmark_results.png",
-    "xiaohao_cai_ultimate_notes/Less_but_Better_PEFT_for_Personality_Detection_超精读笔记_已填充.md",
-    "xiaohao_cai_ultimate_notes/分割方法论总览_SaT_Segmentation_Overview_超精读笔记_已填充.md",
-    "xiaohao_cai_algorithms/README.md",
-    "xiaohao_cai_ultimate_notes/两阶段图像分割_Two_Stage_Segmentation_超精读笔记_已填充.md",
-    "xiaohao_cai_ultimate_notes/Bilevel_Peer-Reviewing_Problem_超精读笔记_已填充.md",
-    "analysis_results/figures/community_structure.png",
-    "analysis_results/figures/influence_ranking.png",
+    "benchmark/benchmark_heatmap.png",
+    "benchmark/benchmark_3D点云.png",
     "analysis_results/figures/topic_stream.png",
     "analysis_results/figures/temporal_heatmap.png",
+    "analysis_results/figures/influence_ranking.png",
+    "analysis_results/figures/community_structure.png",
     "analysis_results/figures/citation_network.png"
   ]
 }

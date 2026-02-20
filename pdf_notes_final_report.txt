@@ -1,0 +1,311 @@
+================================================================================
+PDF与笔记对应关系详细报告
+================================================================================
+
+【文件统计】
+  PDF总数: 80
+  中文笔记: 81
+  英文超精读笔记: 57
+  笔记总数: 138
+
+================================================================================
+【PDF与笔记对应详细列表】
+================================================================================
+[OK=中英文, CN=仅中文, EN=仅英文, X=无笔记]
+
+[CN] 2019_Thylakoid_Electron_Tomography.pdf
+     CN: 2019_Thylakoid_Electron_Tomography.md
+
+[EN] 2023_2307.00056_Proximal_Nested_Sampling.pdf
+     EN: Proximal_Nested_Sampling_超精读笔记_已填充.md
+
+[EN] 2023_2307.12248_Bilevel_Peer_Review.pdf
+     EN: Bilevel_Peer-Reviewing_Problem_超精读笔记_已填充.md
+
+[EN] 2023_2308.01480_Tensor_Train_Approximation.pdf
+     EN: Tensor_Train_Approximation_超精读笔记_已填充.md
+
+[EN] 2023_2311.14733_Equalizing_Protected_Attributes.pdf
+     EN: Equalizing_Protected_Attributes_超精读笔记_已填充.md
+
+[X]  2023_Limpets_Computer_Vision_Frontiers.pdf
+     (无对应笔记)
+
+[EN] 2024_2405.04974_Diffusion_Brain_MRI.pdf
+     EN: Discrepancy-based_Diffusion_MRI_超精读笔记_已填充.md
+
+[EN] 2025_2508.08117_GRASPTrack_MultiObject_Tracking.pdf
+     EN: GRASPTrack_Multi-Object_Tracking_超精读笔记_已填充.md
+
+[EN] 2025_2510.09893_HIPPD_Brain-Inspired_Personality_Detection.pdf
+     EN: EmoPerso_Emotion-Aware_Personality_Detection_超精读笔记_已填充.md
+
+[EN] 2025_2511.02142_3D_Growth_Trajectory_Reconstruction.pdf
+     EN: 3D_Growth_Trajectory_Reconstruction_超精读笔记_已填充.md
+
+[EN] 2025_2511.18209_MotionDuet_3D_Motion_Generation.pdf
+     EN: MotionDuet_3D_Motion_Generation_超精读笔记_已填充.md
+
+[X]  2025_Genes_Shells_AI_Scientific_Reports.pdf
+     (无对应笔记)
+
+[CN] 3DKMI Krawtchouk矩形状签名 3DKMI.pdf
+     CN: 3DKMI Krawtchouk矩形状签名 3DKMI.md
+
+[OK] 3D方向场变换 3D Orientation Field.pdf
+     CN: 3D方向场变换 3D Orientation Field.md
+     EN: 3D_Orientation_Field_Transform_超精读笔记_已填充.md
+
+[OK] 3D树木分割图 3D Tree Segmentation.pdf
+     CN: 3D树木分割图 3D Tree Segmentation.md
+     EN: 3D_Tree_Delineation_Graph_Cut_超精读笔记_已填充.md
+
+[OK] 3D树木分割图割 3D Tree Graph Cut.pdf
+     CN: 3D树木分割图割 3D Tree Graph Cut.md
+     EN: 3D_Tree_Delineation_Graph_Cut_超精读笔记_已填充.md
+
+[OK] 3D树木描绘图割 3D Tree Delineation.pdf
+     CN: 3D树木描绘图割 3D Tree Delineation.md
+     EN: 3D_Tree_Delineation_Graph_Cut_超精读笔记_已填充.md
+
+[CN] Biologically-Inspired_Iterative_Learning_Control_Design_A_Modular-Based_Approach.pdf
+     CN: Biologically-Inspired_Iterative_Learning_Control_Design_A_Modular-Based_Approach.md
+
+[CN] CenSegNet中心体 CenSegNet.pdf
+     CN: CenSegNet中心体 CenSegNet.md
+
+[CN] CornerPoint3D 3D检测新尺度 CornerPoint3D.pdf
+     CN: CornerPoint3D 3D检测新尺度 CornerPoint3D.md
+
+[CN] DNCNet雷达去噪 DNCNet.pdf
+     CN: DNCNet雷达去噪 DNCNet.md
+
+[OK] GAMED虚假新闻检测 GAMED Fake News.pdf
+     CN: GAMED虚假新闻检测 GAMED Fake News.md
+     EN: GAMED_Multimodal_Fake_News_Detection_超精读笔记_已填充.md
+
+[OK] HiFi-Mamba MRI重建 HiFi-Mamba MRI Reconstruction.pdf
+     CN: HiFi-Mamba MRI重建 HiFi-Mamba MRI Reconstruction.md
+     EN: HiFi-Mamba_MRI_Reconstruction_超精读笔记_已填充.md
+
+[OK] HiFi-MambaV2分层MRI HiFi-MambaV2 Hierarchical MRI.pdf
+     CN: HiFi-MambaV2分层MRI HiFi-MambaV2 Hierarchical MRI.md
+     EN: HiFi-Mamba_MRI_Reconstruction_超精读笔记_已填充.md
+
+[CN] ISAR卫星特征识别 ISAR.pdf
+     CN: ISAR卫星特征识别 ISAR.md
+
+[CN] MOGO 3D人体运动生成 MOGO Motion.pdf
+     CN: MOGO 3D人体运动生成 MOGO Motion.md
+
+[CN] PURIFY分布式优化 PURIFY.pdf
+     CN: PURIFY分布式优化 PURIFY.md
+
+[CN] RobustPCA树木分类 Robust PCA Trees.pdf
+     CN: RobustPCA树木分类 Robust PCA Trees.md
+
+[OK] SLaT三阶段分割 SLaT Segmentation.pdf
+     CN: SLaT三阶段分割 SLaT Segmentation.md
+     EN: SLaT_Three-stage_Segmentation_超精读笔记_已填充.md
+
+[CN] Talk2Radar 雷达语言多模态 Talk2Radar.pdf
+     CN: Talk2Radar 雷达语言多模态 Talk2Radar.md
+
+[OK] TransNet动作识别 TransNet HAR.pdf
+     CN: TransNet动作识别 TransNet HAR.md
+     EN: TransNet_Transfer_Learning_HAR_超精读笔记_已填充.md
+
+[OK] Tucker近似 Tucker Approximation.pdf
+     CN: Tucker近似 Tucker Approximation.md
+     EN: Practical_Sketching_Tucker_Approximation_超精读笔记_已填充.md
+
+[OK] 两阶段分类 Two-Stage.pdf
+     CN: 两阶段分类 Two-Stage.md
+     EN: Two-Stage_Segmentation_2013_超精读笔记_已填充.md
+
+[OK] 分割恢复联合模型 Segmentation Restoration.pdf
+     CN: 分割恢复联合模型 Segmentation Restoration.md
+     EN: Variational_Segmentation-Restoration_超精读笔记_已填充.md
+
+[OK] 分割方法论总览 SaT Overview.pdf
+     CN: 分割方法论总览 SaT Overview.md
+     EN: 分割方法论总览_SaT_Segmentation_Overview_超精读笔记_已填充.md
+
+[X]  分布式无线电优化 Distributed Radio Optimization.pdf
+     (无对应笔记)
+
+[CN] 医学图像分类 Medical Classification.pdf
+     CN: 医学图像分类 Medical Classification.md
+
+[OK] 医学图像小样本学习 Medical Few-Shot.pdf
+     CN: 医学图像小样本学习 Medical Few-Shot.md
+     EN: Few-shot_Medical_Imaging_Inference_超精读笔记_已填充.md
+
+[OK] 医学报告生成IIHT Medical Report IIHT.pdf
+     CN: 医学报告生成IIHT Medical Report IIHT.md
+     EN: IIHT_Medical_Report_Generation_超精读笔记_已填充.md
+
+[CN] 双面Sketching张量 Two-Sided Sketching.pdf
+     CN: 双面Sketching张量 Two-Sided Sketching.md
+
+[OK] 变分分割基础Mumford-Shah与ROF Mumford-Shah ROF.pdf
+     CN: 变分分割基础Mumford-Shah与ROF Mumford-Shah ROF.md
+     EN: Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md
+
+[OK] 可见表面检测 Detect Closer Surfaces.pdf
+     CN: 可见表面检测 Detect Closer Surfaces.md
+     EN: Detect_Closer_Surfaces_3D_Detection_超精读笔记_已填充.md
+
+[CN] 可解释AI综述 XAI Survey.pdf
+     CN: 可解释AI综述 XAI Survey.md
+
+[CN] 叶绿体电子断层扫描 Thylakoid.pdf
+     CN: 叶绿体电子断层扫描 Thylakoid.md
+
+[OK] 在线无线电干涉成像 Online Radio Imaging.pdf
+     CN: 在线无线电干涉成像 Online Radio Imaging.md
+     EN: Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md
+
+[CN] 多传感器树木制图 Multi-Sensor Trees.pdf
+     CN: 多传感器树木制图 Multi-Sensor Trees.md
+
+[CN] 多功能传感器树木分类 Tree Species Classification.pdf
+     CN: 多功能传感器树木分类 Tree Species Classification.md
+
+[CN] 多层次可解释AI Multilevel XAI.pdf
+     CN: 多层次可解释AI Multilevel XAI.md
+
+[OK] 多类ROF分割 Iterated ROF.pdf
+     CN: 多类ROF分割 Iterated ROF.md
+     EN: 多类分割迭代ROF_Iterated_ROF_超精读笔记_已填充.md
+
+[CN] 大模型高效微调CALM CALM Fine-tuning.pdf
+     CN: 大模型高效微调CALM CALM Fine-tuning.md
+
+[OK] 平衡神经网络搜索I Balanced NAS I.pdf
+     CN: 平衡神经网络搜索I Balanced NAS I.md
+     EN: 平衡神经网络搜索I_Balanced_NAS_I_超精读笔记.md
+
+[OK] 平衡神经网络搜索II Balanced NAS II.pdf
+     CN: 平衡神经网络搜索II Balanced NAS II.md
+     EN: 平衡神经网络搜索I_Balanced_NAS_I_超精读笔记.md
+
+[CN] 张量CUR分解LoRA tCURLoRA.pdf
+     CN: 张量CUR分解LoRA tCURLoRA.md
+
+[OK] 情感感知人格检测 EmoPerso Emotion-Aware.pdf
+     CN: 情感感知人格检测 EmoPerso Emotion-Aware.md
+     EN: EmoPerso_Emotion-Aware_Personality_Detection_超精读笔记_已填充.md
+
+[CN] 数据增强综述 Data Augmentation.pdf
+     CN: 数据增强综述 Data Augmentation.md
+
+[OK] 无线电干涉不确定性I Radio Interferometric I.pdf
+     CN: 无线电干涉不确定性I Radio Interferometric I.md
+     EN: Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md
+
+[OK] 无线电干涉不确定性II Radio Interferometric II.pdf
+     CN: 无线电干涉不确定性II Radio Interferometric II.md
+     EN: Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md
+
+[EN] 框架分割管状结构 Framelet Tubular.pdf
+     EN: 框架分割管状结构_Framelet_Tubular_超精读笔记_已填充.md
+
+[CN] 框架管状结构分割 Framelet.pdf
+     CN: 框架管状结构分割 Framelet.md
+
+[OK] 概念级XAI指标 Concept XAI.pdf
+     CN: 概念级XAI指标 Concept XAI.md
+     EN: Concept-Based_XAI_Metrics_超精读笔记_已填充.md
+
+[OK] 深度学习架构综述 CNNs RNNs Transformers.pdf
+     CN: 深度学习架构综述 CNNs RNNs Transformers.md
+     EN: CNNs_RNNs_Transformers_HAR_Survey_超精读笔记_已填充.md
+
+[OK] 点云神经表示 Neural Varifolds.pdf
+     CN: 点云神经表示 Neural Varifolds.md
+     EN: Neural_varifolds_quantifying_point_cloud_geometry_超精读笔记_已填充.md
+
+[OK] 球面小波分割 Wavelet Sphere.pdf
+     CN: 球面小波分割 Wavelet Sphere.md
+     EN: Wavelet_Segmentation_on_Sphere_超精读笔记_已填充.md
+
+[CN] 生物启发迭代学习控制 ILC.pdf
+     CN: 生物启发迭代学习控制 ILC.md
+
+[OK] 生物孔隙分割 Bio-Pores.pdf
+     CN: 生物孔隙分割 Bio-Pores.md
+     EN: 生物孔隙变分分割_Bio-Pores_Segmentation_超精读笔记_已填充.md
+
+[CN] 直肠分割放疗 Deep Rectum.pdf
+     CN: 直肠分割放疗 Deep Rectum.md
+
+[CN] 稀疏贝叶斯质量映射I Sparse Bayesian I.pdf
+     CN: 稀疏贝叶斯质量映射I Sparse Bayesian I.md
+
+[CN] 稀疏贝叶斯质量映射II Sparse Bayesian II.pdf
+     CN: 稀疏贝叶斯质量映射II Sparse Bayesian II.md
+
+[CN] 稀疏贝叶斯质量映射III Sparse Bayesian III.pdf
+     CN: 稀疏贝叶斯质量映射III Sparse Bayesian III.md
+
+[CN] 自然历史馆藏错误标本能计算机视觉方法 Mislabelled Specimens.pdf
+     CN: 自然历史馆藏错误标本能计算机视觉方法 Mislabelled Specimens.md
+
+[CN] 船舶匹配遥感 Ship Matching.pdf
+     CN: 船舶匹配遥感 Ship Matching.md
+
+[OK] 蛋白质结构网络图LL4G LL4G Graph.pdf
+     CN: 蛋白质结构网络图LL4G LL4G Graph.md
+     EN: LL4G_Graph-Based_Personality_Detection_超精读笔记_已填充.md
+
+[OK] 语义比例分割 Semantic Proportions.pdf
+     CN: 语义比例分割 Semantic Proportions.md
+     EN: Semantic_Segmentation_by_Proportions_超精读笔记_已填充.md
+
+[OK] 跨域LiDAR检测 Cross-Domain LiDAR.pdf
+     CN: 跨域LiDAR检测 Cross-Domain LiDAR.md
+     EN: Cross-Domain_LiDAR_Detection_超精读笔记_已填充.md
+
+[OK] 近端嵌套采样 Proximal Nested Sampling.pdf
+     CN: 近端嵌套采样 Proximal Nested Sampling.md
+     EN: Proximal_Nested_Sampling_超精读笔记_已填充.md
+
+[CN] 雷达工作模式识别 Radar Work Mode.pdf
+     CN: 雷达工作模式识别 Radar Work Mode.md
+
+[OK] 非负子空间小样本学习 Non-negative Subspace.pdf
+     CN: 非负子空间小样本学习 Non-negative Subspace.md
+     EN: Non-negative_Subspace_Few-Shot_Learning_超精读笔记_已填充.md
+
+[OK] 高效PEFT微调 Less but Better PEFT.pdf
+     CN: 高效PEFT微调 Less but Better PEFT.md
+     EN: Less_but_Better_PEFT_for_Personality_Detection_超精读笔记_已填充.md
+
+[OK] 高效变分分类 Efficient Variational.pdf
+     CN: 高效变分分类 Efficient Variational.md
+     EN: 高效变分分类方法_Efficient_Variational_Classification_超精读笔记_已填充.md
+
+[CN] 高维逆问题不确定性量化 Uncertainty Quantification.pdf
+     CN: 高维逆问题不确定性量化 Uncertainty Quantification.md
+
+================================================================================
+【统计摘要】
+================================================================================
+同时有中英文笔记的PDF: 36
+仅有中文笔记的PDF: 31
+仅有英文笔记的PDF: 10
+无任何笔记的PDF: 3
+有至少一种笔记的PDF: 77 (96%)
+
+================================================================================
+【建议操作】
+================================================================================
+
+1. 有3个PDF没有任何笔记，需要创建
+
+2. 有36个PDF同时拥有中英文笔记
+   建议: 可以合并为一个文件，或保留双语版本
+
+3. 英文超精读笔记是中文笔记的补充版本
+   建议: 确认内容是否重复，决定是否合并

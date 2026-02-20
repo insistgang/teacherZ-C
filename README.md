@@ -88,7 +88,7 @@ D:\Documents\zx\
 │       └── *_超精读笔记.md (55篇)                       # 待填充模板
 │
 ├── 📄 论文集合
-│   └── xiaohao_cai_papers_final/                         # 72个PDF + 分析报告
+│   └── all/                         # 72个PDF + 分析报告
 │       ├── [论文PDF]
 │       ├── verification_report_final.txt                # 验证报告
 │       ├── xiaohao_cai_bibliography.md                  # 参考文献
@@ -162,7 +162,7 @@ python debate_system.py
 python debate_interactive.py
 
 # 批量分析
-python run_debate.py --batch xiaohao_cai_papers_final/
+python run_debate.py --batch all/
 ```
 
 ### 2️⃣ 算法实现
