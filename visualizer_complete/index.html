@@ -6,6 +6,26 @@
     <title>蔡晓昊论文研究可视化系统</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- KaTeX for LaTeX math rendering - 不使用defer确保同步加载 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/bash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/cpp.min.js"></script>
+    <script>
+        // 注册所有加载的语言到 hljs
+        if (window.hljs) {
+            hljs.registerLanguage('python', window.hljsDefinePython || function(){});
+            hljs.registerLanguage('javascript', window.hljsDefineJavaScript || function(){});
+        }
+    </script>
+    <!-- Marked.js for better Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -445,13 +465,39 @@
                 <button class="btn btn-secondary" id="btnViewPDF">
                     <span>📄</span> 查看论文原文
                 </button>
+                <button class="btn btn-secondary" id="btnBackToInfo" style="display: none;">
+                    <span>📋</span> 返回论文信息
+                </button>
             </div>
-            <div class="modal-body-full" id="notePreview">
-                <div class="placeholder" style="text-align: center; padding: 4rem 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">📖</div>
-                    <p>点击上方按钮查看内容</p>
+            <!-- 阅读进度条 -->
+            <div class="reading-progress-container" id="readingProgressContainer" style="display: none;">
+                <div class="reading-progress-bar" id="readingProgressBar"></div>
+            </div>
+            <!-- 模态框主体 - 包含TOC和内容 -->
+            <div class="modal-body-wrapper">
+                <!-- 左侧目录导航 -->
+                <aside class="toc-sidebar" id="tocSidebar">
+                    <div class="toc-header">
+                        <span>📑</span> 目录导航
+                    </div>
+                    <nav class="toc-nav" id="tocNav">
+                        <!-- TOC items will be generated here -->
+                    </nav>
+                </aside>
+                <!-- 右侧内容区域 -->
+                <div class="modal-body-full" id="notePreview">
+                    <div class="placeholder" style="text-align: center; padding: 4rem 2rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📖</div>
+                        <p>点击上方按钮查看内容</p>
+                    </div>
                 </div>
             </div>
+            <!-- 返回顶部按钮 -->
+            <button class="back-to-top" id="backToTop" title="返回顶部">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                </svg>
+            </button>
         </div>
     </div>
 

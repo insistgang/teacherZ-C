@@ -337,7 +337,9 @@ function filterPapers() {
     papers.sort((a, b) => {
         if (sortBy === 'year') return (b.year || 0) - (a.year || 0);
         if (sortBy === 'category') return a.category.localeCompare(b.category);
-        return a.id.localeCompare(b.id);
+        if (sortBy === 'id') return (a.id || 0) - (b.id || 0);
+        // Sort ID as number for proper numeric ordering
+        return (parseInt(a.id) || 0) - (parseInt(b.id) || 0);
     });
 
     filteredPapers = papers;

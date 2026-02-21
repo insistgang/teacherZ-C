@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(start http://localhost:8000)",
+      "Bash(check_files.py:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}

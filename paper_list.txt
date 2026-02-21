@@ -1,0 +1,81 @@
+.claude
+2019_Thylakoid_Electron_Tomography.pdf
+2023_2307.00056_Proximal_Nested_Sampling.pdf
+2023_2307.12248_Bilevel_Peer_Review.pdf
+2023_2308.01480_Tensor_Train_Approximation.pdf
+2023_2311.14733_Equalizing_Protected_Attributes.pdf
+2023_Limpets_Computer_Vision_Frontiers.pdf
+2024_2405.04974_Diffusion_Brain_MRI.pdf
+2025_2508.08117_GRASPTrack_MultiObject_Tracking.pdf
+2025_2510.09893_HIPPD_Brain-Inspired_Personality_Detection.pdf
+2025_2511.02142_3D_Growth_Trajectory_Reconstruction.pdf
+2025_2511.18209_MotionDuet_3D_Motion_Generation.pdf
+2025_Genes_Shells_AI_Scientific_Reports.pdf
+3D方向场变换 3D Orientation Field.pdf
+3D树木分割图 3D Tree Segmentation.pdf
+3D树木分割图割 3D Tree Graph Cut.pdf
+3D树木描绘图割 3D Tree Delineation.pdf
+3DKMI Krawtchouk矩形状签名 3DKMI.pdf
+变分分割基础Mumford-Shah与ROF Mumford-Shah ROF.pdf
+船舶匹配遥感 Ship Matching.pdf
+大模型高效微调CALM CALM Fine-tuning.pdf
+蛋白质结构网络图LL4G LL4G Graph.pdf
+点云神经表示 Neural Varifolds.pdf
+多层次可解释AI Multilevel XAI.pdf
+多传感器树木制图 Multi-Sensor Trees.pdf
+多功能传感器树木分类 Tree Species Classification.pdf
+多类ROF分割 Iterated ROF.pdf
+非负子空间小样本学习 Non-negative Subspace.pdf
+分布式无线电优化 Distributed Radio Optimization.pdf
+分割方法论总览 SaT Overview.pdf
+分割恢复联合模型 Segmentation Restoration.pdf
+概念级XAI指标 Concept XAI.pdf
+高维逆问题不确定性量化 Uncertainty Quantification.pdf
+高效变分分类 Efficient Variational.pdf
+高效PEFT微调 Less but Better PEFT.pdf
+近端嵌套采样 Proximal Nested Sampling.pdf
+可见表面检测 Detect Closer Surfaces.pdf
+可解释AI综述 XAI Survey.pdf
+跨域LiDAR检测 Cross-Domain LiDAR.pdf
+框架分割管状结构 Framelet Tubular.pdf
+框架管状结构分割 Framelet.pdf
+雷达工作模式识别 Radar Work Mode.pdf
+两阶段分类 Two-Stage.pdf
+平衡神经网络搜索I Balanced NAS I.pdf
+平衡神经网络搜索II Balanced NAS II.pdf
+情感感知人格检测 EmoPerso Emotion-Aware.pdf
+球面小波分割 Wavelet Sphere.pdf
+深度学习架构综述 CNNs RNNs Transformers.pdf
+生物孔隙分割 Bio-Pores.pdf
+生物启发迭代学习控制 ILC.pdf
+数据增强综述 Data Augmentation.pdf
+双面Sketching张量 Two-Sided Sketching.pdf
+无线电干涉不确定性I Radio Interferometric I.pdf
+无线电干涉不确定性II Radio Interferometric II.pdf
+稀疏贝叶斯质量映射I Sparse Bayesian I.pdf
+稀疏贝叶斯质量映射II Sparse Bayesian II.pdf
+稀疏贝叶斯质量映射III Sparse Bayesian III.pdf
+叶绿体电子断层扫描 Thylakoid.pdf
+医学报告生成IIHT Medical Report IIHT.pdf
+医学图像分类 Medical Classification.pdf
+医学图像小样本学习 Medical Few-Shot.pdf
+语义比例分割 Semantic Proportions.pdf
+在线无线电干涉成像 Online Radio Imaging.pdf
+张量CUR分解LoRA tCURLoRA.pdf
+直肠分割放疗 Deep Rectum.pdf
+自然历史馆藏错误标本能计算机视觉方法 Mislabelled Specimens.pdf
+Biologically-Inspired_Iterative_Learning_Control_Design_A_Modular-Based_Approach.pdf
+CenSegNet中心体 CenSegNet.pdf
+CornerPoint3D 3D检测新尺度 CornerPoint3D.pdf
+DNCNet雷达去噪 DNCNet.pdf
+GAMED虚假新闻检测 GAMED Fake News.pdf
+HiFi-Mamba MRI重建 HiFi-Mamba MRI Reconstruction.pdf
+HiFi-MambaV2分层MRI HiFi-MambaV2 Hierarchical MRI.pdf
+ISAR卫星特征识别 ISAR.pdf
+MOGO 3D人体运动生成 MOGO Motion.pdf
+PURIFY分布式优化 PURIFY.pdf
+RobustPCA树木分类 Robust PCA Trees.pdf
+SLaT三阶段分割 SLaT Segmentation.pdf
+Talk2Radar 雷达语言多模态 Talk2Radar.pdf
+TransNet动作识别 TransNet HAR.pdf
+Tucker近似 Tucker Approximation.pdf
