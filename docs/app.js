@@ -413,6 +413,16 @@ function renderPagination() {
     container.innerHTML = html;
 }
 
+// ===== 暴露全局函数（供内联事件处理器使用）=====
+window.openPaperModalById = openPaperModalById;
+window.goToPage = goToPage;
+window.filterPapers = filterPapers;
+window.filterAndShowPapers = filterAndShowPapers;
+window.switchPage = switchPage;
+window.showNoteContent = showNoteContent;
+window.showPaperInfo = showPaperInfo;
+window.markdownToHtml = markdownToHtml;
+
 function goToPage(n) {
     if (n < 1 || n > Math.ceil(filteredPapers.length / itemsPerPage)) return;
     currentPageNum = n;
@@ -422,8 +432,14 @@ function goToPage(n) {
 }
 
 function openPaperModalById(id) {
-    const paper = PAPERS_DATA.papers.find(p => p.id === id);
-    if (paper) openPaperModal(paper);
+    // 将字符串 id 转换为数字，因为 data.js 中的 id 是数字类型
+    const numId = parseInt(id, 10);
+    const paper = PAPERS_DATA.papers.find(p => p.id === numId);
+    if (paper) {
+        openPaperModal(paper);
+    } else {
+        console.error('找不到论文 id:', id);
+    }
 }
 
 function searchPapers(query) {
@@ -496,14 +512,14 @@ function initTimelinePage() {
         charts.timeline.setOption({
             tooltip: {
                 trigger: 'item',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                backgroundColor: 'rgba(255, 255, 255, 0.98)',
                 borderColor: '#2563eb',
                 borderWidth: 1,
                 textStyle: {
                     color: '#1f2937',
                     fontSize: 13
                 },
-                extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; padding: 12px;',
+                extraCssText: 'box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 12px; padding: 16px; max-width: 400px;',
                 formatter: params => {
                     if (params.data && params.data.paper) {
                         const p = params.data.paper;
@@ -517,59 +533,105 @@ function initTimelinePage() {
                             '3D视觉与点云': '#06b6d4'
                         };
                         const catColor = categoryColors[p.category] || '#6b7280';
-                        return `<div style="margin-bottom: 6px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${catColor};margin-right:6px;"></span><strong style="color:${catColor};">${p.category}</strong></div>` +
-                               `<div style="font-size:14px;font-weight:600;margin-bottom:4px;">${p.title}</div>` +
-                               `<div style="color:#6b7280;font-size:12px;">[${p.id}] 年份: ${p.year}</div>`;
+                        return `<div style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">` +
+                               `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${catColor};box-shadow: 0 0 0 3px ${catColor}33;"></span>` +
+                               `<strong style="color:${catColor}; font-size: 13px;">${p.category}</strong>` +
+                               `<span style="margin-left: auto; color: #9ca3af; font-size: 11px;">#${p.id}</span></div>` +
+                               `<div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; line-height: 1.5; color: #111827;">${p.title}</div>` +
+                               `<div style="color: #6b7280; font-size: 12px; display: flex; gap: 12px;">` +
+                               `<span>📅 ${p.year}</span>` +
+                               `<span>📄 ${p.pdfFile ? 'PDF 可用' : '暂无 PDF'}</span></div>`;
                     }
                     return '';
                 }
             },
-            grid: { left: '5%', right: '10%', bottom: '10%', top: '5%' },
+            grid: { left: '3%', right: '5%', bottom: '15%', top: '10%', containLabel: true },
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: 0,
+                    start: 0,
+                    end: 100
+                },
+                {
+                    type: 'slider',
+                    xAxisIndex: 0,
+                    start: 0,
+                    end: 100,
+                    height: 20,
+                    bottom: 10,
+                    borderColor: '#e5e7eb',
+                    fillerColor: 'rgba(37, 99, 235, 0.1)',
+                    handleStyle: { color: '#2563eb' },
+                    textStyle: { color: '#6b7280' }
+                }
+            ],
             xAxis: {
                 type: 'category',
                 data: years,
                 name: '年份',
                 nameLocation: 'middle',
-                nameGap: 30,
+                nameGap: 35,
                 nameTextStyle: {
-                    fontSize: 13,
-                    fontWeight: 600
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#374151'
                 },
-                axisLabel: { rotate: 45, fontSize: 11, color: '#4b5563' },
-                axisLine: { lineStyle: { color: '#d1d5db' } }
+                axisLabel: { 
+                    rotate: 0, 
+                    fontSize: 12, 
+                    color: '#4b5563',
+                    fontWeight: 500,
+                    interval: 0
+                },
+                axisLine: { lineStyle: { color: '#d1d5db', width: 2 } },
+                axisTick: { show: true, alignWithLabel: true },
+                splitLine: { 
+                    show: true, 
+                    lineStyle: { color: '#f3f4f6', type: 'dashed' } 
+                }
             },
             yAxis: {
                 type: 'value',
-                show: false,
+                show: true,
+                name: '论文分布',
+                nameTextStyle: {
+                    fontSize: 12,
+                    color: '#6b7280'
+                },
                 min: -0.5,
-                max: maxInYear + 0.5
+                max: maxInYear + 0.5,
+                axisLine: { show: false },
+                axisTick: { show: false },
+                axisLabel: { show: false },
+                splitLine: { show: false }
             },
             series: [{
                 type: 'scatter',
                 data: data,
                 symbolSize: function(val) {
-                    return 16;
+                    return 22;
                 },
                 itemStyle: {
-                    opacity: 0.85,
-                    borderWidth: 2,
-                    borderColor: '#fff'
+                    opacity: 0.9,
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    shadowBlur: 8,
+                    shadowColor: 'rgba(0,0,0,0.15)'
                 },
                 label: {
-                    show: false  // 使用tooltip替代标签
+                    show: false
                 },
                 labelLayout: {
                     hideOverlap: true
                 },
                 emphasis: {
-                    label: {
-                        show: false
-                    },
+                    scale: 1.5,
                     itemStyle: {
                         opacity: 1,
-                        borderColor: '#1f2937',
-                        borderWidth: 2,
-                        shadowBlur: 10,
+                        borderColor: '#fff',
+                        borderWidth: 4,
+                        shadowBlur: 20,
                         shadowColor: 'rgba(0,0,0,0.3)'
                     },
                     scale: 1.3
@@ -935,10 +997,24 @@ function initModalEvents() {
 }
 
 function openPaperModal(paper) {
-    currentPaper = paper;
+    if (!paper) {
+        console.error('openPaperModal: paper 为空');
+        return;
+    }
 
-    document.getElementById('modalPaperId').textContent = '[' + paper.id + ']';
-    document.getElementById('modalPaperTitle').textContent = paper.title;
+    currentPaper = paper;
+    console.log('打开论文模态框:', paper.id, paper.title);
+
+    const modalPaperId = document.getElementById('modalPaperId');
+    const modalPaperTitle = document.getElementById('modalPaperTitle');
+
+    if (!modalPaperId || !modalPaperTitle) {
+        console.error('找不到模态框元素');
+        return;
+    }
+
+    modalPaperId.textContent = '[' + paper.id + ']';
+    modalPaperTitle.textContent = paper.title;
 
     const catBadge = document.getElementById('modalPaperCategory');
     catBadge.textContent = paper.category;
@@ -960,6 +1036,17 @@ function openPaperModal(paper) {
     const btnViewPDF = document.getElementById('btnViewPDF');
     btnViewPDF.disabled = !hasPDF;
     btnViewPDF.style.opacity = hasPDF ? '1' : '0.5';
+
+    // 隐藏返回按钮、TOC侧边栏和进度条
+    const btnBackToInfo = document.getElementById('btnBackToInfo');
+    const tocSidebar = document.getElementById('tocSidebar');
+    const progressContainer = document.getElementById('readingProgressContainer');
+    const backToTop = document.getElementById('backToTop');
+
+    if (btnBackToInfo) btnBackToInfo.style.display = 'none';
+    if (tocSidebar) tocSidebar.classList.add('hidden');
+    if (progressContainer) progressContainer.style.display = 'none';
+    if (backToTop) backToTop.classList.remove('visible');
 
     document.getElementById('paperModal').classList.add('active');
 }
@@ -1041,8 +1128,7 @@ function showPaperInfo(paper) {
     }
 
     if (paper.noteFile) {
-        const notePath = Utils.getNotePath(paper.noteFile);
-        html += `<a href="${notePath}" target="_blank" class="file-link">📖 查看精读笔记</a>`;
+        html += `<button onclick="showNoteContent()" class="file-link" style="cursor: pointer; border: none; background: none; font-size: inherit;">📖 查看精读笔记</button>`;
     }
 
     if (paper.arxiv) {
@@ -1061,12 +1147,644 @@ function showPaperInfo(paper) {
 function closeModal() {
     document.getElementById('paperModal').classList.remove('active');
     currentPaper = null;
+
+    // 重置TOC和进度条
+    const tocSidebar = document.getElementById('tocSidebar');
+    const tocNav = document.getElementById('tocNav');
+    const progressContainer = document.getElementById('readingProgressContainer');
+    const backToTop = document.getElementById('backToTop');
+    const btnBackToInfo = document.getElementById('btnBackToInfo');
+
+    if (tocSidebar) tocSidebar.classList.add('hidden');
+    if (tocNav) tocNav.innerHTML = '';
+    if (progressContainer) progressContainer.style.display = 'none';
+    if (backToTop) backToTop.classList.remove('visible');
+    if (btnBackToInfo) btnBackToInfo.style.display = 'none';
 }
 
 function showNoteContent() {
-    if (!currentPaper) return;
-    // 切换到笔记内容显示
-    showPaperInfo(currentPaper);
+    if (!currentPaper) {
+        console.error('showNoteContent: 没有选中论文');
+        return;
+    }
+
+    const notePreview = document.getElementById('notePreview');
+    const tocSidebar = document.getElementById('tocSidebar');
+    const tocNav = document.getElementById('tocNav');
+    const progressContainer = document.getElementById('readingProgressContainer');
+    const btnBackToInfo = document.getElementById('btnBackToInfo');
+
+    if (!notePreview) {
+        console.error('找不到 notePreview 元素');
+        return;
+    }
+
+    // 显示返回按钮
+    if (btnBackToInfo) {
+        btnBackToInfo.style.display = 'inline-flex';
+        btnBackToInfo.onclick = function() {
+            showPaperInfo(currentPaper);
+            if (tocSidebar) tocSidebar.classList.add('hidden');
+            if (progressContainer) progressContainer.style.display = 'none';
+            btnBackToInfo.style.display = 'none';
+        };
+    }
+
+    // 如果没有笔记文件
+    if (!currentPaper.noteFile) {
+        notePreview.innerHTML = `
+            <div class="paper-detail">
+                <div class="detail-section" style="text-align: center; padding: 3rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                    <h3>暂无精读笔记</h3>
+                    <p style="color: #6b7280;">该论文暂时没有精读笔记</p>
+                </div>
+            </div>
+        `;
+        if (tocSidebar) tocSidebar.classList.add('hidden');
+        if (progressContainer) progressContainer.style.display = 'none';
+        return;
+    }
+
+    const notePath = Utils.getNotePath(currentPaper.noteFile);
+    console.log('加载笔记:', notePath);
+
+    // 显示加载中
+    notePreview.innerHTML = `
+        <div class="paper-detail">
+            <div class="detail-section" style="text-align: center; padding: 3rem;">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                <p>正在加载笔记...</p>
+            </div>
+        </div>
+    `;
+
+    // 加载笔记文件 - 确保使用 UTF-8 编码
+    fetch(notePath)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('笔记文件不存在: ' + notePath);
+            }
+            // 强制使用 UTF-8 解码
+            return response.arrayBuffer().then(buffer => {
+                const decoder = new TextDecoder('utf-8');
+                return decoder.decode(buffer);
+            });
+        })
+        .then(markdown => {
+            // 将 Markdown 转换为 HTML（支持 LaTeX）
+            const html = markdownToHtml(markdown);
+
+            // 创建临时容器解析HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = `<div class="markdown-content">${html}</div>`;
+
+            // 生成目录
+            const tocData = generateTOC(tempDiv);
+
+            // 更新内容
+            notePreview.innerHTML = tempDiv.innerHTML;
+
+            // 更新目录
+            if (tocNav && tocData.length > 0) {
+                renderTOC(tocData, tocNav);
+                if (tocSidebar) tocSidebar.classList.remove('hidden');
+            } else {
+                if (tocSidebar) tocSidebar.classList.add('hidden');
+            }
+
+            // 显示进度条
+            if (progressContainer) progressContainer.style.display = 'block';
+
+            // 等待 KaTeX 加载完成后再渲染公式
+            function renderMath() {
+                if (typeof renderMathInElement !== 'undefined' && typeof katex !== 'undefined') {
+                    try {
+                        console.log('KaTeX 渲染开始...');
+                        renderMathInElement(notePreview, {
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false},
+                                {left: '\\[', right: '\\]', display: true},
+                                {left: '\\(', right: '\\)', display: false}
+                            ],
+                            throwOnError: false,
+                            errorColor: '#cc0000',
+                            strict: false,
+                            trust: true
+                        });
+                        console.log('KaTeX 渲染完成');
+                    } catch (e) {
+                        console.warn('KaTeX 渲染失败:', e);
+                    }
+                } else {
+                    // KaTeX 还没加载，稍后再试
+                    console.log('等待 KaTeX 加载...');
+                    setTimeout(renderMath, 100);
+                }
+            }
+            renderMath();
+
+            // 代码高亮
+            notePreview.querySelectorAll('pre').forEach((pre) => {
+                const code = pre.querySelector('code');
+                if (code && window.hljs) {
+                    // 添加语言标识
+                    const langClass = Array.from(code.classList).find(c => c.startsWith('language-'));
+                    if (langClass) {
+                        const lang = langClass.replace('language-', '');
+                        pre.setAttribute('data-lang', lang);
+                    }
+                    try {
+                        hljs.highlightElement(code);
+                    } catch (e) {
+                        console.warn('代码高亮失败:', e);
+                    }
+                }
+            });
+
+            // 添加折叠功能
+            addCollapsibleSections(notePreview);
+
+            // 设置滚动监听
+            setupScrollListener(notePreview, tocNav);
+
+            // 平滑滚动到顶部
+            notePreview.scrollTop = 0;
+        })
+        .catch(error => {
+            console.error('加载笔记失败:', error);
+            notePreview.innerHTML = `
+                <div class="paper-detail">
+                    <div class="detail-section" style="text-align: center; padding: 3rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
+                        <h3>加载失败</h3>
+                        <p style="color: #6b7280;">${error.message}</p>
+                        <p style="color: #9ca3af; font-size: 0.9rem; margin-top: 1rem;">路径: ${notePath}</p>
+                    </div>
+                </div>
+            `;
+            if (tocSidebar) tocSidebar.classList.add('hidden');
+            if (progressContainer) progressContainer.style.display = 'none';
+        });
+}
+
+// ===== 目录生成 =====
+function generateTOC(container) {
+    const headings = container.querySelectorAll('.markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4');
+    const toc = [];
+
+    headings.forEach((heading, index) => {
+        // 生成唯一ID
+        const id = `section-${index}`;
+        heading.id = id;
+
+        const level = parseInt(heading.tagName[1]);
+        toc.push({
+            level: level,
+            title: heading.textContent.trim(),
+            id: id
+        });
+    });
+
+    return toc;
+}
+
+// ===== 渲染目录 =====
+function renderTOC(tocData, tocNav) {
+    let html = '';
+
+    tocData.forEach(item => {
+        // 截断过长的标题
+        let title = item.title;
+        if (title.length > 35) {
+            title = title.substring(0, 35) + '...';
+        }
+
+        html += `
+            <a class="toc-item level-${item.level}"
+               href="#${item.id}"
+               data-target="${item.id}"
+               title="${item.title}">
+                ${title}
+            </a>
+        `;
+    });
+
+    tocNav.innerHTML = html;
+
+    // 绑定点击事件
+    tocNav.querySelectorAll('.toc-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            const notePreview = document.getElementById('notePreview');
+            const targetElement = notePreview.querySelector(`#${targetId}`);
+
+            if (targetElement) {
+                // 平滑滚动
+                notePreview.scrollTo({
+                    top: targetElement.offsetTop - 20,
+                    behavior: 'smooth'
+                });
+
+                // 更新活动状态
+                tocNav.querySelectorAll('.toc-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
+}
+
+// ===== 滚动监听 =====
+function setupScrollListener(container, tocNav) {
+    const progressBar = document.getElementById('readingProgressBar');
+    const backToTop = document.getElementById('backToTop');
+
+    // 滚动事件处理
+    const handleScroll = () => {
+        // 更新进度条
+        if (progressBar) {
+            const scrollTop = container.scrollTop;
+            const scrollHeight = container.scrollHeight - container.clientHeight;
+            const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // 显示/隐藏返回顶部按钮
+        if (backToTop) {
+            if (container.scrollTop > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        }
+
+        // 更新目录高亮
+        if (tocNav) {
+            highlightActiveSection(container, tocNav);
+        }
+    };
+
+    // 绑定滚动事件
+    container.addEventListener('scroll', handleScroll);
+
+    // 返回顶部按钮
+    if (backToTop) {
+        backToTop.onclick = () => {
+            container.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        };
+    }
+
+    // 初始调用一次
+    handleScroll();
+}
+
+// ===== 高亮当前章节 =====
+function highlightActiveSection(container, tocNav) {
+    const headings = container.querySelectorAll('.markdown-content h1[id], .markdown-content h2[id], .markdown-content h3[id], .markdown-content h4[id]');
+
+    let activeId = null;
+    const scrollTop = container.scrollTop + 50; // 偏移量
+
+    // 找到当前可见的标题
+    for (let i = headings.length - 1; i >= 0; i--) {
+        const heading = headings[i];
+        if (heading.offsetTop <= scrollTop) {
+            activeId = heading.id;
+            break;
+        }
+    }
+
+    // 更新目录高亮
+    tocNav.querySelectorAll('.toc-item').forEach(item => {
+        if (item.getAttribute('data-target') === activeId) {
+            item.classList.add('active');
+            // 确保活动项可见
+            item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+            item.classList.remove('active');
+        }
+    });
+}
+
+// ===== 添加折叠功能 =====
+function addCollapsibleSections(container) {
+    const h2Elements = container.querySelectorAll('.markdown-content h2');
+
+    h2Elements.forEach(h2 => {
+        // 收集h2下面的所有内容直到下一个h2
+        const contentElements = [];
+        let nextElement = h2.nextElementSibling;
+
+        while (nextElement && !nextElement.matches('h2')) {
+            contentElements.push(nextElement);
+            nextElement = nextElement.nextElementSibling;
+        }
+
+        if (contentElements.length > 0) {
+            // 创建包装器
+            const wrapper = document.createElement('div');
+            wrapper.className = 'section-content';
+            wrapper.style.maxHeight = 'none';
+
+            // 将内容移动到包装器中
+            contentElements.forEach(el => {
+                wrapper.appendChild(el);
+            });
+
+            // 插入包装器
+            h2.insertAdjacentElement('afterend', wrapper);
+
+            // 添加点击事件
+            h2.addEventListener('click', function() {
+                const isCollapsed = wrapper.classList.contains('collapsed');
+
+                if (isCollapsed) {
+                    // 展开
+                    wrapper.style.maxHeight = wrapper.scrollHeight + 'px';
+                    wrapper.classList.remove('collapsed');
+                    h2.classList.remove('collapsed');
+                    // 延迟移除maxHeight以允许自适应
+                    setTimeout(() => {
+                        if (!wrapper.classList.contains('collapsed')) {
+                            wrapper.style.maxHeight = 'none';
+                        }
+                    }, 300);
+                } else {
+                    // 收起
+                    wrapper.style.maxHeight = wrapper.scrollHeight + 'px';
+                    // 触发重排
+                    wrapper.offsetHeight;
+                    wrapper.style.maxHeight = '0';
+                    wrapper.classList.add('collapsed');
+                    h2.classList.add('collapsed');
+                }
+            });
+        }
+    });
+}
+
+// 增强版 Markdown 转 HTML 函数（支持 LaTeX）
+// 增强版 Markdown 转 HTML 函数
+function markdownToHtml(markdown) {
+    if (!markdown) return '';
+
+    // 使用唯一占位符保护特殊内容
+    const placeholders = {
+        latexBlocks: [],
+        latexInline: []
+    };
+
+    let text = markdown;
+
+    // ===== 第1步：保护 LaTeX 公式 =====
+    // 使用特殊的占位符格式，避免被 marked.js 处理
+    const PLACEHOLDER_PREFIX = '___MATH_PLACEHOLDER_';
+    const PLACEHOLDER_SUFFIX = '___';
+
+    // 块级公式 $$...$$ - 必须独占一行
+    text = text.replace(/^\$\$([\s\S]*?)\$\$$/gm, (match, formula) => {
+        const idx = placeholders.latexBlocks.length;
+        placeholders.latexBlocks.push(formula.trim());
+        return `\n${PLACEHOLDER_PREFIX}BLOCK_${idx}${PLACEHOLDER_SUFFIX}\n`;
+    });
+
+    // 行内公式 $...$ (排除货币符号 - 要求$后不是空格或数字，且不含换行)
+    text = text.replace(/\$([^\$\s\n][^\$\n]*?)\$/g, (match, formula) => {
+        const idx = placeholders.latexInline.length;
+        placeholders.latexInline.push(formula.trim());
+        return `${PLACEHOLDER_PREFIX}INLINE_${idx}${PLACEHOLDER_SUFFIX}`;
+    });
+
+    // \( ... \) 格式
+    text = text.replace(/\\\(([\s\S]*?)\\\)/g, (match, formula) => {
+        const idx = placeholders.latexInline.length;
+        placeholders.latexInline.push(formula.trim());
+        return `${PLACEHOLDER_PREFIX}INLINE_${idx}${PLACEHOLDER_SUFFIX}`;
+    });
+
+    // \[ ... \] 格式
+    text = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, formula) => {
+        const idx = placeholders.latexBlocks.length;
+        placeholders.latexBlocks.push(formula.trim());
+        return `\n${PLACEHOLDER_PREFIX}BLOCK_${idx}${PLACEHOLDER_SUFFIX}\n`;
+    });
+
+    console.log('LaTeX 保护完成，块级:', placeholders.latexBlocks.length, '行内:', placeholders.latexInline.length);
+
+    let html;
+
+    // ===== 第2步：使用 marked.js 或自定义解析器 =====
+    if (typeof marked !== 'undefined' && marked.parse) {
+        try {
+            console.log('使用 marked.js 解析 Markdown');
+
+            // 配置 marked.js
+            const renderer = new marked.Renderer();
+
+            // 自定义表格渲染
+            renderer.table = function(header, body) {
+                if (!body) body = '';
+                return '<div class="table-wrapper"><table><thead>' + header + '</thead><tbody>' + body + '</tbody></table></div>';
+            };
+
+            // 自定义代码块渲染
+            renderer.code = function(code, language) {
+                const lang = language || 'plaintext';
+                const escapedCode = code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                return `<pre data-lang="${lang}"><code class="language-${lang}">${escapedCode}</code></pre>`;
+            };
+
+            // 自定义链接渲染
+            renderer.link = function(href, title, text) {
+                const titleAttr = title ? ` title="${title}"` : '';
+                return `<a href="${href}" target="_blank" rel="noopener"${titleAttr}>${text}</a>`;
+            };
+
+            // 段落渲染 - 不包装占位符
+            renderer.paragraph = function(text) {
+                if (text.includes(PLACEHOLDER_PREFIX)) {
+                    return text + '\n';
+                }
+                return '<p>' + text + '</p>\n';
+            };
+
+            // 解析 Markdown
+            html = marked.parse(text, {
+                breaks: true,
+                gfm: true,
+                renderer: renderer
+            });
+
+            console.log('marked.js 解析完成');
+        } catch (e) {
+            console.warn('marked.js 解析失败，使用自定义解析器:', e);
+            html = parseMarkdownCustom(text);
+        }
+    } else {
+        console.log('marked.js 不可用，使用自定义解析器');
+        html = parseMarkdownCustom(text);
+    }
+
+    // ===== 第3步：恢复 LaTeX 公式 =====
+    html = html.replace(new RegExp(PLACEHOLDER_PREFIX + 'BLOCK_(\\d+)' + PLACEHOLDER_SUFFIX, 'g'), (match, idx) => {
+        const formula = placeholders.latexBlocks[parseInt(idx)];
+        if (!formula) return match;
+        return `$$${formula}$$`;
+    });
+
+    html = html.replace(new RegExp(PLACEHOLDER_PREFIX + 'INLINE_(\\d+)' + PLACEHOLDER_SUFFIX, 'g'), (match, idx) => {
+        const formula = placeholders.latexInline[parseInt(idx)];
+        if (!formula) return match;
+        return `$${formula}$`;
+    });
+
+    // 清理可能的多余段落标签
+    html = html.replace(/<p>\s*<div class="table-wrapper">/g, '<div class="table-wrapper">');
+    html = html.replace(/<\/div>\s*<\/p>/g, '</div>');
+    html = html.replace(/<p>\s*\$\$/g, '$$');
+    html = html.replace(/\$\$\s*<\/p>/g, '$$');
+
+    console.log('LaTeX 恢复完成');
+    return html;
+}
+
+// 自定义 Markdown 解析器（当 marked.js 不可用时使用）
+function parseMarkdownCustom(text) {
+    console.log('使用自定义 Markdown 解析器');
+    const placeholders = {
+        codeBlocks: [],
+        tables: []
+    };
+
+    const PLACEHOLDER_PREFIX = '___CUSTOM_PLACEHOLDER_';
+    const PLACEHOLDER_SUFFIX = '___';
+
+    // 保护代码块
+    text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        const idx = placeholders.codeBlocks.length;
+        placeholders.codeBlocks.push({ lang: lang || 'plaintext', code: code.trim() });
+        return `${PLACEHOLDER_PREFIX}CODE_${idx}${PLACEHOLDER_SUFFIX}`;
+    });
+
+    // 保护表格 - 改进的正则表达式
+    text = text.replace(/^\|(.+)\|\s*\n\|([:\-|\s]+)\|\s*\n((?:^\|.+\|\s*\n?)+)/gm, (match, headerLine, separatorLine, bodyLines) => {
+        const idx = placeholders.tables.length;
+        placeholders.tables.push({ header: headerLine, separator: separatorLine, body: bodyLines });
+        return `${PLACEHOLDER_PREFIX}TABLE_${idx}${PLACEHOLDER_SUFFIX}`;
+    });
+
+    // HTML 转义
+    text = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // 标题
+    text = text.replace(/^###### (.+)$/gm, '<h6>$1</h6>');
+    text = text.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
+    text = text.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+    text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    text = text.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // 分割线
+    text = text.replace(/^(---|\*\*\*|___)$/gm, '<hr>');
+
+    // 图片和链接
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;">');
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+    // 格式化 (注意顺序：先处理更复杂的模式)
+    text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+    text = text.replace(/~~(.+?)~~/g, '<del>$1</del>');
+    text = text.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+    // 引用
+    text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // 列表
+    text = text.replace(/^[\t ]*[-*+]\s+(.+)$/gm, '<li>$1</li>');
+    text = text.replace(/^[\t ]*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+    // 包裹列表
+    text = text.replace(/(<li>.*?<\/li>\n?)+/g, '<ul>$&</ul>');
+
+    // 段落
+    let paragraphs = text.split(/\n\n+/);
+    text = paragraphs.map(p => {
+        p = p.trim();
+        if (!p) return '';
+        if (p.match(/^<(h[1-6]|ul|ol|blockquote|hr|pre|table|div|___)/)) return p;
+        if (p.includes(PLACEHOLDER_PREFIX)) return p;
+        p = p.replace(/\n/g, '<br>');
+        return '<p>' + p + '</p>';
+    }).join('\n');
+
+    // 恢复代码块
+    text = text.replace(new RegExp(PLACEHOLDER_PREFIX + 'CODE_(\\d+)' + PLACEHOLDER_SUFFIX, 'g'), (match, idx) => {
+        const block = placeholders.codeBlocks[parseInt(idx)];
+        if (!block) return match;
+        const escapedCode = block.code
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        return `<pre data-lang="${block.lang}"><code class="language-${block.lang}">${escapedCode}</code></pre>`;
+    });
+
+    // 恢复表格
+    text = text.replace(new RegExp(PLACEHOLDER_PREFIX + 'TABLE_(\\d+)' + PLACEHOLDER_SUFFIX, 'g'), (match, idx) => {
+        const table = placeholders.tables[parseInt(idx)];
+        if (!table) return match;
+
+        // 解析表头
+        const headers = table.header.split('|').map(h => h.trim()).filter(h => h);
+
+        // 解析表体
+        const rows = table.body.trim().split('\n').map(row => {
+            return row.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+        }).filter(r => r.length > 0 && r.some(c => c));
+
+        // 生成表格 HTML
+        let html = '<div class="table-wrapper"><table><thead><tr>';
+        headers.forEach(h => {
+            let content = processInlineFormatting(h);
+            html += `<th>${content}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        rows.forEach(row => {
+            html += '<tr>';
+            for (let i = 0; i < headers.length; i++) {
+                let cell = row[i] || '';
+                let content = processInlineFormatting(cell);
+                html += `<td>${content}</td>`;
+            }
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        return html;
+    });
+
+    return text;
+}
+
+// 处理行内格式化
+function processInlineFormatting(text) {
+    if (!text) return '';
+    return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>');
 }
 
 function openPDF() {
