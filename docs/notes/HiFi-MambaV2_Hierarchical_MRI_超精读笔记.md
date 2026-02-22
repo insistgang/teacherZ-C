@@ -383,9 +383,9 @@ def loss_function(x_pred, x_gt, k_pred, k_gt):
    - 结合生成模型进行超分辨率
    - 多模态图像融合
 
-### 与蔡晓昊其他工作的联系
+### 与蔡晓浩其他工作的联系
 
-HiFi-MambaV2延续了蔡晓昊在医学图像分析领域的研究脉络：
+HiFi-MambaV2延续了蔡晓浩在医学图像分析领域的研究脉络：
 
 1. **tCURLoRA (2025)**: 高效参数微调 - 共同关注效率优化
 2. **Diffusion Brain MRI (2024)**: 扩散模型MRI重建 - 互补的重建方法
