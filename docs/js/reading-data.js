@@ -674,8 +674,313 @@ const paperNotesV2 = [
   }
 ];
 
-const paperByPriority = new Map(papers.map((paper) => [paper.priority, paper]));
-const noteByPriority = new Map(paperNotesV2.map((note) => [note.priority, note]));
+const noteEnhancements = {
+  "sat-overview": {
+    evidence: ["Abstract", "Introduction", "SaT Methodology", "Theorem 1", "T-ROF Method", "SLaT Method", "vascular / sphere application sections"],
+    reportExpansion: {
+      context: "这篇综述适合作为整组论文的入口，因为它不是只总结一个算法，而是把 smoothing and thresholding (SaT) 作为方法论框架来组织 T-ROF、SLaT、vascular segmentation、spherical segmentation 等分支。精读时应先把它当成索引，而不是当成证明论文。",
+      technicalReading: "技术阅读重点是 SaT 的两段式分解：第一段用 convex smoothing model 得到稳定图像或特征表示，第二段用 thresholding、K-means 或 multichannel clustering 得到分割。要特别注意类别数 K 只进入 thresholding 阶段，因此改变 K 时通常不用重解 smoothing 子问题。",
+      theoremReading: "综述里出现的 Theorem 1 主要用于说明 smoothing 子问题的可解性或稳定性，但真正支撑 ROF thresholding 与 PCMS partial minimizer 关系的细节，需要回到 Linkage 和 Multiclass T-ROF 两篇。这里的理论阅读目标是标出哪些结论来自综述，哪些要回原文核对。",
+      experimentReading: "实验和应用阅读不要泛泛看图片，而要按数据域分类：synthetic retina 检查噪声鲁棒性，degraded color images 检查 SLaT，vascular structures 检查候选边界策略，spherical images 检查球面几何扩展。",
+      relationReading: "它与 Linkage 的关系是“地图 vs 理论根基”，与 SLaT、Framelet/Tight-frame、Wavelet Sphere 的关系是“总方法论 vs 应用分支”。读完这篇后，应能把 dashboard 中 15 篇论文按五条主线放回正确位置。",
+      researchValue: "这篇的研究价值在于帮助读者看到一条可迁移范式：先把退化图像或复杂数据变成稳定表示，再用低成本阈值化或投影得到结构结果。这为后续做深度特征 SaT、graph SaT 或球面分割扩展提供了清楚入口。"
+    }
+  },
+  "pcms-rof-linkage": {
+    evidence: ["Abstract", "Introduction", "Theorem 3.6", "Section 4 T-ROF Algorithm", "Experiments"],
+    reportExpansion: {
+      context: "这篇是整组 SaT/ROF/PCMS 论文的理论核心。它回答的是一个基础问题：Rudin-Osher-Fatemi (ROF) 本来是恢复模型，piecewise constant Mumford-Shah (PCMS) / Chan-Vese 本来是分割模型，为什么恢复解经过 thresholding 后可以解释为分割解。",
+      technicalReading: "技术阅读应围绕三个对象展开：ROF minimizer u*、二相区域常数 m0/m1、threshold set Σ = {x : u*(x) > (m0 + m1)/2}。不要把阈值化看成后处理技巧，而要把它理解为 ROF level set 与 PCMS energy 的连接点。",
+      theoremReading: "Theorem 3.6 或本地 PDF 对应主定理是精读核心。重点不是背定理陈述，而是理解 partial minimizer 的含义：结论保证的是在固定某些变量或特定阈值结构下的局部/部分最优，不是直接宣称全局最优。K=2 最清楚，K>2 需要额外假设。",
+      experimentReading: "实验阅读要对照 noisy、blurry、information loss 三类退化图像，检查 T-ROF 是否因只解凸恢复子问题而获得速度优势，以及分割质量是否仍能贴近 PCMS/Chan-Vese 的目标。",
+      relationReading: "它为 SaT Overview 中的“恢复 + 阈值化”提供理论合法性，也解释 Multiclass T-ROF 为什么不是经验算法。它与 Segmentation Restoration 的区别是：这篇强调 two-stage thresholding 的理论连接，后者强调 joint optimization。",
+      researchValue: "如果后续要做 SaT/T-ROF 的 K>2 理论、阈值稳定性或深度特征阈值化，这篇提供了最重要的数学模板：把一个看似启发式的算法步骤放回变分能量和 minimizer 关系中分析。"
+    }
+  },
+  "iterated-rof": {
+    evidence: ["Abstract", "Algorithm T-ROF", "threshold update τ_i = 1/2(m_{i-1}+m_i)", "convergence discussion", "Experiments"],
+    reportExpansion: {
+      context: "这篇可以看作 T-ROF 的算法原型，位置在 Linkage 之后最合适。Linkage 告诉你为什么 ROF thresholding 有理论意义，这篇告诉你多类分割时阈值如何自动更新、如何落成可运行算法。",
+      technicalReading: "技术阅读的抓手是 solve ROF once 和 iterative threshold update 的配合。先用 ROF 平滑输入图像，再根据当前分割计算区域均值 m_i，用 τ_i = 1/2(m_{i-1}+m_i) 更新相邻类阈值。这样多类分割不必直接求解完整非凸 PCMS。",
+      theoremReading: "理论部分应关注 projected T-ROF 在特定假设下的收敛条件，以及 K=2 时与 Chan-Vese 之间的等价或对应关系。要注意这里的收敛不是任意图像任意 K 的全局保证，而是对阈值序列和投影过程的条件性保证。",
+      experimentReading: "实验阅读重点是 cartoon、texture、medical images 中灰度接近类别的分割表现。应记录哪些例子是单次阈值化失败而迭代阈值成功，以及速度优势是否来自只求解一次 ROF。",
+      relationReading: "它是 SaT Overview 中 T-ROF 分支的原始算法来源，也是 Linkage 后续理论化的前身。与 Segmentation Restoration 相比，它保留 two-stage 结构；与 SLaT 相比，它处理灰度/多类阈值，而不是彩色特征 lifting。",
+      researchValue: "这篇适合提炼可复现算法：输入、ROF 解、区域均值、阈值更新、停止条件都很清楚。读完后可以直接把它改成伪代码或小实验，用来观察 K、噪声、灰度间隔对分割稳定性的影响。"
+    }
+  },
+  "segmentation-restoration": {
+    evidence: ["Abstract", "model E(u,c,g)", "Algorithm 1", "convergence theorem", "Experiments: noise / blur / missing pixels / vector-valued images"],
+    reportExpansion: {
+      context: "这篇处在 SaT/ROF 基础之后，是因为它代表另一条路线：不是先恢复再分割，而是把恢复变量 g 和分割变量 u_i、区域常数 c_i 放进同一个能量函数中同时协调。",
+      technicalReading: "技术阅读应先标清 f、g、A、u_i、c_i 的角色。f 是观测图像，g 是待恢复图像，A 是退化算子，u_i 是区域 indicator 或 label 函数，c_i 是区域常数。核心能量是 μΦ(f,Ag)+λΣ_i∫(g-c_i)^2u_i+Σ_i TV(u_i)。",
+      theoremReading: "理论阅读关注 alternating minimization 的可解性和收敛性：固定两类变量后更新第三类变量，尤其是 g 子问题在什么条件下有唯一解，三变量迭代在 mild condition 下能得到怎样的稳定结论。",
+      experimentReading: "实验必须按退化类型读：high noise、blur、missing pixels、vector-valued images。每类实验都应问：如果没有恢复变量 g，传统 PCMS 会在哪里失败；加入 restoration fidelity 后具体改善什么。",
+      relationReading: "它与 SaT Overview 共享 restoration helps segmentation 的思想，但技术路线不同：SaT 是 two-stage，改变 K 只重做 thresholding；这篇是 joint optimization，变量耦合更强但能直接处理 A 和 Φ。",
+      researchValue: "这篇给后续医学成像、遥感或缺失数据分割一个清晰入口：当退化模型 A 已知或可建模时，与其把恢复和分割割裂，不如研究一个包含 fidelity、region fitting 和 Total Variation 的联合变分模型。"
+    }
+  },
+  "framelet-tubular": {
+    evidence: ["Abstract", "Section 3 algorithm", "boundary interval [α_i, β_i]", "finite convergence theorem", "2D/3D tubular experiments"],
+    reportExpansion: {
+      context: "这篇是管状结构分割线的短版入口，适合先读来理解思想。目标对象不是普通区域分割，而是 MRA 血管、道路等细长结构，它们的边界弱、分叉多、噪声下容易断裂。",
+      technicalReading: "技术抓手是 possible boundary gray interval [α_i, β_i]。算法每轮把像素分成 below、inside、above，只对 inside 的候选边界区域做 framelet denoising / soft-thresholding，而不是对整幅图做统一平滑。",
+      theoremReading: "理论阅读重点是 finite convergence：候选边界集合在迭代中持续收缩，已经确定为 0 或 1 的像素离开候选区。要理解这个保证与传统 variational minimization 不同，它更像有限步分类和局部平滑的组合。",
+      experimentReading: "实验要看 2D/3D tubular structures，尤其是细血管、弱边界、分叉处是否保留。不要只看最终二值图，还要看候选区域收缩是否可能导致漏检或断裂。",
+      relationReading: "它是 Tight-frame Vessel 长版的基础，也与 SaT 有相似结构：先稳定不确定部分，再阈值化得到结构。但它更强调候选边界区间和 framelet 表示，而不是 ROF/PCMS 理论。",
+      researchValue: "这篇的价值是给出一种局部处理策略：复杂图像中不是所有像素都同等困难，真正值得用 framelet 平滑的是边界候选集合。这种思想可迁移到医学点云、血管中心线和遥感线状目标。"
+    }
+  },
+  "tight-frame-vessel": {
+    evidence: ["Abstract", "Algorithm 1", "Theorem 1", "O(n) complexity statement", "2D/3D MRA experiments"],
+    reportExpansion: {
+      context: "这篇是管状结构分割线的长版或完整版本，补足短版中没有展开的 tight-frame 迭代、MRA 实验和有限收敛证明。读它时应把重点放在真实 2D/3D 医学血管数据。",
+      technicalReading: "技术阅读围绕 Λ possible boundary set 展开。算法初始化 Λ^(0)，计算 μ、μ_-、μ_+ 并形成 [α_i,β_i]，再只在 Λ 区域进行 tight-frame smoothing。每一轮将部分像素固定为 0 或 1，剩余像素继续进入下一轮。",
+      theoremReading: "Theorem 1 说明算法会有限步收敛到二值图像；文本还给出每轮复杂度 O(n) 的线性规模解释。精读时要把 n、Λ、候选像素离开机制和 finite convergence 联系起来。",
+      experimentReading: "实验重点是真实 2D/3D MRA images。应观察它相对 PDE、active contour 或其他 variational methods 是否能提取更多 fine tubular details，以及 3D 场景中参数和运行时间是否稳定。",
+      relationReading: "它扩展 Framelet Tubular，并直接启发 Wavelet Sphere 中的边界候选区间思想。与 SaT/ROF 线相比，它的理论核心不是 PCMS partial minimizer，而是候选集合收缩和 tight-frame 表示。",
+      researchValue: "这篇适合提炼为医学图像算法模板：先找不确定边界集合，再把高成本平滑限制在局部区域，并用有限收敛和 O(n) 复杂度说明工程可行性。"
+    }
+  },
+  "slat-color": {
+    evidence: ["Abstract", "Smoothing stage", "Theorem III.1", "Algorithm 1", "Lifting to Lab / RGB+Lab", "Experiments degraded color images"],
+    reportExpansion: {
+      context: "SLaT 是 SaT 从灰度图到彩色图像的自然扩展。它解决的问题不是简单把 ROF 分别用于 R、G、B 三通道，而是处理 RGB 通道相关、颜色空间不足和退化彩色图像分割不稳定。",
+      technicalReading: "技术路线是 Smoothing、Lifting、Thresholding。先对 RGB 每个通道做 convex smoothing，再将平滑后的 RGB 转换到 Lab，并拼成 RGB+Lab 六维特征，最后在六维特征上做 K-means 或 multichannel thresholding。",
+      theoremReading: "Theorem III.1 是 smoothing stage 的唯一解或可解性核心。精读时要分清理论保证主要覆盖第一阶段的凸模型，而最后的 K-means / thresholding 更偏算法步骤。",
+      experimentReading: "实验对象是 degraded color images，退化包括 noise、information loss 和 blur。阅读时要比较 RGB-only、Lab-only 和 RGB+Lab 是否真的提供互补信息，而不是只记录最终视觉效果。",
+      relationReading: "它与 SaT Overview 是总分关系；与 Segmentation Restoration 都处理 vector-valued images，但路线不同：SLaT 是三阶段 feature lifting，Segmentation Restoration 是 joint energy with g。",
+      researchValue: "SLaT 的价值在于把颜色空间作为可设计的中间表示。后续如果把 Lab 换成深度特征、医学多模态通道或遥感光谱通道，这篇提供了“平滑后再提升特征维度”的清晰范式。"
+    }
+  },
+  "sphere-wavelet": {
+    evidence: ["Abstract", "spherical gradient", "spherical wavelet transform", "axisymmetric/directional wavelets and curvelets", "boundary interval shrinkage", "Earth / solar / spherical retina experiments"],
+    reportExpansion: {
+      context: "这篇把 wavelet/frame segmentation 从 Euclidean image 推广到 spherical images。它的关键背景是地球、太阳、全天图和球面视网膜这类数据定义在球面上，不能直接套平面梯度和普通卷积。",
+      technicalReading: "技术阅读应拆成三块：球面采样和 spherical gradient，spherical wavelet transform，包括 axisymmetric wavelets、directional wavelets、curvelets，以及继承自 vessel segmentation 的 boundary candidate interval shrinkage。",
+      theoremReading: "这篇的理论重点更多是算法构造和几何适配，而不是单个强定理。应核对 spherical transform 与 Euclidean tight-frame 的对应关系，并标注哪些性质来自球面小波工具，哪些来自候选区间迭代。",
+      experimentReading: "实验对象包括 Earth topographic map、light probe image、solar data sets、spherical retina images。读实验时要问 directional wavelets / curvelets 是否更适合曲线结构，以及球面几何是否避免了投影到平面带来的失真。",
+      relationReading: "它继承 Framelet/Tight-frame Vessel 的候选边界思想，同时构成 SaT 应用中的几何扩展分支。与 SLaT 并列：SLaT 扩展特征空间，Wavelet Sphere 扩展数据定义域。",
+      researchValue: "这篇适合引出 spherical CNN、球面遥感和全景医学图像分割的后续选题。其研究价值不在于替代深度模型，而在于提供可解释的球面几何和小波稀疏表示基线。"
+    }
+  },
+  "two-stage-classification": {
+    evidence: ["Abstract", "warm initialization", "graph Laplacian", "graph TV", "unconstrained convex model", "projection to binary partition", "point cloud experiments"],
+    reportExpansion: {
+      context: "这篇是从 image segmentation 到 graph classification 的迁移入口。它把像素区域分割抽象成图上标签函数分类，目标对象变成 high-dimensional data 和 point clouds。",
+      technicalReading: "技术路线是 two-stage：先用 SVM 或随机标签做 warm initialization，再在图上解无约束凸变分模型，包含 fidelity、graph Laplacian 和 graph Total Variation (graph TV)，最后投影到 binary partition 或 simplex 顶点。",
+      theoremReading: "理论阅读要关注为什么去掉 simplex constraint 后 K 个类别子问题可以独立求解，以及 convex smoothing 子问题如何保证可计算性。这里的重点不是证明分类全局最优，而是用凸模型替代 NP-hard 或强约束图分割。",
+      experimentReading: "实验覆盖 benchmark high-dimensional data sets 和 unstructured point clouds。读表时要记录初始化方式、迭代 refinement、accuracy 和 CPU time，而不是只看最终分类率。",
+      relationReading: "它把 SaT 的 smoothing + thresholding 迁移成 graph smoothing + projection，是 Efficient Variational Classification 的早期版本。与 SaT/ROF 的关系是思想迁移，不是模型公式一一相同。",
+      researchValue: "这篇提供了可解释图分类路线，适合发展到医学点云、遥感点云和少标签半监督分类。研究入口在于图构建、graph TV 权重、初始化质量和 projection 误差。"
+    }
+  },
+  "efficient-variational-classification": {
+    evidence: ["Abstract", "Section 3 model", "graph Laplacian / graph TV", "unique solution theorem", "Section 4 primal-dual algorithm", "primal-dual convergence", "benchmarks"],
+    reportExpansion: {
+      context: "这是高维分类线的成熟期或期刊版，应该和 Two-Stage Classification 对照阅读。它把早期 two-stage 思想补成更完整的模型、唯一解、primal-dual algorithm 和系统 benchmark。",
+      technicalReading: "技术阅读重点是 multi-class semi-supervised classification 的无约束凸模型。每个类别 j 对应一个标签函数 u_j，目标函数包含 β/2||u_j-û_j||²、α/2 u_j^T L u_j 和 ||∇u_j||_1，K 个子问题可独立求解。",
+      theoremReading: "理论部分应抓住 smoothing convex model 的 unique solution 和 primal-dual algorithm convergence。要理解这些保证覆盖的是连续/松弛标签函数的优化，不等于投影后 hard labels 一定全局最优。",
+      experimentReading: "实验覆盖 high-dimensional benchmark data 和 point clouds。精读时要比较 accuracy、CPU time、迭代次数、初始化方式，以及它相对 graph cut、MBO 或其他半监督方法的速度与准确率。",
+      relationReading: "它是 Two-Stage Classification 的成熟表达，也把 SaT 从像素分割进一步抽象为图上分类。与 RI/UQ 线相比，它共享 convex optimization 风格，但问题对象是 graph labels 而不是 posterior imaging。",
+      researchValue: "这篇适合用于后续工程化复现：模型清楚、primal-dual 流程明确、实验对象标准。它也提供了研究少标签、点云分类和图正则可解释性的入口。"
+    }
+  },
+  "high-dimensional-uq": {
+    evidence: ["Abstract", "posterior and MAP definitions", "HPD credible region approximation", "local credible intervals", "automatic regularization parameter μ", "MRI brain and M31 experiments"],
+    reportExpansion: {
+      context: "这篇是进入高维逆问题不确定性量化的短入口。它把 radio interferometric imaging 中的 MAP-UQ 思路抽象到更一般的 high-dimensional inverse problems，适合在 RI UQ I/II 前预读。",
+      technicalReading: "技术阅读要先建立 posterior、maximum a posteriori (MAP)、highest posterior density (HPD) credible region 和 local credible interval 的概念。方法不是完整采样后验，而是先求 MAP estimator，再用 probability concentration 近似 HPD region。",
+      theoremReading: "理论重点是 γ'_α 或 γ^0_α 类型的 HPD credible region approximation，以及这种近似在 log-concave posterior 下为什么能给高维可计算 UQ。要注意它是近似 UQ，不等同于完整 MCMC。",
+      experimentReading: "实验包括 MRI brain image，并说明 RI image M31 结果类似。应关注自动选择 regularization parameter μ、orthonormal basis 与 SARA dictionary 的差异、credible interval 与误差的对应关系。",
+      relationReading: "它与 RI UQ II 共享 MAP + concentration 的可扩展路线，与 RI UQ I 的完整 posterior sampling 形成取舍对照。它也为其他医学成像逆问题提供迁移模板。",
+      researchValue: "这篇的研究价值在于把不确定性量化从“昂贵采样”变成“可扩展凸优化后处理”。后续可以把 MAP-UQ 用于 MRI、CT、PET 或遥感重建。"
+    }
+  },
+  "ri-uq-i": {
+    evidence: ["Abstract", "RI measurement y = Φx + n", "analysis/synthesis priors", "MYULA and Px-MALA", "credible intervals / HPD regions / hypothesis testing", "M31 / Cygnus A / W28 / 3C288 experiments"],
+    reportExpansion: {
+      context: "RI UQ I 是无线电干涉成像不确定性量化的完整采样版。它先回答“怎样从 posterior samples 得到可信区间和结构假设检验”，再让 RI UQ II 讨论如何用 MAP 近似扩展到大数据。",
+      technicalReading: "技术阅读应从 RI measurement model y = Φx + n 开始，区分 analysis prior 和 synthesis prior。由于 sparse prior 常含 l1 非光滑项，论文使用 Moreau-Yosida envelope、proximal operator、MYULA 和 Px-MALA 让 MCMC 能处理非光滑后验。",
+      theoremReading: "理论重点不是单一闭式定理，而是 proximal MCMC 对 non-smooth priors 的支持机制。要理解 MYULA 如何用平滑 envelope 构造 Langevin 近似，Px-MALA 如何通过 Metropolis-Hastings 校正采样误差。",
+      experimentReading: "实验使用 M31 galaxy、Cygnus A、W28 supernova remnant、3C288 等 RI images。阅读时要把 posterior samples 如何转成 pixel-wise credible intervals、HPD regions 和 structure hypothesis testing 逐项记录。",
+      relationReading: "它是 RI UQ II 的完整采样基准，也是 Proximal Nested Sampling 中 proximal MCMC 背景的来源之一。缺点是慢，因此引出 MAP-UQ 和 online / scalable 方法。",
+      researchValue: "这篇适合作为 Bayesian imaging UQ 的标准模板：先明确定义 posterior，再用能处理非光滑 prior 的采样器，再把样本转化为可解释的不确定性产品。"
+    }
+  },
+  "ri-uq-ii": {
+    evidence: ["Abstract", "MAP estimation model", "probability concentration", "HPD credible region approximation", "local credible intervals", "structure hypothesis testing", "10^5 speed comparison"],
+    reportExpansion: {
+      context: "RI UQ II 是 RI UQ I 的 scalable 替代方案。它保留 UQ 的核心输出，但用 maximum a posteriori (MAP) estimation 和 probability concentration 避免完整 MCMC 的计算成本。",
+      technicalReading: "技术阅读重点是先用 convex optimization 得到 x_MAP，再用 concentration inequality 构造近似 HPD credible regions，进而得到 local credible intervals 和 structure hypothesis testing。这里 MAP 不是终点，而是 UQ 近似的入口。",
+      theoremReading: "理论阅读要抓住 approximate HPD credible region 的公式和假设边界。它依赖 posterior concentration，因此可以很快，但相对 RI UQ I 会丢失完整后验样本的某些细节。",
+      experimentReading: "实验与 RI UQ I 对照，使用 M31、Cygnus A、W28、3C288。重点看 MAP-UQ 与 MCMC 的 credible interval 差异、结构测试是否一致，以及约 10^5 倍速度提升来自哪里。",
+      relationReading: "它与 Quantifying UQ 是同一 MAP-UQ 思想的专门版与一般版；与 Online RI Imaging 一起面向 Square Kilometre Array (SKA) 级 big-data setting。",
+      researchValue: "这篇的价值在于把 UQ 做成可扩展工具。后续研究可以围绕近似误差、保守性、不同 prior 下的 HPD region 质量，以及医学或遥感 inverse problem 迁移展开。"
+    }
+  },
+  "online-ri": {
+    evidence: ["Abstract", "Algorithm 1", "assimilate and discard data blocks", "online forward-backward algorithm", "storage one block", "M31 / Cygnus A / W28 / 3C288 experiments"],
+    reportExpansion: {
+      context: "Online RI Imaging 解决的是无线电干涉成像的数据流和存储问题。它不直接主打 UQ，而是回答 SKA 级数据下能不能边观测、边更新、边丢弃已经处理过的 visibilities。",
+      technicalReading: "技术阅读应抓住 data block 思想：visibilities 分块到达，每个 block 被 assimilate 后进入 online forward-backward / proximal update，然后 discard。算法状态保留在当前图像和必要中间量中，而不是全量数据。",
+      theoremReading: "理论部分关注 Algorithm 1 的目标函数序列单调下降或收敛性质，以及为什么存储需求可以从全量 visibilities 降到单个 data block 规模。这里的保证偏优化和工程可扩展性。",
+      experimentReading: "实验使用 HI region of M31、Cygnus A、W28、3C288。要比较 online 与 offline 的 reconstruction quality、开始重建时间、总运行时间和内存/存储压力。",
+      relationReading: "它与 RI UQ II 共同面向 big-data RI imaging：一个解决在线重建和存储，另一个解决不确定性近似。它也可作为未来 online MAP-UQ 的前置模块。",
+      researchValue: "这篇的价值在于把 inverse problem 算法放回数据获取流程中考虑。后续可研究 streaming UQ、adaptive data acquisition 或在线 proximal algorithm 在其他成像系统中的应用。"
+    }
+  },
+  "proximal-nested-sampling": {
+    evidence: ["Abstract", "Bayesian evidence / marginal likelihood", "Bayes factor", "prior volume ξ", "nested sampling algorithm", "proximal MCMC constrained sampling", "O(10^6) dimension statement"],
+    reportExpansion: {
+      context: "Proximal Nested Sampling 是 Bayesian inverse problem 线的上层延伸。RI UQ I/II 问的是给定模型下图像和不确定性是什么，这篇进一步问：不同模型、prior 或 dictionary 中哪个更可信。",
+      technicalReading: "技术阅读从 Bayesian evidence p(y|M) 和 Bayes factor 开始。Nested sampling 将高维 evidence 积分改写为 prior volume ξ 上的一维积分；proximal MCMC 则负责在 likelihood contour 约束下处理高维、log-concave、非光滑 prior。",
+      theoremReading: "理论重点是 nested sampling 的 prior volume 变换和 proximal MCMC 对 constrained sampling 的适配。要理解它为什么能处理 l1 / Total Variation 等 non-smooth imaging models，以及 O(10^6) 维可扩展性意味着什么。",
+      experimentReading: "实验先用 large Gaussian models 验证 evidence estimation，再在 imaging problems 中比较 dictionary 或 measurement model。读实验时不要只看重建图，而要看 Bayes factor 如何改变模型选择。",
+      relationReading: "它与 RI UQ I 共享 proximal MCMC 背景，与 Quantifying UQ / RI UQ II 共享 Bayesian inverse problem 语境，但问题层级更高：从 posterior uncertainty 进入 model evidence。",
+      researchValue: "这篇适合发展模型选择选题，例如比较 TV prior、wavelet prior、deep prior 或不同 measurement models。它的价值在于把“哪个模型更可信”变成可计算问题。"
+    }
+  }
+};
+
+paperNotesV2.forEach((note) => {
+  const enhancement = noteEnhancements[note.id];
+  if (enhancement) Object.assign(note, enhancement);
+});
+
+const readingReasons = {
+    1: "先读综述是为了拿到整组分割论文的地图：SaT methodology、T-ROF、SLaT、vascular 和 sphere 都会在这里出现，后面读原始论文时才知道每篇负责哪一块。",
+    2: "第二步读 ROF-PCMS linkage，因为它回答最关键的合法性问题：为什么 Rudin-Osher-Fatemi (ROF) minimizer 阈值化之后能服务 piecewise constant Mumford-Shah (PCMS) / Chan-Vese 分割。",
+    3: "T-ROF 放在理论论文后面读，可以把抽象的 partial minimizer 结论落到算法上：solve ROF once，再用 τ_i = 1/2(m_{i-1}+m_i) 更新多类阈值。",
+    4: "有了 SaT/ROF 的两阶段思路后，再读分割恢复耦合模型，才能看清它的差别：这篇不是 simple thresholding，而是把恢复变量 g、分割变量 u_i 和区域常数 c_i 放进同一个 joint optimization。",
+    5: "Framelet tubular 是医学管状结构线的短版入口，先读它能快速理解 below / inside / above 三分区域和只平滑 boundary candidate region 的思想。",
+    6: "Tight-frame vessel 是长版和更完整版本，应放在短版后读，重点补 Algorithm 1、Λ 区域收缩、finite convergence 和 O(n) per iteration。",
+    7: "SLaT 放在基础分割线之后读，因为它继承 SaT 的 smoothing + thresholding，但增加 lifting：RGB smoothing 后转 Lab，拼成 RGB+Lab 六维特征。",
+    8: "Wavelet sphere 是几何域扩展，应在 framelet/tight-frame 与 SLaT 后读。这样可以把 Euclidean image 上的候选边界思想迁移到 spherical wavelet、directional wavelet 和 curvelet。",
+    9: "Two-stage classification 是从 image segmentation 到 graph classification 的桥，读它前需要先理解 SaT 的 smoothing + projection/thresholding 框架。",
+    10: "Efficient variational classification 是 2019 two-stage 的成熟期版本，放在后面读可以对比新增的唯一解、primal-dual convergence、independent K subproblems 和 benchmark point clouds。",
+    11: "高维逆问题 UQ 是进入 RI/UQ 线的短入口，先用它熟悉 posterior、maximum a posteriori (MAP)、highest posterior density (HPD) 和 local credible intervals。",
+    12: "RI UQ I 是完整采样版，应先于快速 MAP 版阅读，因为它给出 posterior samples、MYULA、Px-MALA 和 hypothesis testing 的完整基准。",
+    13: "RI UQ II 放在 RI UQ I 后读，才能看清 MAP + probability concentration 为什么是 scalable 替代，以及它相对完整 MCMC 牺牲了哪些后验信息。",
+    14: "Online RI imaging 解决数据流和存储问题，放在 MAP-UQ 后读可以把 convex optimization 与 SKA big-data setting 联系起来。",
+    15: "Proximal nested sampling 最后读，因为它从估计图像和量化不确定性上升到 Bayesian model selection，需要先理解 proximal MCMC、evidence、Bayes factor 和 high-dimensional inverse problems。"
+  };
+
+const layerBlocks = [
+    {
+      title: "第一层：分割方法论层",
+      papers: [1, 2, 3, 4, 7, 5, 6, 8],
+      body: "这一层围绕 SaT、ROF、PCMS、framelet 和 spherical wavelet 展开。它的核心不是某个特定数据集，而是把非凸分割问题拆成更可控的恢复、平滑、阈值化、lifting 或候选边界收缩。"
+    },
+    {
+      title: "第二层：逆问题与不确定性层",
+      papers: [12, 13, 14, 11, 15],
+      body: "这一层把变分和凸优化语言迁移到 radio interferometric imaging 和 Bayesian inverse problems。重点从单张重建图像转向 posterior、HPD credible regions、local credible intervals、online processing 和 Bayesian evidence。"
+    },
+    {
+      title: "第三层：高维分类迁移层",
+      papers: [9, 10],
+      body: "这一层说明 SaT 的思想可以脱离像素网格，进入 graph-based high-dimensional classification。warm initialization 对应初始标签，graph Laplacian / graph TV 对应图上 smoothing，binary projection 对应 thresholding。"
+    }
+  ];
+
+const weeklyPlan = [
+    {
+      week: "第 1 周",
+      theme: "SaT / ROF / PCMS 基础",
+      papers: [1, 2, 3, 4],
+      goal: "建立 smoothing + thresholding 的理论地图，搞清 ROF minimizer、PCMS partial minimizer、T-ROF 阈值更新和 joint restoration-segmentation 的区别。",
+      diagrams: "画 SaT 两阶段流程图、ROF-PCMS 关系图、T-ROF 阈值更新循环图。",
+      pseudo: "写出 T-ROF 的阈值更新伪代码，并写出 E(u,c,g) alternating minimization 的三变量更新顺序。",
+      summary: "写 300-500 字说明：为什么恢复模型可以成为分割模型的前处理，以及 joint optimization 与 two-stage SaT 的取舍。"
+    },
+    {
+      week: "第 2 周",
+      theme: "framelet / SLaT / sphere 应用",
+      papers: [5, 6, 7, 8],
+      goal: "理解 SaT/thresholding 思想如何进入管状结构、真实 MRA、退化彩色图像和球面图像。",
+      diagrams: "画 below / inside / above 三分区域、Λ candidate set 收缩过程、RGB+Lab lifting 流程和 spherical image 分割 pipeline。",
+      pseudo: "伪代码化 tight-frame vessel Algorithm 1，并列出 spherical wavelet segmentation 的边界候选区间更新步骤。",
+      summary: "写 300-500 字比较：framelet/tight-frame 与 SLaT 都在处理不确定性，但一个处理边界候选像素，一个处理颜色特征空间。"
+    },
+    {
+      week: "第 3 周",
+      theme: "high-dimensional classification",
+      papers: [9, 10],
+      goal: "把 image segmentation 的 SaT 抽象成 graph classification：初始化标签函数，在图上做 convex variational smoothing，再投影到 hard labels。",
+      diagrams: "画 graph construction、warm initialization、K 个独立子问题、binary projection 和 iterative refinement 的完整流程。",
+      pseudo: "写出 graph Laplacian + graph TV 模型的 primal-dual 迭代骨架，并标出每个类别子问题如何独立求解。",
+      summary: "写 300-500 字说明：为什么去掉 simplex constraint 能提升速度，以及这种近似对分类准确率和理论保证有什么影响。"
+    },
+    {
+      week: "第 4 周",
+      theme: "RI imaging / UQ / proximal sampling / nested sampling",
+      papers: [11, 12, 13, 14, 15],
+      goal: "理解从完整 posterior sampling 到 scalable MAP-UQ，再到 online processing 和 Bayesian model selection 的路径。",
+      diagrams: "画 RI measurement y = Φx + n、RI UQ I vs RI UQ II 对照表、online block assimilation 流程和 nested sampling prior volume ξ 示意图。",
+      pseudo: "写出 MAP-UQ 的 HPD approximation 计算步骤，以及 proximal nested sampling 中 likelihood contour 收缩和 proximal MCMC 采样步骤。",
+      summary: "写 300-500 字说明：Bayesian UQ 与传统 reconstruction 的问题不同，它不只问图像是什么，还问哪些像素、结构和模型选择是不确定的。"
+    }
+  ];
+
+const researchTopics = [
+    {
+      title: "SaT 在深度特征图上的可解释分割",
+      sources: [1, 2, 3, 7],
+      innovation: "把 CNN 或 foundation model 的 feature map 作为 smoothing 后的表征，再用 thresholding / clustering 输出可解释区域，比较与 end-to-end segmentation head 的差别。",
+      difficulty: "深度特征不一定满足 ROF/PCMS 的数学假设，阈值化后的区域语义也可能不稳定。",
+      experiment: "先用退化彩色图和少量医学图像，把 RGB+Lab SLaT 与深度特征 SaT 做可视化和 mIoU/边界质量对比。"
+    },
+    {
+      title: "Graph SaT 用于医学点云或遥感点云分类",
+      sources: [9, 10, 5, 6],
+      innovation: "把 warm initialization + graph variational smoothing + binary projection 用到血管中心线点云、LiDAR 或遥感点云上，强调可解释图正则项。",
+      difficulty: "图构建、邻域尺度、label sparsity 和类别不平衡会直接影响 graph TV 的效果。",
+      experiment: "从公开 point cloud benchmark 开始，构造 k-NN graph，比较 SVM 初始化、随机初始化和少量标签初始化下的 accuracy 与 CPU time。"
+    },
+    {
+      title: "tight-frame / wavelet 与 neural implicit representation 结合",
+      sources: [5, 6, 8],
+      innovation: "用 neural implicit representation 表示连续图像或球面信号，再把 wavelet/tight-frame 的稀疏正则用于边界或曲线结构分割。",
+      difficulty: "implicit model 的连续参数化与 framelet coefficient shrinkage 如何稳定结合，需要重新设计优化流程。",
+      experiment: "先在 synthetic tubular structures 和 spherical retina 上比较 explicit image grid、spherical wavelet 与 implicit representation。"
+    },
+    {
+      title: "Spherical wavelet segmentation 与 spherical CNN 对比",
+      sources: [8, 1],
+      innovation: "以 Earth map、solar data、spherical retina 为对象，对比可解释 spherical wavelet/curvelet segmentation 与数据驱动 spherical CNN。",
+      difficulty: "数据量、标注质量和球面采样方式会影响公平对比；wavelet 方法强在可解释，CNN 强在学习能力。",
+      experiment: "复用球面小波论文中的数据类型，构造相同采样和评价指标，比较 boundary quality、噪声鲁棒性和推理时间。"
+    },
+    {
+      title: "MAP-UQ 用于其他医学成像逆问题",
+      sources: [11, 12, 13],
+      innovation: "把 MAP + probability concentration 的 HPD approximation 从 RI imaging 迁移到 MRI、CT 或 PET reconstruction，输出 local credible intervals。",
+      difficulty: "不同成像算子和噪声模型会改变 posterior geometry，HPD 近似的保守性需要重新验证。",
+      experiment: "先用 MRI brain image 模拟 undersampling，比较 MAP-UQ 与小规模 MCMC 的 credible interval 覆盖差异。"
+    },
+    {
+      title: "Proximal nested sampling 比较 TV prior、wavelet prior 与 deep prior",
+      sources: [15, 11, 13],
+      innovation: "用 Bayesian evidence 和 Bayes factor 比较不同 imaging priors，而不是只看重建图像质量。",
+      difficulty: "deep prior 不一定是 log-concave non-smooth prior，可能破坏 proximal nested sampling 的理论便利性。",
+      experiment: "先在小规模 Gaussian/imaging toy problem 上比较 TV prior、wavelet prior，再逐步加入 learned prior。"
+    },
+    {
+      title: "SaT/T-ROF 多相理论缺口与 K>2 近似误差分析",
+      sources: [2, 3, 1],
+      innovation: "围绕 K>2 的附加条件、阈值间隔和 partial minimizer 关系建立更清楚的误差或稳定性分析。",
+      difficulty: "多相边界、区域常数和阈值序列相互耦合，无法直接套用二相结论。",
+      experiment: "先构造 synthetic noisy multiphase images，系统改变 K、灰度间隔和噪声水平，观察 T-ROF 与 PCMS 近似解之间的差异。"
+    }
+  ];
+
+const finalSummary = [
+    "这组论文的研究风格偏数学建模，而不是黑箱经验方法。早期分割论文持续追问一个问题：能不能把非凸、难解、对初始化敏感的分割问题，转成更稳定的 convex smoothing、Total Variation restoration、thresholding 或 candidate-region refinement。",
+    "SaT / ROF / PCMS 这条线的关键价值在于可解释性。Linkage 论文把 ROF minimizer thresholding 与 PCMS / Chan-Vese partial minimizer 接起来，T-ROF 给出可执行的阈值更新算法，Segmentation Restoration 则展示 restoration variable g 如何直接进入 joint optimization。",
+    "framelet、tight-frame、SLaT 和 spherical wavelet 论文说明这套思想不是只适合灰度平面图像。它可以进入 MRA 血管、管状结构、退化彩色图像、Earth map、solar data 和 spherical retina。方法变化很大，但共同模式仍是先稳定表达，再把不确定区域或特征空间转成分割。",
+    "高维分类线把像素分割抽象成 graph classification：warm initialization 提供初始标签函数，graph Laplacian 和 graph TV 做平滑，binary projection 给出 hard labels。无线电干涉与 Bayesian UQ 线则把变分/凸优化语言推进到 inverse problems、MAP、HPD、proximal MCMC、online processing 和 evidence estimation。",
+    "如果要从这 15 篇里提炼自己的研究入口，最值得抓住的不是某个单独算法，而是这种研究范式：从实际成像或分类困难出发，建立可解释模型，寻找凸性、唯一解、收敛、partial minimizer、finite convergence 或 scalable UQ 这样的硬保证，再回到具体数据对象验证这些保证到底解决了什么。"
+  ];
 
 window.ZX_READING_DATA = {
   basePath,
@@ -687,490 +992,10 @@ window.ZX_READING_DATA = {
   noteThemes,
   noteMainlines,
   readingStandard,
-  paperNotesV2
+  paperNotesV2,
+  readingReasons,
+  layerBlocks,
+  weeklyPlan,
+  researchTopics,
+  finalSummary
 };
-
-let activeTrack = "all";
-let query = "";
-let activeNoteTheme = "all";
-let noteQuery = "";
-
-function pdfHref(file) {
-  return encodeURI(basePath + file);
-}
-
-function byId(id) {
-  return document.getElementById(id);
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function themeLabel(key) {
-  return noteThemes.find((theme) => theme.key === key)?.label || key;
-}
-
-function notePdf(note) {
-  const paper = paperByPriority.get(note.priority);
-  return note.pdf || paper?.file || "";
-}
-
-function noteSearchText(note) {
-  return [
-    note.titleCn,
-    note.titleEn,
-    note.year,
-    themeLabel(note.theme),
-    note.difficulty,
-    note.prerequisites.join(" "),
-    note.oneSentence,
-    note.coreProblem,
-    note.whyHard,
-    note.methodHandle,
-    note.keyModelOrFormula,
-    note.algorithmFlow.join(" "),
-    note.theoremOrGuarantee,
-    note.experimentFocus,
-    note.howToRead,
-    note.relation.text,
-    note.readingQuestions.join(" "),
-    note.afterReadingOutput
-  ].join(" ").toLowerCase();
-}
-
-function filteredNotes() {
-  const normalized = noteQuery.trim().toLowerCase();
-  return paperNotesV2.filter((note) => {
-    const themeMatch = activeNoteTheme === "all" || note.theme === activeNoteTheme;
-    const searchMatch = !normalized || noteSearchText(note).includes(normalized);
-    return themeMatch && searchMatch;
-  });
-}
-
-function filteredPapers() {
-  const normalized = query.trim().toLowerCase();
-  return papers.filter((paper) => {
-    const trackMatch = activeTrack === "all" || paper.track === activeTrack;
-    const searchMatch = !normalized || [
-      paper.title,
-      paper.file,
-      paper.time,
-      paper.year,
-      tracks[paper.track].label,
-      paper.position,
-      paper.note
-    ].join(" ").toLowerCase().includes(normalized);
-    return trackMatch && searchMatch;
-  });
-}
-
-function renderThesis() {
-  byId("researchThesis").innerHTML = `
-    <article class="thesis-card">
-      <div>
-        <p class="eyebrow">Synthesis</p>
-        <h2>${thesis.headline}</h2>
-      </div>
-      <p>${thesis.body}</p>
-      <strong>${thesis.oneLine}</strong>
-    </article>
-  `;
-}
-
-function renderMetrics() {
-  const metrics = [
-    { label: "去重后论文", value: "15", detail: "Xiaohao Cai 第一作者" },
-    { label: "研究方向", value: "5", detail: "SaT / ROF / Framelet / 分类 / UQ" },
-    { label: "精读笔记", value: "15", detail: "逐篇结构化卡片" },
-    { label: "阅读阶段", value: "7", detail: "按知识依赖排序" }
-  ];
-
-  byId("metrics").innerHTML = metrics.map((metric) => `
-    <article class="metric">
-      <span>${metric.label}</span>
-      <strong>${metric.value}</strong>
-      <small>${metric.detail}</small>
-    </article>
-  `).join("");
-}
-
-function renderTrackOverview() {
-  const maxCount = Math.max(...Object.values(tracks).map((track) => track.count));
-  byId("trackOverview").innerHTML = Object.entries(tracks).map(([key, track]) => `
-    <article class="track-card" style="--accent:${track.color}">
-      <div class="track-top">
-        <span>${track.short}</span>
-        <strong>${track.count}</strong>
-      </div>
-      <h3>${track.label}</h3>
-      <p>${track.summary}</p>
-      <div class="bar"><i style="width:${track.count / maxCount * 100}%"></i></div>
-    </article>
-  `).join("");
-}
-
-function renderTimeline() {
-  byId("timeline").innerHTML = chronology.map((item) => {
-    const paper = paperByPriority.get(item.priority);
-    return `
-      <article class="time-node" style="--accent:${tracks[item.track].color}">
-        <span>${item.time}</span>
-        <h3>${item.label}</h3>
-        <p>${paper.position}</p>
-        <a href="${pdfHref(paper.file)}">#${paper.priority} 打开 PDF</a>
-      </article>
-    `;
-  }).join("");
-}
-
-function renderFilters() {
-  const filters = [{ key: "all", label: "全部" }].concat(
-    Object.entries(tracks).map(([key, track]) => ({ key, label: track.label }))
-  );
-
-  byId("trackFilters").innerHTML = filters.map((filter) => `
-    <button class="${filter.key === activeTrack ? "active" : ""}" data-filter="${filter.key}" type="button">${filter.label}</button>
-  `).join("");
-}
-
-function renderRows() {
-  const rows = filteredPapers();
-  byId("paperRows").innerHTML = rows.map((paper) => {
-    const track = tracks[paper.track];
-    return `
-      <tr>
-        <td><span class="rank">${paper.priority}</span></td>
-        <td>
-          <strong>${paper.title}</strong>
-          <small>${paper.position}</small>
-          <small>${paper.note}</small>
-        </td>
-        <td>${paper.time}</td>
-        <td><span class="chip" style="--accent:${track.color}">${track.label}</span></td>
-        <td>${paper.pages}</td>
-        <td><a class="file-link" href="${pdfHref(paper.file)}">PDF</a></td>
-      </tr>
-    `;
-  }).join("");
-}
-
-function renderTrackDetails() {
-  byId("trackDetails").innerHTML = Object.entries(tracks).map(([key, track]) => {
-    const list = papers.filter((paper) => paper.track === key);
-    return `
-      <article class="track-detail" style="--accent:${track.color}">
-        <span class="track-code">${track.short}</span>
-        <h3>${track.label}</h3>
-        <p>${track.summary}</p>
-        <p class="emphasis">${track.emphasis}</p>
-        <ul>
-          ${list.map((paper) => `<li><a href="${pdfHref(paper.file)}">#${paper.priority} ${paper.title}</a></li>`).join("")}
-        </ul>
-      </article>
-    `;
-  }).join("");
-}
-
-function renderReadingList() {
-  byId("readingList").innerHTML = readingStages.map((stage) => `
-    <li class="reading-stage">
-      <div class="stage-label">${stage.stage}</div>
-      <div class="stage-body">
-        <h3>${stage.title}</h3>
-        <p>${stage.focus}</p>
-        <div class="stage-papers">
-          ${stage.priorities.map((priority) => {
-            const paper = paperByPriority.get(priority);
-            const track = tracks[paper.track];
-            return `
-              <a class="stage-paper" style="--accent:${track.color}" href="${pdfHref(paper.file)}">
-                <span>#${paper.priority}</span>
-                <strong>${paper.title}</strong>
-                <small>${paper.time} · ${track.label}</small>
-              </a>
-            `;
-          }).join("")}
-        </div>
-      </div>
-    </li>
-  `).join("");
-}
-
-function renderNoteMainlines() {
-  byId("noteMainlines").innerHTML = noteMainlines.map((mainline) => `
-    <article class="mainline-card">
-      <h4>${escapeHtml(mainline.title)}</h4>
-      <p>${escapeHtml(mainline.summary)}</p>
-      <div class="mainline-papers">
-        ${mainline.papers.map((priority) => {
-          const note = noteByPriority.get(priority);
-          return `<button type="button" data-scroll-note="${priority}">#${priority} ${escapeHtml(note.titleCn)}</button>`;
-        }).join("")}
-      </div>
-    </article>
-  `).join("");
-}
-
-function renderNoteReadingOrder() {
-  byId("noteReadingOrder").innerHTML = paperNotesV2.map((note) => `
-    <button type="button" data-scroll-note="${note.priority}">
-      <span>#${note.priority}</span>
-      ${escapeHtml(note.titleCn)}
-    </button>
-  `).join("");
-}
-
-function renderNoteReadingStandard() {
-  byId("noteReadingStandard").innerHTML = readingStandard.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-}
-
-function renderThemeFilters() {
-  byId("noteThemeFilters").innerHTML = noteThemes.map((theme) => `
-    <button class="${theme.key === activeNoteTheme ? "active" : ""}" data-note-theme="${theme.key}" type="button">
-      ${escapeHtml(theme.label)}
-    </button>
-  `).join("");
-}
-
-function renderRelationChips(note) {
-  return note.relation.links.map((priority) => {
-    const related = noteByPriority.get(priority);
-    return `
-      <button type="button" class="relation-chip" data-scroll-note="${priority}">
-        #${priority} ${escapeHtml(related?.titleCn || `论文 ${priority}`)}
-      </button>
-    `;
-  }).join("");
-}
-
-function renderNoteList(title, items) {
-  return `
-    <section class="note-detail-block">
-      <strong>${escapeHtml(title)}</strong>
-      <ul>
-        ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-      </ul>
-    </section>
-  `;
-}
-
-function renderNotes() {
-  const notes = filteredNotes();
-  byId("noteCount").textContent = `${notes.length} / ${paperNotesV2.length} 篇`;
-  byId("noteGrid").innerHTML = notes.map((note) => {
-    const paper = paperByPriority.get(note.priority);
-    const track = tracks[paper.track];
-    const pdf = notePdf(note);
-    return `
-      <article class="note-card" id="note-${note.priority}" style="--accent:${track.color}">
-        <header class="note-head">
-          <span>#${note.priority}</span>
-          <div>
-            <div class="note-meta">
-              <span>${escapeHtml(String(note.year))}</span>
-              <span>${escapeHtml(themeLabel(note.theme))}</span>
-              <span>${escapeHtml(note.difficulty)}</span>
-              <span>阅读顺序 ${note.priority} / ${paperNotesV2.length}</span>
-            </div>
-            <h3>${escapeHtml(note.titleCn)}</h3>
-            <small>${escapeHtml(note.titleEn)} · ${paper.pages} 页</small>
-          </div>
-        </header>
-
-        <div class="note-prereq">
-          ${note.prerequisites.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
-        </div>
-
-        <div class="note-summary">
-          <section>
-            <strong>一句话定位</strong>
-            <p>${escapeHtml(note.oneSentence)}</p>
-          </section>
-          <section>
-            <strong>核心问题</strong>
-            <p>${escapeHtml(note.coreProblem)}</p>
-          </section>
-          <section>
-            <strong>方法抓手</strong>
-            <p>${escapeHtml(note.methodHandle)}</p>
-          </section>
-        </div>
-
-        <div class="note-expanded" id="note-detail-${note.priority}">
-          <section class="note-detail-block">
-            <strong>为什么难</strong>
-            <p>${escapeHtml(note.whyHard)}</p>
-          </section>
-          <section class="note-detail-block">
-            <strong>关键模型 / 公式</strong>
-            <code>${escapeHtml(note.keyModelOrFormula)}</code>
-          </section>
-          ${renderNoteList("算法流程", note.algorithmFlow)}
-          <section class="note-detail-block">
-            <strong>理论保证 / 定理结论</strong>
-            <p>${escapeHtml(note.theoremOrGuarantee)}</p>
-          </section>
-          <section class="note-detail-block">
-            <strong>实验重点</strong>
-            <p>${escapeHtml(note.experimentFocus)}</p>
-          </section>
-          <section class="note-detail-block">
-            <strong>怎么精读</strong>
-            <p>${escapeHtml(note.howToRead)}</p>
-          </section>
-          <section class="note-detail-block">
-            <strong>关联关系</strong>
-            <p>${escapeHtml(note.relation.text)}</p>
-            <div class="relation-chips">${renderRelationChips(note)}</div>
-          </section>
-          ${renderNoteList("精读问题", note.readingQuestions)}
-          <section class="note-detail-block output-block">
-            <strong>读后产出</strong>
-            <p>${escapeHtml(note.afterReadingOutput)}</p>
-          </section>
-        </div>
-
-        <div class="note-actions">
-          <a href="${pdfHref(pdf)}">打开 PDF</a>
-          <a href="reading_report.html#paper-${escapeHtml(note.id)}">完整研究报告</a>
-          <button type="button" class="note-toggle" data-note-toggle="${note.priority}" aria-expanded="false" aria-controls="note-detail-${note.priority}">展开精读字段</button>
-        </div>
-      </article>
-    `;
-  }).join("");
-}
-
-function scrollToNote(priority) {
-  switchView("notes");
-  activeNoteTheme = "all";
-  noteQuery = "";
-  const search = byId("noteSearchInput");
-  if (search) search.value = "";
-  renderThemeFilters();
-  renderNotes();
-  requestAnimationFrame(() => {
-    const card = byId(`note-${priority}`);
-    if (!card) return;
-    card.classList.add("expanded");
-    const button = card.querySelector("[data-note-toggle]");
-    if (button) {
-      button.setAttribute("aria-expanded", "true");
-      button.textContent = "收起精读字段";
-    }
-    card.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-}
-
-function switchView(viewId) {
-  document.querySelectorAll(".view").forEach((view) => {
-    view.classList.toggle("active", view.id === viewId);
-  });
-  document.querySelectorAll(".nav-item").forEach((item) => {
-    item.classList.toggle("active", item.dataset.view === viewId);
-  });
-}
-
-function bindEvents() {
-  document.querySelectorAll(".nav-item").forEach((item) => {
-    item.addEventListener("click", () => switchView(item.dataset.view));
-  });
-
-  byId("searchInput").addEventListener("input", (event) => {
-    query = event.target.value;
-    renderRows();
-    switchView("papers");
-  });
-
-  byId("trackFilters").addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-filter]");
-    if (!button) return;
-    activeTrack = button.dataset.filter;
-    renderFilters();
-    renderRows();
-  });
-
-  byId("noteThemeFilters").addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-note-theme]");
-    if (!button) return;
-    activeNoteTheme = button.dataset.noteTheme;
-    renderThemeFilters();
-    renderNotes();
-  });
-
-  byId("noteSearchInput").addEventListener("input", (event) => {
-    noteQuery = event.target.value;
-    renderNotes();
-  });
-
-  byId("noteGrid").addEventListener("click", (event) => {
-    const toggle = event.target.closest("button[data-note-toggle]");
-    if (toggle) {
-      const card = byId(`note-${toggle.dataset.noteToggle}`);
-      const expanded = card.classList.toggle("expanded");
-      toggle.setAttribute("aria-expanded", String(expanded));
-      toggle.textContent = expanded ? "收起精读字段" : "展开精读字段";
-      return;
-    }
-
-    const relation = event.target.closest("button[data-scroll-note]");
-    if (relation) {
-      scrollToNote(relation.dataset.scrollNote);
-    }
-  });
-
-  byId("noteMainlines").addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-scroll-note]");
-    if (button) scrollToNote(button.dataset.scrollNote);
-  });
-
-  byId("noteReadingOrder").addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-scroll-note]");
-    if (button) scrollToNote(button.dataset.scrollNote);
-  });
-}
-
-function handleInitialLocation() {
-  const params = new URLSearchParams(window.location.search);
-  const noteId = params.get("note");
-  if (noteId) {
-    const note = paperNotesV2.find((item) => item.id === noteId);
-    if (note) {
-      scrollToNote(note.priority);
-      return;
-    }
-  }
-
-  if (window.location.hash === "#notes") {
-    switchView("notes");
-  }
-}
-
-function init() {
-  renderThesis();
-  renderMetrics();
-  renderTrackOverview();
-  renderTimeline();
-  renderFilters();
-  renderRows();
-  renderTrackDetails();
-  renderReadingList();
-  renderNoteMainlines();
-  renderNoteReadingOrder();
-  renderNoteReadingStandard();
-  renderThemeFilters();
-  renderNotes();
-  bindEvents();
-  handleInitialLocation();
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("metrics")) {
-    init();
-  }
-});

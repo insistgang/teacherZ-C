@@ -51,4 +51,4 @@
 
 ## 说明
 
-旧版 `agent_team_reading_report.md` 的 agent 分工式摘要已经不再作为主要内容。完整报告现在与 dashboard 的 `paperNotesV2` 数据对齐，报告页通过 `app.js` 和 `report.js` 渲染同一批论文标题、年份、主题、阅读顺序和 PDF 路径。
+旧版 `agent_team_reading_report.md` 的 agent 分工式摘要已经不再作为主要内容。完整报告现在与 dashboard 的 `paperNotesV2` 数据对齐，报告页通过 `js/reading-data.js` 和 `js/report.js` 渲染同一批论文标题、年份、主题、阅读顺序和 PDF 路径。
