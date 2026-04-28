@@ -295,6 +295,114 @@ const readingStages = [
   }
 ];
 
+const readingNotes = [
+  {
+    priority: 1,
+    problem: "作为入口论文，它回答 SaT 方法到底覆盖哪些分支，以及这些分支如何从灰度分割扩展到彩色、血管、球面和高光谱图像。",
+    method: "主线是 smoothing + thresholding：先用更稳定的恢复/平滑模型处理退化图像，再用阈值化、lifting 或聚类得到分割。",
+    readFor: "不要当作单篇原始方法论文读，重点画方法树：T-ROF、SLaT、framelet、sphere 这些节点分别解决什么问题。",
+    relation: "先读它建立地图，再回到 Linkage 与 Iterated ROF 补理论，之后读 SLaT、Framelet 和 Wavelet Sphere 看扩展应用。"
+  },
+  {
+    priority: 2,
+    problem: "核心问题是 ROF 图像恢复模型和 PCMS/Chan-Vese 分割模型之间是否有可证明的联系。",
+    method: "论文证明在二相分割中，对 ROF minimizer 做合适阈值化，可以得到 PCMS/Chan-Vese 类模型的部分极小解。",
+    readFor: "重点盯住 theorem 的假设、阈值范围、partial minimizer 的含义，以及为什么这能支撑 SaT/T-ROF 的合理性。",
+    relation: "这是整组 SaT/ROF 论文的理论支柱；Iterated ROF 是算法前身，SaT Overview 是后来的方法论总结。"
+  },
+  {
+    priority: 3,
+    problem: "传统多类分割直接求 Chan-Vese/Mumford-Shah 类模型困难，论文尝试用 ROF 去噪加阈值迭代来绕开非凸求解。",
+    method: "每轮解 ROF 类恢复问题，再根据当前灰度/类别结构更新阈值，实现 multiclass segmentation。",
+    readFor: "重点看算法流程、阈值更新、多类扩展方式，以及它和 Chan-Vese/Mumford-Shah 能量的关系。",
+    relation: "它是 Linkage 论文的历史源头；先读算法，再读 2019 理论长文，会更容易理解证明为什么重要。"
+  },
+  {
+    priority: 4,
+    problem: "噪声、模糊、缺失像素和向量值图像会让传统分割模型不稳定，论文把恢复信息直接耦合进分割模型。",
+    method: "在 PCMS 分割框架里引入 restoration fidelity term，让分割和恢复在同一个变分模型中相互约束。",
+    readFor: "先看模型各项分别对应什么退化情形，再看它和两阶段 SaT 路线的差异：联合优化 vs 先恢复后阈值。",
+    relation: "它连接 restoration 和 segmentation；和 SaT 一起看，能形成“联合模型”和“两阶段模型”的对照。"
+  },
+  {
+    priority: 5,
+    problem: "血管、道路等管状结构细长、弱边缘、分叉多，常规边缘或区域模型容易断裂。",
+    method: "先定位可能边界灰度区间并三分图像，再用 framelet/tight-frame 迭代收缩和平滑边界候选区域。",
+    readFor: "把它当短版算法读：输入如何预处理、候选边界怎么定义、framelet 迭代如何逐步收敛到二值管状结构。",
+    relation: "这是管状结构分割的会议短版；读完后接 Vessel Segmentation 长版看完整 tight-frame 表述和实验。"
+  },
+  {
+    priority: 6,
+    problem: "医学 MRA 血管分割需要保留细血管、分叉和 3D 结构，同时抵抗噪声和弱边界。",
+    method: "用方向选择性 tight-frame / framelet 表示做迭代分割，配合边界区域收缩和 2D/3D 实验验证。",
+    readFor: "重点看 tight-frame 的角色、迭代步骤、收敛性说明，以及 2D/3D MRA 上哪些结果比短版更完整。",
+    relation: "它是 Framelet-Based Tubular 的扩展版；两篇合读可以看到从会议算法到完整医学分割论文的扩展。"
+  },
+  {
+    priority: 7,
+    problem: "彩色退化图像分割不能只看 RGB，通道相关性和感知颜色差异都会影响分割质量。",
+    method: "SLaT 增加 Lifting：RGB 平滑后转换到 Lab，并把 RGB + Lab 特征合起来做聚类/阈值化。",
+    readFor: "重点理解 Lifting 为什么存在：Lab 不是装饰特征，而是补充 RGB 的感知颜色表达。",
+    relation: "它是 SaT 从灰度/多类分割走向彩色图像的关键扩展；读完再看 Overview 中对 SLaT 的归纳。"
+  },
+  {
+    priority: 8,
+    problem: "球面图像不在平面欧氏网格上，平面 TV、wavelet 和采样方式不能直接搬用。",
+    method: "把 wavelet/curvelet 分割思想推广到球面，处理球面梯度、球面采样和非欧氏几何上的稀疏表示。",
+    readFor: "重点看几何部分：球面上的导数、采样和变换如何定义，而不是只看实验图像。",
+    relation: "它和 framelet 管状结构同属特殊几何/特殊表示分割，说明 SaT/thresholding 思想可以离开平面图像。"
+  },
+  {
+    priority: 9,
+    problem: "高维数据和点云没有规则图像网格，但仍然可以被看成图上的分类/分割问题。",
+    method: "先用 SVM 或随机标签做 warm initialization，再在 k-NN 图上解凸变分平滑模型，最后投影成硬分类。",
+    readFor: "重点看 SaT 思想如何从 pixel segmentation 迁移到 graph classification：初始化、图构造、平滑、投影。",
+    relation: "它是 2024 Efficient Variational Classification 的前身；两篇连读能看到方法从两阶段思路走向成熟期刊版。"
+  },
+  {
+    priority: 10,
+    problem: "多类半监督高维分类需要可扩展、可并行、能处理点云和无结构数据的变分方法。",
+    method: "用无 simplex 约束的凸模型，每个类别标签函数独立求解，结合 graph Laplacian、graph TV、primal-dual 和 argmax 投影。",
+    readFor: "重点看无 simplex 约束带来的并行性、唯一解证明、primal-dual 算法，以及实验如何证明效率和泛化性。",
+    relation: "这是高维分类线的成熟版本，也说明早期 ROF/Mumford-Shah/TV 工具箱已经抽象到 graph-based classification。"
+  },
+  {
+    priority: 11,
+    problem: "高维逆问题中只给一个重建图像不够，还需要知道哪些区域可信、哪些结构不确定。",
+    method: "用凸优化得到 MAP，再通过概率集中不等式构造 HPD credible regions 和 local credible intervals。",
+    readFor: "把它当 UQ 入口读：先掌握 MAP、HPD 区域、局部可信区间和正则参数估计，再读无线电干涉两篇 companion。",
+    relation: "它把 RI MAP-UQ 思路推广到一般高维逆问题，是 RI II 与 Proximal Nested Sampling 之间的概念桥。"
+  },
+  {
+    priority: 12,
+    problem: "无线电干涉成像后验含稀疏、非光滑先验，传统 MCMC 很难直接采样。",
+    method: "用 proximal MCMC 对完整后验采样，然后做 pixel-wise credible intervals、HPD regions 和结构假设检验。",
+    readFor: "重点看它能给出完整后验信息，也要注意计算代价；这正是 RI II 做 MAP 快速近似的动机。",
+    relation: "它是完整采样基线；和 RI II 对照读能理解“准确后验采样”和“可扩展近似 UQ”的取舍。"
+  },
+  {
+    priority: 13,
+    problem: "RI I 的 MCMC 后验采样对 SKA 级大数据太贵，需要一个能落地的快速 UQ 方案。",
+    method: "用 MAP estimation 加 probability concentration 构造近似可信区域和局部可信区间。",
+    readFor: "重点看 MAP-UQ 的近似逻辑、credible region 如何从优化解得到、以及它相对 RI I 损失和获得了什么。",
+    relation: "这是无线电/UQ 线最关键的实践论文；High-Dimensional Inverse Problems UQ 是它的一般化版本。"
+  },
+  {
+    priority: 14,
+    problem: "无线电观测 visibility 数据是流式到达且规模巨大，不能全部保存后再离线重建。",
+    method: "数据块到达时 assimilate，完成更新后 discard，通过 online optimization 降低存储和计算压力。",
+    readFor: "重点看数据流设计、到达即处理的优化流程，以及它如何服务后续 RI-UQ 的大规模场景。",
+    relation: "它更像 RI-UQ 的工程前置条件：先解决数据规模和在线重建，再讨论重建结果的不确定性。"
+  },
+  {
+    priority: 15,
+    problem: "UQ 问给定模型下结果有多可信，模型选择则进一步问哪个 Bayesian model 更合适。",
+    method: "结合 proximal MCMC 和 nested sampling 来估计 Bayesian evidence，用于高维模型比较。",
+    readFor: "最后读，重点看 evidence、nested sampling、likelihood contour 和 proximal operator 如何组合。",
+    relation: "它是无线电/UQ 线的上层扩展：从重建和不确定性推进到 Bayesian model selection。"
+  }
+];
+
 const paperByPriority = new Map(papers.map((paper) => [paper.priority, paper]));
 
 let activeTrack = "all";
@@ -342,7 +450,7 @@ function renderMetrics() {
   const metrics = [
     { label: "去重后论文", value: "15", detail: "Xiaohao Cai 第一作者" },
     { label: "研究方向", value: "5", detail: "SaT / ROF / Framelet / 分类 / UQ" },
-    { label: "时间跨度", value: "2011-2024", detail: "预印本与正式发表脉络" },
+    { label: "精读笔记", value: "15", detail: "逐篇结构化卡片" },
     { label: "阅读阶段", value: "7", detail: "按知识依赖排序" }
   ];
 
@@ -457,6 +565,46 @@ function renderReadingList() {
   `).join("");
 }
 
+function renderNotes() {
+  byId("noteGrid").innerHTML = readingNotes.map((note) => {
+    const paper = paperByPriority.get(note.priority);
+    const track = tracks[paper.track];
+    return `
+      <article class="note-card" style="--accent:${track.color}">
+        <header class="note-head">
+          <span>#${paper.priority}</span>
+          <div>
+            <h3>${paper.title}</h3>
+            <small>${paper.time} · ${track.label} · ${paper.pages} 页</small>
+          </div>
+        </header>
+        <div class="note-sections">
+          <section>
+            <strong>核心问题</strong>
+            <p>${note.problem}</p>
+          </section>
+          <section>
+            <strong>方法抓手</strong>
+            <p>${note.method}</p>
+          </section>
+          <section>
+            <strong>精读重点</strong>
+            <p>${note.readFor}</p>
+          </section>
+          <section>
+            <strong>关联关系</strong>
+            <p>${note.relation}</p>
+          </section>
+        </div>
+        <div class="note-actions">
+          <a href="${pdfHref(paper.file)}">打开 PDF</a>
+          <a href="00_papers_first_author_xiaohao_cai_deduped/agent_team_reading_report.md">完整报告</a>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
 function switchView(viewId) {
   document.querySelectorAll(".view").forEach((view) => {
     view.classList.toggle("active", view.id === viewId);
@@ -495,6 +643,7 @@ function init() {
   renderRows();
   renderTrackDetails();
   renderReadingList();
+  renderNotes();
   bindEvents();
 }
 
