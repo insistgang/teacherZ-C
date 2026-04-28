@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xiaohao Cai 第一作者论文复现难度与效果评估</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="report-page repro-report-page">
+  <header class="report-hero">
+    <div class="report-hero-inner">
+      <p class="eyebrow">Reproducibility Assessment</p>
+      <h1>15 篇论文复现难度与复现效果测试</h1>
+      <p>这份报告只做诚实的 toy / partial reproduction：能跑的算法记录真实指标、耗时和输出图；依赖过重的论文明确说明 full reproduction 所需数据、库和算力。</p>
+      <p class="report-version" id="reproReportVersion"></p>
+      <div class="report-hero-actions">
+        <a class="report-button primary" href="index.html#repro">返回 Dashboard 复现评估</a>
+        <a class="report-button" href="reading_report.html">完整研究报告</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="report-shell">
+    <nav class="report-nav" aria-label="复现报告目录">
+      <div>
+        <p class="eyebrow">Navigation</p>
+        <h2>目录</h2>
+      </div>
+      <div id="reproReportToc" class="report-toc"></div>
+    </nav>
+
+    <section class="report-section" id="repro-positioning">
+      <p class="eyebrow">Section 0</p>
+      <h2>报告定位</h2>
+      <p>这里的复现评估不是声称完整复现 15 篇论文。真实论文级复现往往需要 MRA、radio interferometry visibilities、sphere wavelet stack、proximal MCMC diagnostics 或 large-scale benchmark。当前目标是建立一个可运行、可检查、可展示的 minimal reproducible experiment 系统。</p>
+      <p>每个实验固定随机种子，结果写入 <code>reproduce/results/repro_results.json</code> 和 <code>reproduce/results/repro_results.csv</code>，页面展示的 completed 指标来自本地脚本实际运行结果。</p>
+    </section>
+
+    <section class="report-section" id="repro-overview">
+      <p class="eyebrow">Section 1</p>
+      <h2>总体结论</h2>
+      <div class="repro-summary-grid" id="reproReportSummary"></div>
+      <div class="report-callout">
+        <strong>关键原则</strong>
+        <p>toy reproduction 只证明算法机制可演示，不证明论文实验结论；partial reproduction 只覆盖核心算法路线的一部分，不替代 paper-level reproduction。</p>
+      </div>
+    </section>
+
+    <section class="report-section" id="repro-scoring">
+      <p class="eyebrow">Section 2</p>
+      <h2>评分系统</h2>
+      <div class="repro-two-column">
+        <article class="workbench-block">
+          <div class="block-title"><span>01</span><h3>复现难度 difficultyScore</h3></div>
+          <ul id="reproReportDifficultyScoring"></ul>
+        </article>
+        <article class="workbench-block">
+          <div class="block-title"><span>02</span><h3>复现效果 effectScore</h3></div>
+          <ul id="reproReportEffectScoring"></ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="report-section" id="repro-ranking">
+      <p class="eyebrow">Section 3</p>
+      <h2>难度排行榜与优先级</h2>
+      <div class="repro-ranking-grid" id="reproReportRankings"></div>
+    </section>
+
+    <section class="report-section" id="repro-order">
+      <p class="eyebrow">Section 4</p>
+      <h2>推荐复现顺序</h2>
+      <div class="compact-reading-order repro-order-list" id="reproReportBatches"></div>
+    </section>
+
+    <section class="report-section" id="repro-results">
+      <p class="eyebrow">Section 5</p>
+      <h2>实际运行结果表</h2>
+      <div class="report-table-wrap">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>论文</th>
+              <th>层级</th>
+              <th>状态</th>
+              <th>耗时</th>
+              <th>核心指标</th>
+            </tr>
+          </thead>
+          <tbody id="reproReportResultsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="report-section" id="repro-figures">
+      <p class="eyebrow">Section 6</p>
+      <h2>结果图</h2>
+      <div class="result-figure-grid" id="reproReportFigures"></div>
+    </section>
+
+    <section class="report-section" id="repro-paper-sections">
+      <p class="eyebrow">Section 7</p>
+      <h2>15 篇逐篇复现评估</h2>
+      <div id="reproReportCards"></div>
+    </section>
+
+    <section class="report-section" id="repro-next">
+      <p class="eyebrow">Section 8</p>
+      <h2>下一步复现路线</h2>
+      <div id="reproReportNextSteps"></div>
+    </section>
+  </main>
+
+  <script src="js/shared.js"></script>
+  <script src="js/reading-data.js"></script>
+  <script src="js/reproduction.js"></script>
+</body>
+</html>

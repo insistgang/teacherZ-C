@@ -6,7 +6,21 @@
     return;
   }
 
-  const { tracks, thesis, papers, chronology, readingStages, noteThemes, noteMainlines, readingStandard, paperNotesV2, siteMeta } = data;
+  const {
+    tracks,
+    thesis,
+    papers,
+    chronology,
+    readingStages,
+    noteThemes,
+    noteMainlines,
+    readingStandard,
+    paperNotesV2,
+    reproScoring,
+    reproRecommendedBatches,
+    reproAssessments,
+    siteMeta
+  } = data;
   const { byId, escapeHtml, pdfHref, themeLabel, notePdf, createPaperMaps } = shared;
   const { paperByPriority, noteByPriority } = createPaperMaps(data);
 
@@ -14,6 +28,8 @@ let activeTrack = "all";
 let query = "";
 let activeNoteTheme = "all";
 let noteQuery = "";
+let activeReproLevel = "all";
+let reproQuery = "";
 
 
 
@@ -51,6 +67,38 @@ function filteredNotes() {
     const themeMatch = activeNoteTheme === "all" || note.theme === activeNoteTheme;
     const searchMatch = !normalized || noteSearchText(note).includes(normalized);
     return themeMatch && searchMatch;
+  });
+}
+
+function reproSearchText(item) {
+  return [
+    item.titleCn,
+    item.titleEn,
+    item.reproductionLevel,
+    item.difficultyLabel,
+    item.effectLabel,
+    item.fullReproductionFeasibility,
+    item.minimalExperiment,
+    item.expectedOutcome,
+    item.metrics?.join(" "),
+    item.dependencies?.join(" "),
+    item.dataRequirement,
+    item.computeRequirement,
+    item.implementationRisk,
+    item.verificationPlan,
+    item.resultStatus,
+    item.notes,
+    Object.keys(item.runMetrics || {}).join(" "),
+    Object.values(item.runMetrics || {}).join(" ")
+  ].join(" ").toLowerCase();
+}
+
+function filteredReproAssessments() {
+  const normalized = reproQuery.trim().toLowerCase();
+  return reproAssessments.filter((item) => {
+    const levelMatch = activeReproLevel === "all" || item.reproductionLevel === activeReproLevel;
+    const searchMatch = !normalized || reproSearchText(item).includes(normalized);
+    return levelMatch && searchMatch;
   });
 }
 
@@ -354,6 +402,203 @@ function renderNotes() {
   }).join("");
 }
 
+function renderScoreDots(score, label) {
+  const dots = Array.from({ length: 5 }, (_, index) => (
+    `<span class="${index < score ? "on" : ""}"></span>`
+  )).join("");
+  return `<div class="score-dots" aria-label="${escapeHtml(label)} ${score} / 5">${dots}<strong>${score}/5</strong></div>`;
+}
+
+function renderMetricPairs(metrics) {
+  const entries = Object.entries(metrics || {});
+  if (!entries.length) return "<p>暂无运行指标。</p>";
+  return `
+    <dl class="metric-pairs">
+      ${entries.map(([key, value]) => `
+        <div>
+          <dt>${escapeHtml(key)}</dt>
+          <dd>${escapeHtml(value)}</dd>
+        </div>
+      `).join("")}
+    </dl>
+  `;
+}
+
+function renderResultFiles(item) {
+  if (!item.resultFiles?.length) return "<p>暂无结果文件。</p>";
+  return `
+    <div class="result-file-grid">
+      ${item.resultFiles.map((file) => `
+        <a href="${escapeHtml(file)}" target="_blank" rel="noopener">
+          ${/\.(png|jpg|jpeg|webp)$/i.test(file) ? `<img src="${escapeHtml(file)}" alt="${escapeHtml(item.titleCn)} 复现结果图">` : ""}
+          <span>${escapeHtml(file.replace("assets/repro/", ""))}</span>
+        </a>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderReproSummary() {
+  if (!byId("reproSummary")) return;
+  const completed = reproAssessments.filter((item) => item.resultStatus === "completed").length;
+  const skipped = reproAssessments.filter((item) => item.resultStatus === "skipped").length;
+  const partial = reproAssessments.filter((item) => item.reproductionLevel === "partial").length;
+  const toy = reproAssessments.filter((item) => item.reproductionLevel === "toy").length;
+  const hardest = [...reproAssessments].sort((a, b) => b.difficultyScore - a.difficultyScore || a.priority - b.priority).slice(0, 3);
+  const clearest = [...reproAssessments].sort((a, b) => b.effectScore - a.effectScore || a.difficultyScore - b.difficultyScore).slice(0, 3);
+
+  const cards = [
+    { label: "评估论文", value: reproAssessments.length, detail: "与精读卡片一一对应" },
+    { label: "已运行", value: completed, detail: skipped ? `${skipped} 个 skipped` : "当前 0 个 skipped" },
+    { label: "partial / toy", value: `${partial} / ${toy}`, detail: "没有伪装 paper-level full reproduction" },
+    { label: "最难 full reproduction", value: hardest.map((item) => `#${item.priority}`).join(" "), detail: hardest.map((item) => item.titleCn).join(" · ") },
+    { label: "演示最清楚", value: clearest.map((item) => `#${item.priority}`).join(" "), detail: clearest.map((item) => item.titleCn).join(" · ") }
+  ];
+
+  byId("reproSummary").innerHTML = cards.map((card) => `
+    <article class="metric repro-metric">
+      <span>${escapeHtml(card.label)}</span>
+      <strong>${escapeHtml(card.value)}</strong>
+      <small>${escapeHtml(card.detail)}</small>
+    </article>
+  `).join("");
+}
+
+function renderReproScoring() {
+  const difficulty = byId("reproDifficultyScoring");
+  const effect = byId("reproEffectScoring");
+  if (difficulty) difficulty.innerHTML = (reproScoring?.difficultyDimensions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  if (effect) effect.innerHTML = (reproScoring?.effectDimensions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function renderReproBatches() {
+  const target = byId("reproBatches");
+  if (!target) return;
+  target.innerHTML = reproRecommendedBatches.map((batch, index) => `
+    <article class="repro-batch">
+      <button type="button" data-repro-batch="${index}">
+        <span>${String(index + 1).padStart(2, "0")}</span>
+        ${escapeHtml(batch.title)}
+      </button>
+      <p>${escapeHtml(batch.reason)}</p>
+      <div class="relation-chips">
+        ${batch.priorities.map((priority) => {
+          const item = reproAssessments.find((entry) => entry.priority === priority);
+          return `<button type="button" class="relation-chip" data-scroll-repro="${priority}">#${priority} ${escapeHtml(item?.titleCn || `论文 ${priority}`)}</button>`;
+        }).join("")}
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderReproLevelFilters() {
+  const target = byId("reproLevelFilters");
+  if (!target) return;
+  const levels = [{ key: "all", label: "全部" }].concat(
+    [...new Set(reproAssessments.map((item) => item.reproductionLevel))].map((level) => ({ key: level, label: level }))
+  );
+  target.innerHTML = levels.map((level) => `
+    <button class="${level.key === activeReproLevel ? "active" : ""}" data-repro-level="${escapeHtml(level.key)}" type="button">
+      ${escapeHtml(level.label)}
+    </button>
+  `).join("");
+}
+
+function renderReproCards() {
+  const target = byId("reproCards");
+  if (!target) return;
+  const items = filteredReproAssessments();
+  const count = byId("reproCount");
+  if (count) count.textContent = `${items.length} / ${reproAssessments.length} 篇`;
+  target.innerHTML = items.map((item) => {
+    const paper = paperByPriority.get(item.priority);
+    const track = tracks[paper.track];
+    const pdf = notePdf(item);
+    return `
+      <article class="repro-card" id="repro-card-${item.priority}" style="--accent:${track.color}">
+        <header class="repro-card-head">
+          <div>
+            <div class="note-meta">
+              <span>#${item.priority}</span>
+              <span>${escapeHtml(item.reproductionLevel)}</span>
+              <span>${escapeHtml(item.resultStatus)}</span>
+            </div>
+            <h3>${escapeHtml(item.titleCn)}</h3>
+            <small>${escapeHtml(item.titleEn)}</small>
+          </div>
+          <span class="status-pill ${escapeHtml(item.resultStatus)}">${escapeHtml(item.resultStatus)}</span>
+        </header>
+
+        <div class="repro-score-grid">
+          <section>
+            <strong>复现难度：${escapeHtml(item.difficultyLabel)}</strong>
+            ${renderScoreDots(item.difficultyScore, "复现难度")}
+          </section>
+          <section>
+            <strong>展示效果：${escapeHtml(item.effectLabel)}</strong>
+            ${renderScoreDots(item.effectScore, "展示效果")}
+          </section>
+        </div>
+
+        <div class="note-summary repro-summary">
+          <section>
+            <strong>最小可复现实验</strong>
+            <p>${escapeHtml(item.minimalExperiment)}</p>
+          </section>
+          <section>
+            <strong>预期 / 实际结果</strong>
+            <p>${escapeHtml(item.expectedOutcome)}</p>
+          </section>
+          <section>
+            <strong>Full reproduction 判断</strong>
+            <p>${escapeHtml(item.fullReproductionFeasibility)}</p>
+          </section>
+        </div>
+
+        <div class="note-expanded repro-expanded" id="repro-detail-${item.priority}">
+          <section class="note-detail-block">
+            <strong>依赖与数据</strong>
+            <p>${escapeHtml(item.dependencies.join(" / "))}</p>
+            <p>${escapeHtml(item.dataRequirement)}</p>
+          </section>
+          <section class="note-detail-block">
+            <strong>算力与风险</strong>
+            <p>${escapeHtml(item.computeRequirement)}</p>
+            <p>${escapeHtml(item.implementationRisk)}</p>
+          </section>
+          <section class="note-detail-block">
+            <strong>验证计划</strong>
+            <p>${escapeHtml(item.verificationPlan)}</p>
+          </section>
+          <section class="note-detail-block">
+            <strong>指标字段</strong>
+            <p>${escapeHtml(item.metrics.join(" / "))}</p>
+          </section>
+          <section class="note-detail-block">
+            <strong>实际运行指标</strong>
+            ${renderMetricPairs(item.runMetrics)}
+          </section>
+          <section class="note-detail-block">
+            <strong>结果文件</strong>
+            ${renderResultFiles(item)}
+          </section>
+          <section class="note-detail-block output-block">
+            <strong>说明</strong>
+            <p>${escapeHtml(item.notes)}</p>
+          </section>
+        </div>
+
+        <div class="note-actions">
+          <a href="${pdfHref(pdf)}" target="_blank" rel="noopener">打开 PDF</a>
+          <a href="reading_report.html#paper-${escapeHtml(item.id)}">查看完整报告</a>
+          <a href="reproduction_report.html#repro-${escapeHtml(item.id)}">查看复现结果</a>
+          <button type="button" class="note-toggle" data-repro-toggle="${item.priority}" aria-expanded="false" aria-controls="repro-detail-${item.priority}">展开复现字段</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
 function scrollToNote(priority) {
   switchView("notes");
   activeNoteTheme = "all";
@@ -370,6 +615,27 @@ function scrollToNote(priority) {
     if (button) {
       button.setAttribute("aria-expanded", "true");
       button.textContent = "收起精读字段";
+    }
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function scrollToRepro(priority) {
+  switchView("repro");
+  activeReproLevel = "all";
+  reproQuery = "";
+  const search = byId("reproSearchInput");
+  if (search) search.value = "";
+  renderReproLevelFilters();
+  renderReproCards();
+  requestAnimationFrame(() => {
+    const card = byId(`repro-card-${priority}`);
+    if (!card) return;
+    card.classList.add("expanded");
+    const button = card.querySelector("[data-repro-toggle]");
+    if (button) {
+      button.setAttribute("aria-expanded", "true");
+      button.textContent = "收起复现字段";
     }
     card.scrollIntoView({ behavior: "smooth", block: "start" });
   });
@@ -441,6 +707,34 @@ function bindDashboardEvents() {
     const button = event.target.closest("button[data-scroll-note]");
     if (button) scrollToNote(button.dataset.scrollNote);
   });
+
+  byId("reproLevelFilters").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-repro-level]");
+    if (!button) return;
+    activeReproLevel = button.dataset.reproLevel;
+    renderReproLevelFilters();
+    renderReproCards();
+  });
+
+  byId("reproSearchInput").addEventListener("input", (event) => {
+    reproQuery = event.target.value;
+    renderReproCards();
+  });
+
+  byId("reproCards").addEventListener("click", (event) => {
+    const toggle = event.target.closest("button[data-repro-toggle]");
+    if (toggle) {
+      const card = byId(`repro-card-${toggle.dataset.reproToggle}`);
+      const expanded = card.classList.toggle("expanded");
+      toggle.setAttribute("aria-expanded", String(expanded));
+      toggle.textContent = expanded ? "收起复现字段" : "展开复现字段";
+    }
+  });
+
+  byId("reproBatches").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-scroll-repro]");
+    if (button) scrollToRepro(button.dataset.scrollRepro);
+  });
 }
 
 function handleNoteHashOrQuery() {
@@ -456,6 +750,10 @@ function handleNoteHashOrQuery() {
 
   if (window.location.hash === "#notes") {
     switchView("notes");
+  }
+
+  if (window.location.hash === "#repro") {
+    switchView("repro");
   }
 }
 
@@ -474,6 +772,11 @@ function init() {
   renderNoteReadingStandard();
   renderThemeFilters();
   renderNotes();
+  renderReproSummary();
+  renderReproScoring();
+  renderReproBatches();
+  renderReproLevelFilters();
+  renderReproCards();
   bindDashboardEvents();
   handleNoteHashOrQuery();
 }

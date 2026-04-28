@@ -1,0 +1,278 @@
+[
+  {
+    "priority": 1,
+    "id": "sat-overview",
+    "experiment_id": "sat_rof_trof",
+    "reproductionLevel": "partial",
+    "status": "completed",
+    "runtime_seconds": 0.5387,
+    "metrics": {
+      "direct_accuracy": 0.659,
+      "sat_accuracy": 0.9799,
+      "accuracy_gain": 0.321
+    },
+    "resultFiles": [
+      "assets/repro/sat_demo.png"
+    ],
+    "notes": "Toy SaT: TV smoothing followed by K-means thresholding on synthetic multiphase image."
+  },
+  {
+    "priority": 2,
+    "id": "pcms-rof-linkage",
+    "experiment_id": "sat_rof_trof",
+    "reproductionLevel": "partial",
+    "status": "completed",
+    "runtime_seconds": 0.5387,
+    "metrics": {
+      "direct_dice": 0.8989,
+      "rof_threshold_dice": 0.996,
+      "pcms_like_energy": 204.0
+    },
+    "resultFiles": [
+      "assets/repro/sat_demo.png"
+    ],
+    "notes": "Toy linkage: ROF/TV minimizer thresholded at a fixed midpoint; not a proof of Theorem 3.6."
+  },
+  {
+    "priority": 3,
+    "id": "iterated-rof",
+    "experiment_id": "sat_rof_trof",
+    "reproductionLevel": "partial",
+    "status": "completed",
+    "runtime_seconds": 0.5387,
+    "metrics": {
+      "raw_kmeans_accuracy": 0.659,
+      "trof_accuracy": 0.9799,
+      "threshold_iterations": 3
+    },
+    "resultFiles": [
+      "assets/repro/sat_demo.png",
+      "assets/repro/trof_thresholds.png"
+    ],
+    "notes": "Toy T-ROF: iterative tau_i = 1/2(m_{i-1}+m_i) after one TV smoothing step."
+  },
+  {
+    "priority": 4,
+    "id": "segmentation-restoration",
+    "experiment_id": "segmentation_restoration",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.2319,
+    "metrics": {
+      "direct_accuracy": 0.5332,
+      "joint_toy_accuracy": 0.9604,
+      "accuracy_gain": 0.4272,
+      "alternating_iterations": 8
+    },
+    "resultFiles": [
+      "assets/repro/segmentation_restoration_toy.png"
+    ],
+    "notes": "Toy alternating restoration-segmentation over g, class means and labels; not full variational AM proof reproduction."
+  },
+  {
+    "priority": 5,
+    "id": "framelet-tubular",
+    "experiment_id": "tubular_tight_frame",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.1345,
+    "metrics": {
+      "dice": 0.9981,
+      "iou": 0.9962,
+      "lambda_initial": 651,
+      "lambda_final": 2,
+      "iterations": 12
+    },
+    "resultFiles": [
+      "assets/repro/tubular_lambda_shrinkage.png"
+    ],
+    "notes": "Approximate toy reproduction: Gaussian smoothing stands in for framelet smoothing inside uncertain boundary interval."
+  },
+  {
+    "priority": 6,
+    "id": "tight-frame-vessel",
+    "experiment_id": "tubular_tight_frame",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.1345,
+    "metrics": {
+      "dice": 0.9981,
+      "iou": 0.9962,
+      "lambda_initial": 651,
+      "lambda_final": 2,
+      "iterations": 12
+    },
+    "resultFiles": [
+      "assets/repro/tubular_lambda_shrinkage.png"
+    ],
+    "notes": "Approximate toy reproduction: Lambda boundary set shrinkage and finite convergence pattern on synthetic 2D vessel network."
+  },
+  {
+    "priority": 7,
+    "id": "slat-color",
+    "experiment_id": "slat_color",
+    "reproductionLevel": "partial",
+    "status": "completed",
+    "runtime_seconds": 0.169,
+    "metrics": {
+      "rgb_only_accuracy": 0.7092,
+      "rgb_lab_accuracy": 0.7145,
+      "accuracy_gain": 0.0053
+    },
+    "resultFiles": [
+      "assets/repro/slat_rgb_vs_rgblab.png"
+    ],
+    "notes": "Toy SLaT: channel smoothing, RGB plus Lab-like luminance/chroma lifting, K-means on synthetic degraded color image."
+  },
+  {
+    "priority": 8,
+    "id": "sphere-wavelet",
+    "experiment_id": "sphere_wavelet_toy",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.141,
+    "metrics": {
+      "dice": 0.8418,
+      "gradient_threshold_quantile": 0.93
+    },
+    "resultFiles": [
+      "assets/repro/sphere_wavelet_toy.png"
+    ],
+    "notes": "Approximate sphere toy: equirectangular smoothing plus spherical-gradient correction; no S2LET/SSHT/SO3 stack."
+  },
+  {
+    "priority": 9,
+    "id": "two-stage-classification",
+    "experiment_id": "graph_classification",
+    "reproductionLevel": "partial",
+    "status": "completed",
+    "runtime_seconds": 0.1162,
+    "metrics": {
+      "initial_accuracy": 0.8,
+      "smoothed_accuracy": 0.8139,
+      "accuracy_gain": 0.0139,
+      "iterations": 18
+    },
+    "resultFiles": [
+      "assets/repro/graph_classification_before_after.png"
+    ],
+    "notes": "Toy graph classification: centroid warm initialization, kNN graph smoothing, argmax projection."
+  },
+  {
+    "priority": 10,
+    "id": "efficient-variational-classification",
+    "experiment_id": "graph_classification",
+    "reproductionLevel": "partial",
+    "status": "completed",
+    "runtime_seconds": 0.1162,
+    "metrics": {
+      "initial_accuracy": 0.8,
+      "smoothed_accuracy": 0.8139,
+      "accuracy_gain": 0.0139,
+      "iterations": 18
+    },
+    "resultFiles": [
+      "assets/repro/graph_classification_before_after.png"
+    ],
+    "notes": "Toy repeated graph smoothing: demonstrates independent label-function update idea without full graph TV primal-dual solver."
+  },
+  {
+    "priority": 11,
+    "id": "high-dimensional-uq",
+    "experiment_id": "map_uq_toy",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.1159,
+    "metrics": {
+      "map_psnr": 18.7123,
+      "map_snr": 9.6004,
+      "map_runtime_seconds": 0.0031,
+      "mcmc_runtime_seconds": 0.0071,
+      "gamma_alpha_toy": 939.9229,
+      "mean_interval_length": 0.1739
+    },
+    "resultFiles": [
+      "assets/repro/map_uq_reconstruction_uncertainty.png"
+    ],
+    "notes": "Toy MAP-UQ: small Fourier undersampling inverse problem with approximate HPD and local interval map."
+  },
+  {
+    "priority": 12,
+    "id": "ri-uq-i",
+    "experiment_id": "map_uq_toy",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.1159,
+    "metrics": {
+      "map_psnr": 18.7123,
+      "map_snr": 9.6004,
+      "map_runtime_seconds": 0.0031,
+      "mcmc_runtime_seconds": 0.0071,
+      "gamma_alpha_toy": 939.9229,
+      "mean_interval_length": 0.1739
+    },
+    "resultFiles": [
+      "assets/repro/map_uq_reconstruction_uncertainty.png"
+    ],
+    "notes": "Toy proximal-MCMC-style sampling on a 32x32 Fourier inverse problem; no RI operator or MCMC diagnostics."
+  },
+  {
+    "priority": 13,
+    "id": "ri-uq-ii",
+    "experiment_id": "map_uq_toy",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.1159,
+    "metrics": {
+      "map_psnr": 18.7123,
+      "map_snr": 9.6004,
+      "map_runtime_seconds": 0.0031,
+      "mcmc_runtime_seconds": 0.0071,
+      "gamma_alpha_toy": 939.9229,
+      "mean_interval_length": 0.1739
+    },
+    "resultFiles": [
+      "assets/repro/map_uq_reconstruction_uncertainty.png"
+    ],
+    "notes": "Toy MAP-UQ is faster than the toy sampler and gives a similar uncertainty pattern; not a paper-level SKA experiment."
+  },
+  {
+    "priority": 14,
+    "id": "online-ri",
+    "experiment_id": "online_ri_toy",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.1145,
+    "metrics": {
+      "offline_psnr": 12.3359,
+      "online_psnr": 12.3359,
+      "offline_snr": 2.6069,
+      "online_snr": 2.6069,
+      "peak_stored_measurements_offline": 585,
+      "peak_stored_measurements_online": 98
+    },
+    "resultFiles": [
+      "assets/repro/online_ri_storage_quality.png"
+    ],
+    "notes": "Toy online RI: split Fourier measurements into blocks, assimilate each block, then discard it conceptually."
+  },
+  {
+    "priority": 15,
+    "id": "proximal-nested-sampling",
+    "experiment_id": "nested_sampling_toy",
+    "reproductionLevel": "toy",
+    "status": "completed",
+    "runtime_seconds": 0.0692,
+    "metrics": {
+      "estimated_log_evidence": -5.5996,
+      "reference_log_evidence": -3.1319,
+      "absolute_log_error": 2.4676,
+      "live_points": 80,
+      "iterations": 180
+    },
+    "resultFiles": [
+      "assets/repro/nested_sampling_evidence_trace.png"
+    ],
+    "notes": "Toy nested sampling on a 2D Gaussian likelihood under a uniform prior; not proximal constrained MCMC."
+  }
+]

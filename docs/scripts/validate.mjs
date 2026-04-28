@@ -34,7 +34,7 @@ const data = context.window.ZX_READING_DATA;
 check(Boolean(data), "window.ZX_READING_DATA 未导出");
 
 if (data) {
-  const { papers, paperNotesV2 } = data;
+  const { papers, paperNotesV2, reproAssessments } = data;
   check(Array.isArray(papers) && papers.length === 15, "papers 长度不是 15");
   check(Array.isArray(paperNotesV2) && paperNotesV2.length === 15, "paperNotesV2 长度不是 15");
 
@@ -61,23 +61,57 @@ if (data) {
     const pdfPath = path.join(docsDir, data.basePath, paper.file);
     check(fs.existsSync(pdfPath), `PDF 不存在：${paper.file}`);
   });
+
+  check(Array.isArray(reproAssessments) && reproAssessments.length === 15, "reproAssessments 长度不是 15");
+  if (Array.isArray(reproAssessments)) {
+    const noteIdSet = new Set(noteIds);
+    const reproIds = reproAssessments.map((item) => item.id);
+    check(new Set(reproIds).size === reproIds.length, "reproAssessment.id 不唯一");
+
+    reproAssessments.forEach((item) => {
+      check(noteIdSet.has(item.id), `${item.id} 无法匹配 paperNotesV2.id`);
+      check(Number.isInteger(item.difficultyScore) && item.difficultyScore >= 1 && item.difficultyScore <= 5, `${item.id} difficultyScore 不在 1-5`);
+      check(Number.isInteger(item.effectScore) && item.effectScore >= 1 && item.effectScore <= 5, `${item.id} effectScore 不在 1-5`);
+      check(typeof item.minimalExperiment === "string" && item.minimalExperiment.trim().length > 0, `${item.id} minimalExperiment 为空`);
+      check(Array.isArray(item.metrics), `${item.id} metrics 不是数组`);
+      check(item.resultStatus, `${item.id} 缺少 resultStatus`);
+      if (item.resultStatus === "completed") {
+        check(Array.isArray(item.resultFiles) && item.resultFiles.length > 0, `${item.id} completed 但没有 resultFiles`);
+        (item.resultFiles || []).forEach((file) => {
+          check(fs.existsSync(path.join(docsDir, file)), `${item.id} resultFile 不存在：${file}`);
+        });
+      }
+      if (item.resultStatus === "skipped") {
+        check(Boolean(item.skipped_reason || item.skippedReason), `${item.id} skipped 但缺少 skipped_reason`);
+      }
+    });
+  }
 }
 
 const indexHtml = readText(path.join(docsDir, "index.html"));
 const reportHtml = readText(path.join(docsDir, "reading_report.html"));
+const reproductionReportPath = path.join(docsDir, "reproduction_report.html");
+const reproductionReportHtml = fs.existsSync(reproductionReportPath) ? readText(reproductionReportPath) : "";
 const styleCss = readText(path.join(docsDir, "style.css"));
 const dashboardJs = readText(path.join(jsDir, "dashboard.js"));
 const oldReportName = ["agent_team_reading_report", ".md"].join("");
 
 check(!indexHtml.includes(oldReportName), "index.html 仍直接指向旧 Markdown 完整报告");
+check(fs.existsSync(reproductionReportPath), "docs/reproduction_report.html 不存在");
+check(indexHtml.includes("复现评估"), "index.html 缺少“复现评估”入口");
 check(indexHtml.includes('src="js/shared.js"'), "index.html 未加载 js/shared.js");
 check(indexHtml.includes('src="js/reading-data.js"'), "index.html 未加载 js/reading-data.js");
 check(indexHtml.includes('src="js/dashboard.js"'), "index.html 未加载 js/dashboard.js");
 check(reportHtml.includes('src="js/shared.js"'), "reading_report.html 未加载 js/shared.js");
 check(reportHtml.includes('src="js/reading-data.js"'), "reading_report.html 未加载 js/reading-data.js");
 check(reportHtml.includes('src="js/report.js"'), "reading_report.html 未加载 js/report.js");
-check(!/src=["']app\.js["']/.test(indexHtml + reportHtml), "HTML 仍加载根目录 app.js");
-check(!/src=["']report\.js["']/.test(indexHtml + reportHtml), "HTML 仍加载根目录 report.js");
+check(reproductionReportHtml.includes('src="js/shared.js"'), "reproduction_report.html 未加载 js/shared.js");
+check(reproductionReportHtml.includes('src="js/reading-data.js"'), "reproduction_report.html 未加载 js/reading-data.js");
+check(reproductionReportHtml.includes('src="js/reproduction.js"'), "reproduction_report.html 未加载 js/reproduction.js");
+check(!/src=["']app\.js["']/.test(indexHtml + reportHtml + reproductionReportHtml), "HTML 仍加载根目录 app.js");
+check(!/src=["']report\.js["']/.test(indexHtml + reportHtml + reproductionReportHtml), "HTML 仍加载根目录 report.js");
+check(fs.existsSync(path.join(repoRoot, "reproduce", "results", "repro_results.json")), "reproduce/results/repro_results.json 不存在");
+check(fs.existsSync(path.join(repoRoot, "reproduce", "results", "repro_results.csv")), "reproduce/results/repro_results.csv 不存在");
 
 check(styleCss.includes("@media (max-width: 1100px)"), "style.css 缺少 @media (max-width: 1100px)");
 check(styleCss.includes("@media (max-width: 900px)"), "style.css 缺少 @media (max-width: 900px)");
@@ -122,4 +156,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("validate passed: papers=15, notes=15, PDFs ok, links ok, old refs clean");
+console.log("validate passed: papers=15, notes=15, reproAssessments=15, PDFs ok, links ok, old refs clean");
