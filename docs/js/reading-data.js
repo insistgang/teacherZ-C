@@ -982,6 +982,11 @@ const finalSummary = [
     "如果要从这 15 篇里提炼自己的研究入口，最值得抓住的不是某个单独算法，而是这种研究范式：从实际成像或分类困难出发，建立可解释模型，寻找凸性、唯一解、收敛、partial minimizer、finite convergence 或 scalable UQ 这样的硬保证，再回到具体数据对象验证这些保证到底解决了什么。"
   ];
 
+const siteMeta = {
+  commit: "9cc8d69",
+  lastUpdated: "2026-04-28"
+};
+
 window.ZX_READING_DATA = {
   basePath,
   tracks,
@@ -997,5 +1002,6 @@ window.ZX_READING_DATA = {
   layerBlocks,
   weeklyPlan,
   researchTopics,
-  finalSummary
+  finalSummary,
+  siteMeta
 };

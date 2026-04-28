@@ -6,7 +6,7 @@
     return;
   }
 
-  const { tracks, thesis, papers, chronology, readingStages, noteThemes, noteMainlines, readingStandard, paperNotesV2 } = data;
+  const { tracks, thesis, papers, chronology, readingStages, noteThemes, noteMainlines, readingStandard, paperNotesV2, siteMeta } = data;
   const { byId, escapeHtml, pdfHref, themeLabel, notePdf, createPaperMaps } = shared;
   const { paperByPriority, noteByPriority } = createPaperMaps(data);
 
@@ -99,6 +99,12 @@ function renderMetrics() {
       <small>${metric.detail}</small>
     </article>
   `).join("");
+}
+
+function renderSiteVersion() {
+  const target = byId("dashboardVersion");
+  if (!target || !siteMeta) return;
+  target.textContent = `commit: ${siteMeta.commit} · last updated: ${siteMeta.lastUpdated}`;
 }
 
 function renderTrackOverview() {
@@ -456,6 +462,7 @@ function handleNoteHashOrQuery() {
 function init() {
   renderThesis();
   renderMetrics();
+  renderSiteVersion();
   renderTrackOverview();
   renderTimeline();
   renderTrackFilters();

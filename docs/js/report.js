@@ -17,7 +17,8 @@
     layerBlocks,
     weeklyPlan,
     researchTopics,
-    finalSummary
+    finalSummary,
+    siteMeta
   } = data;
 
   const {
@@ -331,7 +332,14 @@ RI UQ I
     byId("reportSummary").innerHTML = finalSummary.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
   }
 
+  function renderSiteVersion() {
+    const target = byId("reportVersion");
+    if (!target || !siteMeta) return;
+    target.textContent = `commit: ${siteMeta.commit} · last updated: ${siteMeta.lastUpdated}`;
+  }
+
   function renderReport() {
+    renderSiteVersion();
     renderToc();
     renderMainlines();
     renderTimeline();

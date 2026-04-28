@@ -148,6 +148,15 @@ input:focus-visible {
   font-size: 18px;
 }
 
+.site-version {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d4ddd7;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+}
+
 .publish-label,
 .eyebrow {
   color: var(--gold);
@@ -841,6 +850,8 @@ td small {
 .note-detail-block code {
   display: block;
   white-space: pre-wrap;
+  overflow-x: auto;
+  max-width: 100%;
   color: var(--ink);
   font-family: "Cascadia Mono", Consolas, monospace;
   font-size: 13px;
@@ -930,6 +941,12 @@ td small {
   font-size: 17px;
 }
 
+.report-hero .report-version {
+  color: #bfcac3;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
 .report-hero-actions,
 .report-paper-actions,
 .report-actions-row {
@@ -943,6 +960,16 @@ td small {
   margin: 24px auto 56px;
   display: grid;
   gap: 18px;
+}
+
+.shell > *,
+.report-shell > *,
+.panel,
+.note-card,
+.report-nav,
+.report-section,
+.report-paper {
+  min-width: 0;
 }
 
 .report-nav,
@@ -986,6 +1013,7 @@ td small {
   text-decoration: none;
   font-size: 13px;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .report-button.primary,
@@ -1202,13 +1230,16 @@ td small {
 
 @supports not (color: color-mix(in srgb, #000 50%, #fff)) {
   .track-top span,
+  .thesis-card,
   .chip,
   .track-code,
   .stage-paper,
+  .note-card,
   .note-head > span,
   .note-meta span,
   .note-summary section,
   .note-detail-block,
+  .report-section,
   .relation-chip,
   .note-actions a,
   .note-actions button,
@@ -1221,7 +1252,8 @@ td small {
 
   .note-summary section,
   .note-detail-block,
-  .stage-paper {
+  .stage-paper,
+  .report-section {
     background: #fffdf8;
   }
 }
@@ -1235,6 +1267,7 @@ td small {
 
   .shell {
     margin-left: 0;
+    max-width: 100%;
   }
 
   .metric-grid,
@@ -1268,6 +1301,7 @@ td small {
   .report-nav {
     position: static;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .report-toc,
@@ -1334,10 +1368,25 @@ td small {
     margin-top: 14px;
   }
 
+  .topbar,
+  .search,
+  .search input,
+  .note-search,
+  .note-search input {
+    width: 100%;
+  }
+
   .report-hero-inner,
   .report-section,
   .report-paper {
     padding: 16px;
+  }
+
+  .report-tree,
+  .report-formula,
+  .note-detail-block code {
+    overflow-x: auto;
+    max-width: 100%;
   }
 
   .report-nav {

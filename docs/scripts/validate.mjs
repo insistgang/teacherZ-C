@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
+import { execFileSync } from "node:child_process";
 
 const repoRoot = path.resolve(process.cwd());
 const docsDir = path.join(repoRoot, "docs");
@@ -64,6 +65,8 @@ if (data) {
 
 const indexHtml = readText(path.join(docsDir, "index.html"));
 const reportHtml = readText(path.join(docsDir, "reading_report.html"));
+const styleCss = readText(path.join(docsDir, "style.css"));
+const dashboardJs = readText(path.join(jsDir, "dashboard.js"));
 const oldReportName = ["agent_team_reading_report", ".md"].join("");
 
 check(!indexHtml.includes(oldReportName), "index.html 仍直接指向旧 Markdown 完整报告");
@@ -73,6 +76,27 @@ check(indexHtml.includes('src="js/dashboard.js"'), "index.html 未加载 js/dash
 check(reportHtml.includes('src="js/shared.js"'), "reading_report.html 未加载 js/shared.js");
 check(reportHtml.includes('src="js/reading-data.js"'), "reading_report.html 未加载 js/reading-data.js");
 check(reportHtml.includes('src="js/report.js"'), "reading_report.html 未加载 js/report.js");
+check(!/src=["']app\.js["']/.test(indexHtml + reportHtml), "HTML 仍加载根目录 app.js");
+check(!/src=["']report\.js["']/.test(indexHtml + reportHtml), "HTML 仍加载根目录 report.js");
+
+check(styleCss.includes("@media (max-width: 1100px)"), "style.css 缺少 @media (max-width: 1100px)");
+check(styleCss.includes("@media (max-width: 900px)"), "style.css 缺少 @media (max-width: 900px)");
+check(styleCss.includes("@media (max-width: 640px)"), "style.css 缺少 @media (max-width: 640px)");
+if (styleCss.includes("color-mix(")) {
+  check(styleCss.includes("@supports not"), "style.css 使用 color-mix 但缺少 @supports not fallback");
+}
+check(styleCss.includes("focus-visible"), "style.css 缺少 focus-visible 样式");
+check(dashboardJs.includes("aria-expanded"), "dashboard 展开按钮缺少 aria-expanded");
+check(dashboardJs.includes("aria-controls"), "dashboard 展开按钮缺少 aria-controls");
+check(/setAttribute\(["']aria-expanded["']/.test(dashboardJs), "dashboard 展开/收起未同步 aria-expanded");
+
+const trackedLegacyScripts = execFileSync("git", ["ls-files", "docs/app.js", "docs/report.js"], {
+  cwd: repoRoot,
+  encoding: "utf8"
+}).trim();
+check(!trackedLegacyScripts, `根目录 legacy 脚本仍被 git 跟踪：${trackedLegacyScripts}`);
+check(!fs.existsSync(path.join(docsDir, "app.js")), "docs/app.js 仍存在");
+check(!fs.existsSync(path.join(docsDir, "report.js")), "docs/report.js 仍存在");
 
 const forbiddenRefs = [
   { label: "standalone legacy data script", test: (text) => /(^|[/"'\s])data\.js($|[?"'\s])/.test(text) },
