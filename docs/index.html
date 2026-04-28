@@ -19,7 +19,7 @@
     <nav class="nav" aria-label="Dashboard sections">
       <button class="nav-item active" data-view="overview" type="button"><span>OV</span>概览</button>
       <button class="nav-item" data-view="papers" type="button"><span>LI</span>论文清单</button>
-      <button class="nav-item" data-view="tracks" type="button"><span>TR</span>研究主线</button>
+      <button class="nav-item" data-view="tracks" type="button"><span>TR</span>研究方向</button>
       <button class="nav-item" data-view="reading" type="button"><span>RD</span>精读路线</button>
       <button class="nav-item" data-view="dedup" type="button"><span>DU</span>去重记录</button>
     </nav>
@@ -27,7 +27,7 @@
     <div class="publish-box">
       <span class="publish-label">发布集</span>
       <strong>15 篇去重论文</strong>
-      <span>更新于 2026-04-28</span>
+      <span>研究脉络版 · 2026-04-28</span>
     </div>
   </aside>
 
@@ -35,22 +35,24 @@
     <header class="topbar">
       <div>
         <p class="eyebrow">Latest Research Set</p>
-        <h1>蔡老师第一作者论文去重阅读 Dashboard</h1>
+        <h1>Xiaohao Cai 第一作者论文研究脉络 Dashboard</h1>
       </div>
       <label class="search">
         <span>Search</span>
-        <input id="searchInput" type="search" placeholder="按题目、主线、年份搜索">
+        <input id="searchInput" type="search" placeholder="按题目、方向、时间搜索">
       </label>
     </header>
 
     <section class="view active" id="overview">
+      <section id="researchThesis"></section>
+
       <div class="metric-grid" id="metrics"></div>
 
       <section class="panel">
         <div class="panel-header">
           <div>
             <p class="eyebrow">Research Map</p>
-            <h2>三条主线和一条方法迁移线</h2>
+            <h2>五个研究方向</h2>
           </div>
           <a class="text-link" href="00_papers_first_author_xiaohao_cai_deduped/agent_team_reading_report.md">阅读完整报告</a>
         </div>
@@ -61,7 +63,7 @@
         <div class="panel-header">
           <div>
             <p class="eyebrow">Timeline</p>
-            <h2>从变分分割到 Bayesian 模型选择</h2>
+            <h2>2011-2024 发表与预印本时间线</h2>
           </div>
         </div>
         <div class="timeline" id="timeline"></div>
@@ -73,7 +75,7 @@
         <div class="panel-header">
           <div>
             <p class="eyebrow">Library</p>
-            <h2>最新去重论文集</h2>
+            <h2>最新去重论文集与建议阅读顺序</h2>
           </div>
           <div class="segmented" id="trackFilters"></div>
         </div>
@@ -81,10 +83,10 @@
           <table>
             <thead>
               <tr>
-                <th>优先级</th>
+                <th>顺序</th>
                 <th>论文</th>
-                <th>年份</th>
-                <th>主线</th>
+                <th>时间</th>
+                <th>方向</th>
                 <th>页数</th>
                 <th>文件</th>
               </tr>
@@ -100,7 +102,7 @@
         <div class="panel-header">
           <div>
             <p class="eyebrow">Synthesis</p>
-            <h2>Agent team 阅读结论</h2>
+            <h2>研究方向拆解</h2>
           </div>
         </div>
         <div class="track-detail-grid" id="trackDetails"></div>
@@ -112,7 +114,7 @@
         <div class="panel-header">
           <div>
             <p class="eyebrow">Queue</p>
-            <h2>建议精读顺序</h2>
+            <h2>七阶段精读路线</h2>
           </div>
           <a class="text-link" href="00_papers_first_author_xiaohao_cai_deduped/README.md">查看去重说明</a>
         </div>

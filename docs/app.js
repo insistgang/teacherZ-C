@@ -1,192 +1,301 @@
 const basePath = "00_papers_first_author_xiaohao_cai_deduped/";
 
 const tracks = {
-  variational: {
-    label: "变分分割 / SaT",
+  sat: {
+    label: "SaT / 变分分割",
     short: "SaT",
-    count: 8,
+    count: 3,
     color: "#28666e",
-    summary: "用恢复、凸优化、TV/ROF/Mumford-Shah、framelet 替代直接非凸分割，再用阈值、投影或聚类输出分割结果。",
-    emphasis: "理论核心是 PCMS 与 ROF 的联系；应用核心是 SLaT、T-ROF 和 framelet 管状结构分割。"
+    summary: "以 smoothing/restoration 先稳定图像，再通过 thresholding、lifting 或聚类得到分割。",
+    emphasis: "这条线说明他的分割方法不是单纯应用，而是用凸模型替代直接求解困难的非凸分割问题。"
   },
-  inverse: {
-    label: "无线电 / UQ / 采样",
-    short: "UQ",
-    count: 6,
-    color: "#8f5b2e",
-    summary: "从无线电干涉重建进入高维贝叶斯逆问题，逐步补齐可扩展重建、不确定性量化和模型选择。",
-    emphasis: "主链是 Online RI -> proximal MCMC UQ -> MAP UQ -> 一般逆问题 UQ -> proximal nested sampling。"
+  rof: {
+    label: "ROF / PCMS 理论",
+    short: "ROF",
+    count: 2,
+    color: "#795c34",
+    summary: "建立 ROF 恢复模型与 PCMS、Chan-Vese 分割模型之间的桥梁。",
+    emphasis: "核心贡献是把“恢复 + 阈值化 = 分割”从经验套路推进到有理论支撑的范式。"
+  },
+  framelet: {
+    label: "Framelet / 特殊几何",
+    short: "FR",
+    count: 3,
+    color: "#3f6f4f",
+    summary: "用 tight-frame、framelet、wavelet 处理血管、管状结构和球面图像等特殊几何数据。",
+    emphasis: "这条线展示 SaT/阈值化思想如何迁移到细长结构、弱边缘和非欧氏图像。"
   },
   classification: {
     label: "高维图分类",
     short: "CL",
-    count: 1,
+    count: 2,
     color: "#5e548e",
-    summary: "把 SaT/ROF/Mumford-Shah 的变分分割思想迁移到高维数据和点云半监督分类。",
-    emphasis: "关键设计是无 simplex 约束的凸模型、类别标签函数独立求解和 argmax 投影。"
+    summary: "把图像分割抽象成 graph-based classification，用图 Laplacian 和 graph TV 做半监督分类。",
+    emphasis: "后期重点是高维数据、点云和无结构数据上的变分分类模型。"
+  },
+  bayes: {
+    label: "Bayesian 逆问题 / UQ",
+    short: "UQ",
+    count: 5,
+    color: "#9a5a36",
+    summary: "从无线电干涉成像进入高维贝叶斯逆问题，关注重建、采样、不确定性量化和模型选择。",
+    emphasis: "主链是 proximal MCMC、MAP-UQ、online RI 和 proximal nested sampling。"
   }
+};
+
+const thesis = {
+  headline: "从图像分割到贝叶斯逆问题的同一套数学语言",
+  body: "这 15 篇共同呈现的主方向是：变分模型 + 凸优化 + 稀疏/小波/框架表示 + 贝叶斯逆问题，用来做图像分割、恢复、分类、成像和不确定性量化。",
+  oneLine: "核心套路是先把复杂非凸问题转化为更稳定的凸问题，再通过阈值化、投影、采样或近端算法得到最终结果。"
 };
 
 const papers = [
   {
     priority: 1,
     file: "分割方法论总览 SaT Overview.pdf",
-    title: "An Overview of SaT Segmentation Methodology and Its Applications in Image Processing",
+    title: "An Overview of SaT Segmentation Methodology and Its Applications",
+    time: "2023",
     year: 2023,
     pages: 27,
-    track: "variational",
+    track: "sat",
     type: "Springer Handbook",
-    note: "先建立 SaT 方法地图；这是综述章节，不是原始方法论文。"
+    position: "全局地图：先解释 SaT、T-ROF、SLaT、血管、球面和 hyperspectral 等分支。",
+    note: "建议先读 Introduction、SaT Methodology、T-ROF、SLaT、vascular、sphere 几节。"
   },
   {
     priority: 2,
     file: "变分分割基础Mumford-Shah与ROF Mumford-Shah ROF.pdf",
-    title: "Linkage Between Piecewise Constant Mumford-Shah Model and ROF Model and Its Virtue in Image Segmentation",
+    title: "Linkage Between PCMS and ROF Model and Its Virtue in Image Segmentation",
+    time: "2019",
     year: 2019,
     pages: 31,
-    track: "variational",
-    type: "arXiv",
-    note: "理论核心：解释为什么 ROF 恢复加阈值能求解 PCMS/Chan-Vese 类分割。"
+    track: "rof",
+    type: "arXiv / theory",
+    position: "理论核心：解释 ROF minimizer 阈值化为什么能得到 PCMS/Chan-Vese 的部分极小解。",
+    note: "重点搞清 Mumford-Shah、PCMS、Chan-Vese、ROF 四者关系。"
   },
   {
     priority: 3,
     file: "多类ROF分割 Iterated ROF.pdf",
     title: "Multiclass Segmentation by Iterated ROF Thresholding",
+    time: "2013",
     year: 2013,
     pages: 14,
-    track: "variational",
+    track: "rof",
     type: "LNCS / EMMCVPR",
-    note: "T-ROF 早期会议版，是 2019 理论长文的直接前身。"
+    position: "T-ROF 的早期算法雏形：ROF 去噪解反复阈值化，用于多类分割。",
+    note: "和 Linkage 连着读，可以看到从算法动机到理论支撑的演化。"
   },
   {
     priority: 4,
-    file: "SLaT三阶段分割 SLaT Segmentation.pdf",
-    title: "A Three-stage Approach for Segmenting Degraded Color Images: Smoothing, Lifting and Thresholding",
-    year: 2015,
-    pages: 19,
-    track: "variational",
+    file: "分割恢复联合模型 Segmentation Restoration.pdf",
+    title: "Variational Image Segmentation Model Coupled with Image Restoration Achievements",
+    time: "2014",
+    year: 2014,
+    pages: 23,
+    track: "sat",
     type: "arXiv",
-    note: "Smoothing-Lifting-Thresholding，把 SaT 推到退化彩色图像。"
+    position: "把 restoration fidelity term 引入 PCMS，使模型能处理噪声、模糊、缺失像素和向量值图像。",
+    note: "先看 Abstract、Introduction 和模型式子，不必一开始深究全部收敛证明。"
   },
   {
     priority: 5,
-    file: "分割恢复联合模型 Segmentation Restoration.pdf",
-    title: "Variational Image Segmentation Model Coupled with Image Restoration Achievements",
-    year: 2014,
-    pages: 23,
-    track: "variational",
-    type: "arXiv",
-    note: "联合恢复与分割路线，对比 SaT 的解耦路线。"
+    file: "框架管状结构分割 Framelet.pdf",
+    title: "Framelet-Based Algorithm for Segmentation of Tubular Structures",
+    time: "2011 / 2012",
+    year: 2012,
+    pages: 12,
+    track: "framelet",
+    type: "SSVM / LNCS",
+    position: "早期管状结构分割：用 framelet/tight-frame 处理血管、道路等细长结构。",
+    note: "适合先读短版，快速理解管状结构分割算法怎么设计。"
   },
   {
     priority: 6,
-    file: "两阶段分类 Two-Stage.pdf",
-    title: "A Two-Stage Classification Method for High-Dimensional Data and Point Clouds",
-    year: 2019,
-    pages: 21,
-    track: "variational",
-    type: "arXiv",
-    note: "SaT 方法论迁移到图上的半监督分类。"
+    file: "框架分割管状结构 Framelet Tubular.pdf",
+    title: "Vessel Segmentation in Medical Imaging Using a Tight-Frame Based Algorithm",
+    time: "2011 preprint / about 2013",
+    year: 2011,
+    pages: 13,
+    track: "framelet",
+    type: "arXiv / extended version",
+    position: "Framelet 管状结构分割扩展版：补足 MRA 血管、tight-frame 迭代、收敛性和 2D/3D 实验。",
+    note: "建议放在短版后读，重点看算法步骤、收敛性和医学图像实验。"
   },
   {
     priority: 7,
+    file: "SLaT三阶段分割 SLaT Segmentation.pdf",
+    title: "SLaT: Smoothing, Lifting and Thresholding",
+    time: "2015 preprint / 2017 line",
+    year: 2015,
+    pages: 19,
+    track: "sat",
+    type: "arXiv",
+    position: "从灰度图扩展到彩色退化图像：RGB 平滑后 lifting 到 RGB + Lab，再聚类阈值化。",
+    note: "关键不是 K-means，而是 Lifting：Lab 提供感知颜色信息，补充 RGB 通道相关性。"
+  },
+  {
+    priority: 8,
+    file: "球面小波分割 Wavelet Sphere.pdf",
+    title: "Wavelet-Based Segmentation on the Sphere",
+    time: "2016 preprint / 2019 v2 / about 2020",
+    year: 2016,
+    pages: 22,
+    track: "framelet",
+    type: "arXiv",
+    position: "把 tight-frame/wavelet 分割推广到球面图像，如地球、太阳、全天图和球面视网膜图像。",
+    note: "看几何扩展：球面 wavelet/curvelet、球面梯度和球面采样。"
+  },
+  {
+    priority: 9,
+    file: "两阶段分类 Two-Stage.pdf",
+    title: "A Two-Stage Classification Method for High-Dimensional Data and Point Clouds",
+    time: "2019",
+    year: 2019,
+    pages: 21,
+    track: "classification",
+    type: "arXiv",
+    position: "把 SaT 从 image segmentation 推到 graph-based classification。",
+    note: "先用 SVM 等 warm initialization，再图上凸变分平滑，最后投影为分类结果。"
+  },
+  {
+    priority: 10,
     file: "高效变分分类 Efficient Variational.pdf",
     title: "An Efficient and Versatile Variational Method for High-Dimensional Data Classification",
+    time: "2024",
     year: 2024,
     pages: 25,
     track: "classification",
     type: "Journal of Scientific Computing",
-    note: "2024 期刊版，强调无 simplex 约束、并行标签函数和 one-class 扩展。"
-  },
-  {
-    priority: 8,
-    file: "在线无线电干涉成像 Online Radio Imaging.pdf",
-    title: "Online radio interferometric imaging: assimilating and discarding visibilities on arrival",
-    year: 2017,
-    pages: 14,
-    track: "inverse",
-    type: "MNRAS style preprint",
-    note: "RI 大数据流式重建入口：边观测、边重建、边丢弃 visibility blocks。"
-  },
-  {
-    priority: 9,
-    file: "无线电干涉不确定性I Radio Interferometric I.pdf",
-    title: "Uncertainty quantification for radio interferometric imaging: I. proximal MCMC methods",
-    year: 2018,
-    pages: 16,
-    track: "inverse",
-    type: "MNRAS companion I",
-    note: "用 proximal MCMC 处理非光滑稀疏后验，给出 credible intervals、HPD regions 和结构检验。"
-  },
-  {
-    priority: 10,
-    file: "无线电干涉不确定性II Radio Interferometric II.pdf",
-    title: "Uncertainty quantification for radio interferometric imaging: II. MAP estimation",
-    year: 2018,
-    pages: 13,
-    track: "inverse",
-    type: "MNRAS companion II",
-    note: "核心落地论文：MAP + probability concentration 近似 UQ，替代昂贵 MCMC。"
+    position: "2019 两阶段分类的成熟期/期刊版，面向多类半监督分类、高维数据和点云。",
+    note: "重点看 graph Laplacian、graph TV、唯一解、primal-dual 算法和实验对比。"
   },
   {
     priority: 11,
     file: "高维逆问题不确定性量化 Uncertainty Quantification.pdf",
     title: "Quantifying Uncertainty in High Dimensional Inverse Problems by Convex Optimisation",
+    time: "2019",
     year: 2019,
     pages: 5,
-    track: "inverse",
+    track: "bayes",
     type: "EUSIPCO",
-    note: "把 RI MAP-UQ 泛化到一般高维逆问题，并加入自动正则参数估计。"
+    position: "UQ 总入口：把 RI 里的 MAP-UQ 思路推广到一般高维逆问题。",
+    note: "先用它理解 MAP、HPD credible region、local credible interval。"
   },
   {
     priority: 12,
-    file: "近端嵌套采样 Proximal Nested Sampling.pdf",
-    title: "Proximal nested sampling for high-dimensional Bayesian model selection",
-    year: 2022,
-    pages: 42,
-    track: "inverse",
-    type: "arXiv / Bayesian computation",
-    note: "从 UQ 推进到 Bayesian evidence 和模型选择，是 UQ 主链的升级。"
+    file: "无线电干涉不确定性I Radio Interferometric I.pdf",
+    title: "Uncertainty Quantification for Radio Interferometric Imaging I: Proximal MCMC Methods",
+    time: "2018",
+    year: 2018,
+    pages: 16,
+    track: "bayes",
+    type: "MNRAS companion I",
+    position: "用 proximal MCMC 支持非光滑稀疏先验，并从完整后验样本做 UQ。",
+    note: "重点看 credible intervals、HPD regions、hypothesis testing。"
   },
   {
     priority: 13,
-    file: "球面小波分割 Wavelet Sphere.pdf",
-    title: "Wavelet-based segmentation on the sphere",
-    year: 2016,
-    pages: 22,
-    track: "inverse",
-    type: "arXiv",
-    note: "球面/小波/几何信号处理支线，与 RI-UQ 共享稀疏表示和非欧氏数据处理。"
+    file: "无线电干涉不确定性II Radio Interferometric II.pdf",
+    title: "Uncertainty Quantification for Radio Interferometric Imaging II: MAP Estimation",
+    time: "2018",
+    year: 2018,
+    pages: 13,
+    track: "bayes",
+    type: "MNRAS companion II",
+    position: "RI I 的快速版：用 MAP estimation 加概率集中理论近似 UQ，面向 SKA 级大数据。",
+    note: "和 RI I 对照读，理解完整采样和快速近似之间的取舍。"
   },
   {
     priority: 14,
-    file: "框架管状结构分割 Framelet.pdf",
-    title: "Framelet-Based Algorithm for Segmentation of Tubular Structures",
-    year: 2012,
-    pages: 12,
-    track: "variational",
-    type: "SSVM / LNCS",
-    note: "早期会议版，体现 framelet 管状结构分割的源头。"
+    file: "在线无线电干涉成像 Online Radio Imaging.pdf",
+    title: "Online Radio Interferometric Imaging",
+    time: "2019",
+    year: 2019,
+    pages: 14,
+    track: "bayes",
+    type: "MNRAS style preprint",
+    position: "无线电干涉成像的大数据流式处理：visibilities 到达就 assimilate，然后丢弃。",
+    note: "解决大规模观测里数据不能全部存下来、也不能等全部到齐再处理的问题。"
   },
   {
     priority: 15,
-    file: "框架分割管状结构 Framelet Tubular.pdf",
-    title: "Vessel Segmentation in Medical Imaging Using a Tight-Frame Based Algorithm",
-    year: 2011,
-    pages: 13,
-    track: "variational",
-    type: "arXiv",
-    note: "扩展版，引入方向选择性 tight-frame 和更复杂 3D MRA 实验。"
+    file: "近端嵌套采样 Proximal Nested Sampling.pdf",
+    title: "Proximal Nested Sampling for High-Dimensional Bayesian Model Selection",
+    time: "2022",
+    year: 2022,
+    pages: 42,
+    track: "bayes",
+    type: "arXiv / Bayesian computation",
+    position: "从“估计图像 + 不确定性”升级到“哪个 Bayesian model 更合适”。",
+    note: "最后读，因为它需要 Bayesian evidence、nested sampling 和 proximal MCMC 背景。"
   }
 ];
 
-const timeline = [
-  { year: "2011-2012", label: "Framelet / tight-frame 管状结构", track: "variational" },
-  { year: "2013-2015", label: "T-ROF、联合恢复分割、SLaT", track: "variational" },
-  { year: "2017-2019", label: "RI 在线重建、proximal MCMC UQ、MAP UQ", track: "inverse" },
-  { year: "2019-2024", label: "SaT 到图分类，再到高维变分分类期刊版", track: "classification" },
-  { year: "2022", label: "Proximal nested sampling 做高维模型选择", track: "inverse" }
+const chronology = [
+  { time: "2011 / 2012", priority: 5, track: "framelet", label: "Framelet-Based Algorithm for Segmentation of Tubular Structures" },
+  { time: "2011 preprint / about 2013", priority: 6, track: "framelet", label: "Vessel Segmentation in Medical Imaging Using a Tight-Frame Based Algorithm" },
+  { time: "2013", priority: 3, track: "rof", label: "Multiclass Segmentation by Iterated ROF Thresholding" },
+  { time: "2014", priority: 4, track: "sat", label: "Variational Image Segmentation Model Coupled with Image Restoration Achievements" },
+  { time: "2015 preprint / 2017 line", priority: 7, track: "sat", label: "SLaT: Smoothing, Lifting and Thresholding" },
+  { time: "2016 preprint / 2019 v2 / about 2020", priority: 8, track: "framelet", label: "Wavelet-Based Segmentation on the Sphere" },
+  { time: "2018", priority: 12, track: "bayes", label: "RI UQ I: Proximal MCMC Methods" },
+  { time: "2018", priority: 13, track: "bayes", label: "RI UQ II: MAP Estimation" },
+  { time: "2019", priority: 14, track: "bayes", label: "Online Radio Interferometric Imaging" },
+  { time: "2019", priority: 2, track: "rof", label: "Linkage Between PCMS and ROF Model" },
+  { time: "2019", priority: 11, track: "bayes", label: "High-Dimensional Inverse Problems UQ" },
+  { time: "2019", priority: 9, track: "classification", label: "Two-Stage Classification for High-Dimensional Data" },
+  { time: "2022", priority: 15, track: "bayes", label: "Proximal Nested Sampling" },
+  { time: "2023", priority: 1, track: "sat", label: "SaT Segmentation Methodology Overview" },
+  { time: "2024", priority: 10, track: "classification", label: "Efficient Variational High-Dimensional Classification" }
 ];
+
+const readingStages = [
+  {
+    stage: "第一阶段",
+    title: "先建立全局地图",
+    focus: "先读 SaT 综述，建立 smoothing + thresholding 的整体地图，不要一开始啃证明。",
+    priorities: [1]
+  },
+  {
+    stage: "第二阶段",
+    title: "补核心理论",
+    focus: "连着读 ROF-PCMS 理论和 Iterated ROF，理解恢复模型如何支撑分割模型。",
+    priorities: [2, 3]
+  },
+  {
+    stage: "第三阶段",
+    title: "看恢复与分割如何结合",
+    focus: "理解 restoration fidelity term 为什么能让噪声、模糊、缺失像素和向量值图像更稳。",
+    priorities: [4]
+  },
+  {
+    stage: "第四阶段",
+    title: "读医学血管与 framelet/tight-frame 应用",
+    focus: "先短版、再长版，看管状结构、细血管、弱边缘、分叉和 2D/3D MRA 实验。",
+    priorities: [5, 6]
+  },
+  {
+    stage: "第五阶段",
+    title: "读 SaT 的扩展应用",
+    focus: "一篇看彩色图像 lifting，一篇看球面几何，确认 SaT/thresholding 的可迁移性。",
+    priorities: [7, 8]
+  },
+  {
+    stage: "第六阶段",
+    title: "读高维分类线",
+    focus: "把 image segmentation 抽象成 graph-based classification：初始化、图上平滑、投影/argmax。",
+    priorities: [9, 10]
+  },
+  {
+    stage: "第七阶段",
+    title: "读无线电干涉与不确定性量化线",
+    focus: "先短 UQ 总入口，再读 RI I/II、online imaging，最后读 Bayesian model selection。",
+    priorities: [11, 12, 13, 14, 15]
+  }
+];
+
+const paperByPriority = new Map(papers.map((paper) => [paper.priority, paper]));
 
 let activeTrack = "all";
 let query = "";
@@ -206,20 +315,35 @@ function filteredPapers() {
     const searchMatch = !normalized || [
       paper.title,
       paper.file,
+      paper.time,
       paper.year,
       tracks[paper.track].label,
+      paper.position,
       paper.note
     ].join(" ").toLowerCase().includes(normalized);
     return trackMatch && searchMatch;
   });
 }
 
+function renderThesis() {
+  byId("researchThesis").innerHTML = `
+    <article class="thesis-card">
+      <div>
+        <p class="eyebrow">Synthesis</p>
+        <h2>${thesis.headline}</h2>
+      </div>
+      <p>${thesis.body}</p>
+      <strong>${thesis.oneLine}</strong>
+    </article>
+  `;
+}
+
 function renderMetrics() {
   const metrics = [
-    { label: "去重后论文", value: "15", detail: "第一作者 PDF" },
-    { label: "研究主线", value: "3", detail: "SaT / UQ / 分类" },
-    { label: "删除旧重复", value: "1", detail: "错命名近重复" },
-    { label: "阅读报告", value: "3", detail: "Agent 分组完成" }
+    { label: "去重后论文", value: "15", detail: "Xiaohao Cai 第一作者" },
+    { label: "研究方向", value: "5", detail: "SaT / ROF / Framelet / 分类 / UQ" },
+    { label: "时间跨度", value: "2011-2024", detail: "预印本与正式发表脉络" },
+    { label: "阅读阶段", value: "7", detail: "按知识依赖排序" }
   ];
 
   byId("metrics").innerHTML = metrics.map((metric) => `
@@ -232,6 +356,7 @@ function renderMetrics() {
 }
 
 function renderTrackOverview() {
+  const maxCount = Math.max(...Object.values(tracks).map((track) => track.count));
   byId("trackOverview").innerHTML = Object.entries(tracks).map(([key, track]) => `
     <article class="track-card" style="--accent:${track.color}">
       <div class="track-top">
@@ -240,24 +365,30 @@ function renderTrackOverview() {
       </div>
       <h3>${track.label}</h3>
       <p>${track.summary}</p>
-      <div class="bar"><i style="width:${track.count / 8 * 100}%"></i></div>
+      <div class="bar"><i style="width:${track.count / maxCount * 100}%"></i></div>
     </article>
   `).join("");
 }
 
 function renderTimeline() {
-  byId("timeline").innerHTML = timeline.map((item) => `
-    <article class="time-node" style="--accent:${tracks[item.track].color}">
-      <span>${item.year}</span>
-      <p>${item.label}</p>
-    </article>
-  `).join("");
+  byId("timeline").innerHTML = chronology.map((item) => {
+    const paper = paperByPriority.get(item.priority);
+    return `
+      <article class="time-node" style="--accent:${tracks[item.track].color}">
+        <span>${item.time}</span>
+        <h3>${item.label}</h3>
+        <p>${paper.position}</p>
+        <a href="${pdfHref(paper.file)}">#${paper.priority} 打开 PDF</a>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderFilters() {
   const filters = [{ key: "all", label: "全部" }].concat(
     Object.entries(tracks).map(([key, track]) => ({ key, label: track.label }))
   );
+
   byId("trackFilters").innerHTML = filters.map((filter) => `
     <button class="${filter.key === activeTrack ? "active" : ""}" data-filter="${filter.key}" type="button">${filter.label}</button>
   `).join("");
@@ -272,9 +403,10 @@ function renderRows() {
         <td><span class="rank">${paper.priority}</span></td>
         <td>
           <strong>${paper.title}</strong>
+          <small>${paper.position}</small>
           <small>${paper.note}</small>
         </td>
-        <td>${paper.year}</td>
+        <td>${paper.time}</td>
         <td><span class="chip" style="--accent:${track.color}">${track.label}</span></td>
         <td>${paper.pages}</td>
         <td><a class="file-link" href="${pdfHref(paper.file)}">PDF</a></td>
@@ -293,7 +425,7 @@ function renderTrackDetails() {
         <p>${track.summary}</p>
         <p class="emphasis">${track.emphasis}</p>
         <ul>
-          ${list.slice(0, 5).map((paper) => `<li>${paper.title}</li>`).join("")}
+          ${list.map((paper) => `<li><a href="${pdfHref(paper.file)}">#${paper.priority} ${paper.title}</a></li>`).join("")}
         </ul>
       </article>
     `;
@@ -301,15 +433,26 @@ function renderTrackDetails() {
 }
 
 function renderReadingList() {
-  byId("readingList").innerHTML = papers.map((paper) => `
-    <li style="--accent:${tracks[paper.track].color}">
-      <div class="read-rank">${paper.priority}</div>
-      <div>
-        <h3>${paper.title}</h3>
-        <p>${paper.note}</p>
-        <span>${paper.year} · ${paper.type} · ${paper.pages} 页</span>
+  byId("readingList").innerHTML = readingStages.map((stage) => `
+    <li class="reading-stage">
+      <div class="stage-label">${stage.stage}</div>
+      <div class="stage-body">
+        <h3>${stage.title}</h3>
+        <p>${stage.focus}</p>
+        <div class="stage-papers">
+          ${stage.priorities.map((priority) => {
+            const paper = paperByPriority.get(priority);
+            const track = tracks[paper.track];
+            return `
+              <a class="stage-paper" style="--accent:${track.color}" href="${pdfHref(paper.file)}">
+                <span>#${paper.priority}</span>
+                <strong>${paper.title}</strong>
+                <small>${paper.time} · ${track.label}</small>
+              </a>
+            `;
+          }).join("")}
+        </div>
       </div>
-      <a href="${pdfHref(paper.file)}">打开 PDF</a>
     </li>
   `).join("");
 }
@@ -344,6 +487,7 @@ function bindEvents() {
 }
 
 function init() {
+  renderThesis();
   renderMetrics();
   renderTrackOverview();
   renderTimeline();
