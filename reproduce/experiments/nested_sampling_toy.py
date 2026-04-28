@@ -63,4 +63,7 @@ def run():
         "absolute_log_error": round(abs(log_est - log_ref), 4),
         "live_points": n_live,
         "iterations": n_iter
-    }, [fig_file], elapsed(), "Toy nested sampling on a 2D Gaussian likelihood under a uniform prior; not proximal constrained MCMC.")]
+    }, [fig_file], elapsed(), "Toy nested sampling on a 2D Gaussian likelihood under a uniform prior; not proximal constrained MCMC. Completed with large error; use as nested sampling mechanism demo only.", {
+        "resultQuality": "rough illustrative",
+        "warning": "large evidence error; toy only"
+    })]

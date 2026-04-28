@@ -75,6 +75,7 @@ function reproSearchText(item) {
     item.titleCn,
     item.titleEn,
     item.reproductionLevel,
+    item.reproductionTruthLevel,
     item.difficultyLabel,
     item.effectLabel,
     item.fullReproductionFeasibility,
@@ -87,6 +88,9 @@ function reproSearchText(item) {
     item.implementationRisk,
     item.verificationPlan,
     item.resultStatus,
+    item.resultQuality,
+    item.warning,
+    item.fidelityWarning,
     item.notes,
     Object.keys(item.runMetrics || {}).join(" "),
     Object.values(item.runMetrics || {}).join(" ")
@@ -442,15 +446,17 @@ function renderReproSummary() {
   if (!byId("reproSummary")) return;
   const completed = reproAssessments.filter((item) => item.resultStatus === "completed").length;
   const skipped = reproAssessments.filter((item) => item.resultStatus === "skipped").length;
-  const partial = reproAssessments.filter((item) => item.reproductionLevel === "partial").length;
-  const toy = reproAssessments.filter((item) => item.reproductionLevel === "toy").length;
+  const partial = reproAssessments.filter((item) => item.reproductionTruthLevel === "partial-completed").length;
+  const toy = reproAssessments.filter((item) => item.reproductionTruthLevel === "toy-completed").length;
+  const paperLevel = reproAssessments.filter((item) => item.reproductionTruthLevel === "paper-level-completed").length;
   const hardest = [...reproAssessments].sort((a, b) => b.difficultyScore - a.difficultyScore || a.priority - b.priority).slice(0, 3);
   const clearest = [...reproAssessments].sort((a, b) => b.effectScore - a.effectScore || a.difficultyScore - b.difficultyScore).slice(0, 3);
 
   const cards = [
     { label: "评估论文", value: reproAssessments.length, detail: "与精读卡片一一对应" },
     { label: "已运行", value: completed, detail: skipped ? `${skipped} 个 skipped` : "当前 0 个 skipped" },
-    { label: "partial / toy", value: `${partial} / ${toy}`, detail: "没有伪装 paper-level full reproduction" },
+    { label: "partial / toy", value: `${partial} / ${toy}`, detail: "truth level，不等于脚本状态" },
+    { label: "paper-level", value: `${paperLevel} / ${reproAssessments.length}`, detail: "当前无论文级完整复现" },
     { label: "最难 full reproduction", value: hardest.map((item) => `#${item.priority}`).join(" "), detail: hardest.map((item) => item.titleCn).join(" · ") },
     { label: "演示最清楚", value: clearest.map((item) => `#${item.priority}`).join(" "), detail: clearest.map((item) => item.titleCn).join(" · ") }
   ];
@@ -462,6 +468,23 @@ function renderReproSummary() {
       <small>${escapeHtml(card.detail)}</small>
     </article>
   `).join("");
+}
+
+function renderReproTruthAlert() {
+  const target = byId("reproTruthAlert");
+  if (!target) return;
+  const paperLevel = reproAssessments.filter((item) => item.reproductionTruthLevel === "paper-level-completed").length;
+  target.innerHTML = `
+    <strong>复现真实性提示</strong>
+    <p>completed 表示 toy/partial 实验脚本跑通，不表示论文级完整复现。当前 paper-level reproduction: ${paperLevel} / ${reproAssessments.length}。</p>
+    <div class="truth-legend">
+      <span>completed = script ran successfully</span>
+      <span>toy-completed = synthetic minimal demo only</span>
+      <span>partial-completed = partial algorithmic route demo</span>
+      <span>paper-level-completed = close to paper experiments</span>
+      <span>current paper-level-completed: ${paperLevel}</span>
+    </div>
+  `;
 }
 
 function renderReproScoring() {
@@ -521,6 +544,7 @@ function renderReproCards() {
             <div class="note-meta">
               <span>#${item.priority}</span>
               <span>${escapeHtml(item.reproductionLevel)}</span>
+              <span>${escapeHtml(item.reproductionTruthLevel)}</span>
               <span>${escapeHtml(item.resultStatus)}</span>
             </div>
             <h3>${escapeHtml(item.titleCn)}</h3>
@@ -577,6 +601,13 @@ function renderReproCards() {
           <section class="note-detail-block">
             <strong>实际运行指标</strong>
             ${renderMetricPairs(item.runMetrics)}
+          </section>
+          <section class="note-detail-block">
+            <strong>真实性 / 质量提示</strong>
+            <p>${escapeHtml(item.reproductionTruthLevel)}</p>
+            ${item.fidelityWarning ? `<p>${escapeHtml(item.fidelityWarning)}</p>` : ""}
+            ${item.resultQuality ? `<p>resultQuality: ${escapeHtml(item.resultQuality)}</p>` : ""}
+            ${item.warning ? `<p class="warning-text">${escapeHtml(item.warning)}</p>` : ""}
           </section>
           <section class="note-detail-block">
             <strong>结果文件</strong>
@@ -773,6 +804,7 @@ function init() {
   renderThemeFilters();
   renderNotes();
   renderReproSummary();
+  renderReproTruthAlert();
   renderReproScoring();
   renderReproBatches();
   renderReproLevelFilters();

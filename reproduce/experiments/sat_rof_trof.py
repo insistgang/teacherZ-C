@@ -88,19 +88,19 @@ def run():
     dice_sat = float((2 * ((truth2 == 1) & sat2).sum()) / ((truth2 == 1).sum() + sat2.sum()))
 
     return [
-        completed(1, "sat-overview", "sat_rof_trof", "partial", {
+        completed(1, "sat-overview", "sat_rof_trof", "toy-to-partial", {
             "direct_accuracy": round(acc_raw, 4),
             "sat_accuracy": round(acc_sat, 4),
             "accuracy_gain": round(acc_sat - acc_raw, 4)
-        }, [sat_file], runtime, "Toy SaT: TV smoothing followed by K-means thresholding on synthetic multiphase image."),
-        completed(2, "pcms-rof-linkage", "sat_rof_trof", "partial", {
+        }, [sat_file], runtime, "Gaussian smoothing is used as a lightweight proxy for convex ROF/TV smoothing on a synthetic toy image."),
+        completed(2, "pcms-rof-linkage", "sat_rof_trof", "toy-to-partial", {
             "direct_dice": round(dice_direct, 4),
             "rof_threshold_dice": round(dice_sat, 4),
             "pcms_like_energy": round(float(np.abs(np.gradient(sat2.astype(float))[0]).sum() + np.abs(np.gradient(sat2.astype(float))[1]).sum()), 4)
-        }, [sat_file], runtime, "Toy linkage: ROF/TV minimizer thresholded at a fixed midpoint; not a proof of Theorem 3.6."),
-        completed(3, "iterated-rof", "sat_rof_trof", "partial", {
+        }, [sat_file], runtime, "This synthetic toy demonstrates thresholding after proxy smoothing, but does not solve the exact ROF model or prove Theorem 3.6."),
+        completed(3, "iterated-rof", "sat_rof_trof", "toy-to-partial", {
             "raw_kmeans_accuracy": round(acc_raw, 4),
             "trof_accuracy": round(acc_trof, 4),
             "threshold_iterations": len(threshold_trace) - 1
-        }, [sat_file, trof_file], runtime, "Toy T-ROF: iterative tau_i = 1/2(m_{i-1}+m_i) after one TV smoothing step.")
+        }, [sat_file, trof_file], runtime, "This synthetic toy implements the threshold update tau_i = 1/2(m_{i-1}+m_i) after proxy smoothing; strict T-ROF should solve ROF once.")
     ]

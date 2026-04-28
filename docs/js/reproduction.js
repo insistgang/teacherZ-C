@@ -75,12 +75,14 @@
     const completed = reproAssessments.filter((item) => item.resultStatus === "completed").length;
     const skipped = reproAssessments.filter((item) => item.resultStatus === "skipped").length;
     const failed = reproAssessments.filter((item) => item.resultStatus === "failed").length;
+    const paperLevel = reproAssessments.filter((item) => item.reproductionTruthLevel === "paper-level-completed").length;
     const avgDifficulty = reproAssessments.reduce((sum, item) => sum + item.difficultyScore, 0) / reproAssessments.length;
     const avgEffect = reproAssessments.reduce((sum, item) => sum + item.effectScore, 0) / reproAssessments.length;
     const figures = new Set(reproAssessments.flatMap((item) => item.resultFiles || [])).size;
     const cards = [
       { label: "评估对象", value: "15", detail: "Xiaohao Cai 第一作者论文" },
       { label: "运行状态", value: `${completed} completed`, detail: `${skipped} skipped · ${failed} failed` },
+      { label: "paper-level", value: `${paperLevel} / ${reproAssessments.length}`, detail: "当前无论文级完整复现" },
       { label: "平均难度", value: avgDifficulty.toFixed(1), detail: "1 低到 5 极高" },
       { label: "平均展示效果", value: avgEffect.toFixed(1), detail: "1 弱到 5 很明显" },
       { label: "结果图", value: figures, detail: "位于 docs/assets/repro/" }
@@ -92,6 +94,23 @@
         <small>${escapeHtml(card.detail)}</small>
       </article>
     `).join("");
+  }
+
+  function renderTruthAlert() {
+    const target = byId("reproReportTruthAlert");
+    if (!target) return;
+    const paperLevel = reproAssessments.filter((item) => item.reproductionTruthLevel === "paper-level-completed").length;
+    target.innerHTML = `
+      <strong>复现真实性提示</strong>
+      <p>completed 表示 toy/partial 实验跑通，不表示论文级完整复现。当前 paper-level reproduction: ${paperLevel} / ${reproAssessments.length}。</p>
+      <div class="truth-legend">
+        <span>completed = script ran successfully</span>
+        <span>toy-completed = synthetic minimal demo only</span>
+        <span>partial-completed = partial algorithmic route demo</span>
+        <span>paper-level-completed = close to paper experiments</span>
+        <span>current paper-level-completed: ${paperLevel}</span>
+      </div>
+    `;
   }
 
   function renderScoring() {
@@ -150,6 +169,7 @@
           <small>${escapeHtml(item.titleEn)}</small>
         </td>
         <td>${escapeHtml(item.reproductionLevel)}</td>
+        <td>${escapeHtml(item.reproductionTruthLevel)}</td>
         <td><span class="status-pill ${escapeHtml(item.resultStatus)}">${escapeHtml(item.resultStatus)}</span></td>
         <td>${escapeHtml(item.runtimeSeconds ?? "n/a")}s</td>
         <td>${escapeHtml(metricSummary(item.runMetrics))}</td>
@@ -198,6 +218,7 @@
 
           <div class="report-meta-row">
             <span>${escapeHtml(item.reproductionLevel)}</span>
+            <span>${escapeHtml(item.reproductionTruthLevel)}</span>
             <span>难度 ${item.difficultyScore}/5 · ${escapeHtml(item.difficultyLabel)}</span>
             <span>效果 ${item.effectScore}/5 · ${escapeHtml(item.effectLabel)}</span>
             <span>${escapeHtml(item.resultStatus)}</span>
@@ -237,6 +258,14 @@
           </section>
 
           <section class="report-subsection">
+            <h4>结果质量与 warning</h4>
+            <p><strong>truth level：</strong>${escapeHtml(item.reproductionTruthLevel)}</p>
+            ${item.fidelityWarning ? `<p>${escapeHtml(item.fidelityWarning)}</p>` : ""}
+            ${item.resultQuality ? `<p><strong>resultQuality：</strong>${escapeHtml(item.resultQuality)}</p>` : ""}
+            ${item.warning ? `<p class="warning-text">${escapeHtml(item.warning)}</p>` : ""}
+          </section>
+
+          <section class="report-subsection">
             <h4>结果文件</h4>
             ${resultFiles(item)}
           </section>
@@ -253,6 +282,7 @@
   function renderNextSteps() {
     const paragraphs = [
       "第一步应把效果最清楚的 SaT / T-ROF / SLaT toy 变成可反复运行的小 benchmark：固定噪声、模糊、灰度间隔和类别数，系统记录 accuracy、Dice 与运行时间。",
+      "重新设计 SLaT toy，使 RGB 通道高度相关但 Lab/chroma 差异明显，以更好展示 lifting 的价值。当前 RGB+Lab-like 只带来 0.0053 的 accuracy gain，不能支撑很强的效果结论。",
       "第二步可以补 framelet/tight-frame 与 graph classification 的更忠实实现：前者替换 Gaussian fallback 为真正 framelet/tight-frame shrinkage，后者补 graph TV proximal 或 primal-dual solver。",
       "第三步再进入 inverse problem：把 MAP-UQ toy 扩展到更真实的 Fourier / MRI undersampling，再做小规模 posterior sampling 校验 HPD approximation 的保守性。",
       "最后才建议推进 spherical wavelet 和 proximal nested sampling 的 full reproduction，因为它们依赖专门库、采样诊断和高维模型选择验证，短期最容易把 toy 结果误读成论文级结果。"
@@ -264,6 +294,7 @@
     renderVersion();
     renderToc();
     renderSummary();
+    renderTruthAlert();
     renderScoring();
     renderRankings();
     renderBatches();

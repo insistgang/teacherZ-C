@@ -79,7 +79,7 @@ def run():
     }
     runtime = elapsed()
     return [
-        completed(11, "high-dimensional-uq", "map_uq_toy", "toy", base_metrics, [fig_file], runtime, "Toy MAP-UQ: small Fourier undersampling inverse problem with approximate HPD and local interval map."),
-        completed(12, "ri-uq-i", "map_uq_toy", "toy", base_metrics, [fig_file], runtime, "Toy proximal-MCMC-style sampling on a 32x32 Fourier inverse problem; no RI operator or MCMC diagnostics."),
-        completed(13, "ri-uq-ii", "map_uq_toy", "toy", base_metrics, [fig_file], runtime, "Toy MAP-UQ is faster than the toy sampler and gives a similar uncertainty pattern; not a paper-level SKA experiment.")
+        completed(11, "high-dimensional-uq", "map_uq_toy", "toy", base_metrics, [fig_file], runtime, "Toy MAP-UQ: small Fourier undersampling inverse problem with approximate HPD and local interval map. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."),
+        completed(12, "ri-uq-i", "map_uq_toy", "toy", base_metrics, [fig_file], runtime, "Toy proximal-MCMC-style sampling on a 32x32 Fourier inverse problem; no RI operator or MCMC diagnostics. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."),
+        completed(13, "ri-uq-ii", "map_uq_toy", "toy", base_metrics, [fig_file], runtime, "Toy MAP-UQ is faster than the toy sampler and gives a similar uncertainty pattern; not a paper-level SKA experiment. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim.")
     ]

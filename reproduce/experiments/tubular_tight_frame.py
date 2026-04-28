@@ -76,6 +76,6 @@ def run():
     }
     runtime = elapsed()
     return [
-        completed(5, "framelet-tubular", "tubular_tight_frame", "toy", metrics, [fig_file], runtime, "Approximate toy reproduction: Gaussian smoothing stands in for framelet smoothing inside uncertain boundary interval."),
-        completed(6, "tight-frame-vessel", "tubular_tight_frame", "toy", metrics, [fig_file], runtime, "Approximate toy reproduction: Lambda boundary set shrinkage and finite convergence pattern on synthetic 2D vessel network.")
+        completed(5, "framelet-tubular", "tubular_tight_frame", "toy", metrics, [fig_file], runtime, "Approximate toy reproduction: Gaussian smoothing stands in for framelet smoothing inside uncertain boundary interval. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance."),
+        completed(6, "tight-frame-vessel", "tubular_tight_frame", "toy", metrics, [fig_file], runtime, "Approximate toy reproduction: Lambda boundary set shrinkage and finite convergence pattern on synthetic 2D vessel network. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance.")
     ]

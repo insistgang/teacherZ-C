@@ -56,4 +56,4 @@ def run():
         "rgb_only_accuracy": round(rgb_acc, 4),
         "rgb_lab_accuracy": round(rgblab_acc, 4),
         "accuracy_gain": round(rgblab_acc - rgb_acc, 4)
-    }, [fig_file], elapsed(), "Toy SLaT: channel smoothing, RGB plus Lab-like luminance/chroma lifting, K-means on synthetic degraded color image.")]
+    }, [fig_file], elapsed(), "Toy SLaT: channel smoothing, RGB plus Lab-like luminance/chroma lifting, K-means on synthetic degraded color image. Current toy shows only a small metric gain; a better synthetic color case is needed to highlight Lab lifting.")]

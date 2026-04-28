@@ -34,9 +34,19 @@ python reproduce/run_all.py
 ## 复现等级定义
 
 - `toy`：使用 synthetic/toy 数据，只验证论文核心思想的一个小型可运行片段。
+- `toy-to-partial`：实现了论文算法路线的一部分，但关键求解器使用轻量 proxy，例如 Gaussian smoothing 代替严格 ROF/TV minimization。
 - `partial`：复现论文核心算法路线的一部分，例如 SaT smoothing + thresholding、SLaT RGB+Lab、graph smoothing。
 - `paper-level`：接近论文实验设置。当前没有把任何重依赖论文标成 paper-level。
 - `assessment-only`：只做难度评估，不运行实验。当前 15 篇都至少有 toy 或 partial 实验。
+
+`resultStatus=completed` 只表示脚本跑通，不表示论文级完整复现。Dashboard 中的 `reproductionTruthLevel` 才用于区分：
+
+- `toy-completed`：synthetic minimal demo only
+- `partial-completed`：partial algorithmic route demo
+- `paper-level-completed`：close to paper experiments
+- `assessment-only`：只做评估
+
+当前 `paper-level-completed = 0 / 15`。
 
 ## 哪些不是 full reproduction
 

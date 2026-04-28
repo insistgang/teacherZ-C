@@ -66,23 +66,51 @@ if (data) {
   if (Array.isArray(reproAssessments)) {
     const noteIdSet = new Set(noteIds);
     const reproIds = reproAssessments.map((item) => item.id);
+    const allowedTruthLevels = new Set(["toy-completed", "partial-completed", "paper-level-completed", "assessment-only"]);
+    const paperLevelCount = reproAssessments.filter((item) => item.reproductionTruthLevel === "paper-level-completed").length;
+    const resultsPath = path.join(repoRoot, "reproduce", "results", "repro_results.json");
+    const runResults = fs.existsSync(resultsPath) ? JSON.parse(readText(resultsPath)) : [];
+    const runResultById = new Map(runResults.map((item) => [item.id, item]));
+    const satSource = readText(path.join(repoRoot, "reproduce", "experiments", "sat_rof_trof.py"));
     check(new Set(reproIds).size === reproIds.length, "reproAssessment.id 不唯一");
+    check(process.env.ALLOW_PAPER_LEVEL === "1" || paperLevelCount === 0, `paper-level-completed 当前必须为 0，实际为 ${paperLevelCount}`);
 
     reproAssessments.forEach((item) => {
       check(noteIdSet.has(item.id), `${item.id} 无法匹配 paperNotesV2.id`);
+      check(allowedTruthLevels.has(item.reproductionTruthLevel), `${item.id} reproductionTruthLevel 无效或缺失`);
       check(Number.isInteger(item.difficultyScore) && item.difficultyScore >= 1 && item.difficultyScore <= 5, `${item.id} difficultyScore 不在 1-5`);
       check(Number.isInteger(item.effectScore) && item.effectScore >= 1 && item.effectScore <= 5, `${item.id} effectScore 不在 1-5`);
       check(typeof item.minimalExperiment === "string" && item.minimalExperiment.trim().length > 0, `${item.id} minimalExperiment 为空`);
       check(Array.isArray(item.metrics), `${item.id} metrics 不是数组`);
       check(item.resultStatus, `${item.id} 缺少 resultStatus`);
+      const notesLower = String(item.notes || "").toLowerCase();
+      if (String(item.reproductionTruthLevel || "").includes("toy")) {
+        check(notesLower.includes("toy") || notesLower.includes("synthetic"), `${item.id} truthLevel 含 toy 但 notes 未说明 toy/synthetic`);
+      }
       if (item.resultStatus === "completed") {
         check(Array.isArray(item.resultFiles) && item.resultFiles.length > 0, `${item.id} completed 但没有 resultFiles`);
+        check(Boolean(item.resultQuality || item.notes), `${item.id} completed 但缺少 resultQuality 或 notes`);
         (item.resultFiles || []).forEach((file) => {
           check(fs.existsSync(path.join(docsDir, file)), `${item.id} resultFile 不存在：${file}`);
         });
       }
       if (item.resultStatus === "skipped") {
         check(Boolean(item.skipped_reason || item.skippedReason), `${item.id} skipped 但缺少 skipped_reason`);
+      }
+      if (item.id === "proximal-nested-sampling") {
+        const absoluteLogError = Number(item.runMetrics?.absolute_log_error ?? runResultById.get(item.id)?.metrics?.absolute_log_error ?? 0);
+        if (absoluteLogError > 1) {
+          check(Boolean(item.warning), "nested_sampling_toy absolute_log_error > 1 但缺少 warning");
+        }
+      }
+      if (item.id === "slat-color") {
+        const accuracyGain = Number(item.runMetrics?.accuracy_gain ?? runResultById.get(item.id)?.metrics?.accuracy_gain ?? 0);
+        if (accuracyGain < 0.02) {
+          check(item.effectScore !== 5, "SLaT accuracy_gain < 0.02 时 effectScore 不能为 5");
+        }
+      }
+      if (["sat-overview", "pcms-rof-linkage", "iterated-rof"].includes(item.id) && satSource.includes("gaussian_filter")) {
+        check(notesLower.includes("proxy smoothing") || (notesLower.includes("gaussian") && notesLower.includes("proxy")), `${item.id} 使用 gaussian_filter 但 notes 未说明 proxy smoothing / Gaussian proxy`);
       }
     });
   }
