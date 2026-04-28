@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xiaohao Cai 第一作者论文研究脉络完整报告</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="report-page">
+  <header class="report-hero">
+    <div class="report-hero-inner">
+      <p class="eyebrow">Complete Reading Report</p>
+      <h1>Xiaohao Cai 第一作者论文研究脉络完整报告</h1>
+      <p>围绕 15 篇第一作者论文建立系统阅读地图：研究方向、时间线、知识依赖、逐篇精读标准、四周阅读计划和后续选题入口。</p>
+      <div class="report-hero-actions">
+        <a class="report-button primary" href="index.html">返回 Dashboard</a>
+        <a class="report-button" href="index.html#notes">回到精读笔记</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="report-shell">
+    <nav class="report-nav" aria-label="完整报告目录">
+      <div>
+        <p class="eyebrow">Navigation</p>
+        <h2>目录</h2>
+      </div>
+      <div id="reportToc" class="report-toc"></div>
+    </nav>
+
+    <section class="report-section" id="report-positioning">
+      <p class="eyebrow">Section 0</p>
+      <h2>报告定位</h2>
+      <p>这份报告不是旧版 agent 粗读日志，也不是逐篇摘要的堆叠。它把 dashboard 中的 15 张结构化精读卡片展开成一份正式阅读指南，用同一套论文数据、同一套阅读顺序和同一条研究脉络来组织内容。</p>
+      <p>报告重点回答五个问题：Xiaohao Cai 这组论文的研究方向是什么；15 篇论文如何形成发表时间线；不同论文之间如何相互支撑；精读每篇论文时应该抓住什么模型、算法、定理和实验对象；读完之后可以怎样形成自己的选题入口。</p>
+    </section>
+
+    <section class="report-section" id="report-direction">
+      <p class="eyebrow">Section 1</p>
+      <h2>总体研究方向判断</h2>
+      <p>总体看，这 15 篇 Xiaohao Cai 第一作者论文不是随机分散在图像处理和机器学习应用上的工作，而是围绕一套稳定的数学语言展开：变分模型、凸优化、稀疏/小波/框架表示、贝叶斯逆问题，用于图像分割、恢复、分类、无线电干涉成像和不确定性量化。早期工作关心如何把非凸分割问题拆成更稳定的平滑或恢复子问题，后期工作把这种可解释、可优化的建模风格迁移到图上分类和高维贝叶斯逆问题。</p>
+      <div class="mainline-grid" id="reportMainlines"></div>
+    </section>
+
+    <section class="report-section" id="report-timeline-section">
+      <p class="eyebrow">Section 2</p>
+      <h2>论文发表时间线</h2>
+      <p>发表时间线只说明这些论文在时间上如何出现，不等于推荐阅读顺序。真正精读时应按知识依赖排序：先建立 SaT/ROF/PCMS 的理论地图，再读医学、彩色、球面和高维分类扩展，最后进入无线电干涉成像与 Bayesian uncertainty quantification。</p>
+      <div class="report-table-wrap">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>论文</th>
+              <th>主线</th>
+              <th>脉络作用</th>
+            </tr>
+          </thead>
+          <tbody id="reportTimeline"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="report-section" id="report-order-section">
+      <p class="eyebrow">Section 3</p>
+      <h2>推荐阅读顺序</h2>
+      <p>下面的顺序不按发表时间，而按知识依赖排序。每一项都说明为什么放在这个位置，避免从无线电干涉、球面小波或 nested sampling 直接切入导致背景断裂。</p>
+      <ol class="report-order" id="reportReadingOrder"></ol>
+    </section>
+
+    <section class="report-section" id="report-layers">
+      <p class="eyebrow">Section 4</p>
+      <h2>三层研究脉络图</h2>
+      <div id="reportLayers"></div>
+    </section>
+
+    <section class="report-section" id="report-papers-section">
+      <p class="eyebrow">Section 5</p>
+      <h2>15 篇逐篇精读报告</h2>
+      <p>这一部分是报告核心。每篇都按统一模板展开：定位、问题、难点、方法、公式、算法流程、理论保证、实验重点、论文关系、精读问题和读后产出。公式用 plain text 表示，不依赖 MathJax。</p>
+      <div id="reportPapers"></div>
+    </section>
+
+    <section class="report-section" id="report-dependencies-section">
+      <p class="eyebrow">Section 6</p>
+      <h2>15 篇之间的依赖关系</h2>
+      <div id="reportDependencies"></div>
+    </section>
+
+    <section class="report-section" id="report-plan-section">
+      <p class="eyebrow">Section 7</p>
+      <h2>给我的四周阅读计划</h2>
+      <div class="week-grid" id="reportPlan"></div>
+    </section>
+
+    <section class="report-section" id="report-topics-section">
+      <p class="eyebrow">Section 8</p>
+      <h2>可选研究选题入口</h2>
+      <div class="topic-grid" id="reportTopics"></div>
+    </section>
+
+    <section class="report-section" id="report-summary-section">
+      <p class="eyebrow">Section 9</p>
+      <h2>最终总结</h2>
+      <div id="reportSummary"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script src="report.js"></script>
+</body>
+</html>

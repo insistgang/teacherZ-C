@@ -379,7 +379,7 @@ const paperNotesV2 = [
     methodHandle: "论文先分析 K=2 的 T-ROF 与 PCMS 关系，再把 ROF minimizer 的 level set/threshold set 与 PCMS partial minimizer 联系起来。核心操作是求 ROF minimizer u*，再取 threshold set Σ = {x : u*(x) > (m0 + m1) / 2}，从而把恢复解转成分割区域。",
     keyModelOrFormula: "ROF: TV(u) + μ/2 ∫(u - f)^2 dx; PCMS/Chan-Vese: perimeter(Σ) + λ ∫ data fitting; threshold: Σ = {x : u*(x) > (m0 + m1)/2}.",
     algorithmFlow: ["固定二相常数 m0、m1。", "求解 ROF / T-ROF 相关凸恢复子问题。", "用 (m0 + m1) / 2 构造阈值。", "把 ROF minimizer 的 level set 转为区域 Σ。", "检查 Σ 与 PCMS partial minimizer 的关系。"],
-    theoremOrGuarantee: "PDF 中主定理集中在 Section 3：K=2 时，ROF minimizer 的合适阈值集可给出 PCMS/Chan-Vese 的 partial minimizer；多相 K>2 仍有类似结论，但依赖更具体的假设和阈值结构。",
+    theoremOrGuarantee: "精读时以 Theorem 3.6 或本地 PDF 对应主定理为核心：K=2 时，ROF minimizer 的合适阈值集可给出 PCMS/Chan-Vese 的 partial minimizer；多相 K>2 仍有类似结论，但依赖更具体的假设和阈值结构。",
     experimentFocus: "实验部分展示 T-ROF 在 noisy、blurry、information loss 等退化图像上的分割效率和质量，重点不是新数据集，而是验证理论范式带来的计算优势。",
     howToRead: "先读 Abstract 和 Section 1，明确 ROF 与 PCMS 各自角色；再精读 Section 3 的主定理和 partial minimizer；最后读 Section 4 的 T-ROF 算法和收敛分析。",
     relation: { text: "它给 T-ROF 与 SaT 提供理论合法性，并解释为什么恢复模型可以服务分割。", links: [1, 3, 4] },
@@ -467,7 +467,7 @@ const paperNotesV2 = [
     methodHandle: "长版用 tight-frame 表示迭代细化可能边界区域。它初始化 Λ^(0) 为潜在边界像素，根据 μ、μ_-、μ_+ 得到 [α_i, β_i]，再只在 Λ 区域执行 tight-frame denoising / smoothing，并逐轮更新二值候选。",
     keyModelOrFormula: "Λ^(i+1) = {j : 0 < f_j^(i+1/2) < 1}; update only Λ; pixels mapped to 0 or 1 leave the candidate set.",
     algorithmFlow: ["初始化潜在边界集合 Λ^(0)。", "计算 μ、μ_-、μ_+ 并形成 [α_i, β_i]。", "按区间把像素映射到 0、候选值或 1。", "在 Λ 区域做 tight-frame 迭代。", "更新 Λ，直到得到二值血管图像。"],
-    theoremOrGuarantee: "Theorem 1 证明 tight-frame algorithm 会收敛到二值图像；文本还强调通常几次迭代即可收敛，每轮复杂度可按像素规模理解为线性级别。",
+    theoremOrGuarantee: "Theorem 1 证明 tight-frame algorithm 会有限步收敛到二值图像；文本还强调通常几次迭代即可收敛，每轮复杂度为 O(n)，n 为像素/体素规模。",
     experimentFocus: "实验对象为 real 2D/3D MRA images；对照 PDE 和 variational methods，重点看是否提取更多 tubular objects 与 fine details。",
     howToRead: "先读 Introduction 中与 PDE/active contour 的差异；精读 Algorithm 1 和 Theorem 1；实验部分重点看 2D 与 3D MRA 的细节保持。",
     relation: { text: "它扩展了 Framelet 短版，并为 spherical wavelet segmentation 提供“候选边界区间 + wavelet/frame”思想来源。", links: [5, 8, 1] },
@@ -676,6 +676,19 @@ const paperNotesV2 = [
 
 const paperByPriority = new Map(papers.map((paper) => [paper.priority, paper]));
 const noteByPriority = new Map(paperNotesV2.map((note) => [note.priority, note]));
+
+window.ZX_READING_DATA = {
+  basePath,
+  tracks,
+  thesis,
+  papers,
+  chronology,
+  readingStages,
+  noteThemes,
+  noteMainlines,
+  readingStandard,
+  paperNotesV2
+};
 
 let activeTrack = "all";
 let query = "";
@@ -1025,7 +1038,7 @@ function renderNotes() {
 
         <div class="note-actions">
           <a href="${pdfHref(pdf)}">打开 PDF</a>
-          <a href="00_papers_first_author_xiaohao_cai_deduped/agent_team_reading_report.md">完整报告</a>
+          <a href="reading_report.html#paper-${escapeHtml(note.id)}">完整研究报告</a>
           <button type="button" class="note-toggle" data-note-toggle="${note.priority}" aria-expanded="false" aria-controls="note-detail-${note.priority}">展开精读字段</button>
         </div>
       </article>
@@ -1122,6 +1135,22 @@ function bindEvents() {
   });
 }
 
+function handleInitialLocation() {
+  const params = new URLSearchParams(window.location.search);
+  const noteId = params.get("note");
+  if (noteId) {
+    const note = paperNotesV2.find((item) => item.id === noteId);
+    if (note) {
+      scrollToNote(note.priority);
+      return;
+    }
+  }
+
+  if (window.location.hash === "#notes") {
+    switchView("notes");
+  }
+}
+
 function init() {
   renderThesis();
   renderMetrics();
@@ -1137,6 +1166,11 @@ function init() {
   renderThemeFilters();
   renderNotes();
   bindEvents();
+  handleInitialLocation();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("metrics")) {
+    init();
+  }
+});
