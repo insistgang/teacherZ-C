@@ -1,7 +1,7 @@
 # Xiaohao Cai 学术研究精读与复现项目
 
-> **目标**: 系统精读80+篇论文，复现核心方法
-> **状态**: 54篇精读笔记已填充（约80篇PDF）
+> **目标**: 系统精读15篇第一作者论文，复现核心方法
+> **状态**: 15篇精读笔记已全部完成
 
 ---
 
@@ -15,23 +15,33 @@ D:\Documents\zx\
 ├── 📄 start-server.bat                   # 启动本地服务器脚本
 │
 ├── 📁 docs/                              # Web展示系统
-│   ├── index.html                        # 主页面
+│   ├── index.html                        # 主页面（精读Dashboard）
 │   ├── reading_report.html               # 阅读报告页
 │   ├── reproduction_report.html          # 复现报告页
 │   ├── style.css / js/                   # 前端资源
-│   ├── assets/repro/                     # 复现实验图片
-│   └── 00_papers_first_author_xiaohao_cai_deduped/  # 15篇去重PDF元数据
+│   ├── assets/repro/                     # 复现实验图片（10张）
+│   └── 00_papers_first_author_xiaohao_cai_deduped/  # 15篇PDF
 │
 ├── 📁 visualizer_complete/               # 完整可视化系统
-│   ├── 00_papers/                        # 80篇论文PDF（346 MB）
+│   ├── 00_papers/                        # 15篇论文PDF（35 MB）
 │   ├── app.js / data.js / index.html    # 前端代码
-│   └── style.css / check_files.py
+│   └── style.css
 │
-├── 📁 xiaohao_cai_ultimate_notes/        # 论文精读笔记（108个文件）
-│   ├── 00_分析报告汇总.md
-│   ├── *_超精读笔记_已填充.md            # 54篇完整笔记
-│   ├── *_超精读笔记_完整.md / 深度版.md   # 精简版本
-│   └── README.md
+├── 📁 xiaohao_cai_ultimate_notes/        # 15篇精读笔记
+│   ├── SLaT_Three-stage_Segmentation_超精读笔记_已填充.md
+│   ├── Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md
+│   ├── Two-Stage_Segmentation_2013_超精读笔记_已填充.md
+│   ├── Variational_Segmentation-Restoration_超精读笔记_已填充.md
+│   ├── High-Dimensional_Inverse_Problems_UQ_超精读笔记_已填充.md
+│   ├── 高效变分分类方法_超精读笔记_已填充.md
+│   ├── 框架分割管状结构_超精读笔记_已填充.md
+│   ├── 多类分割迭代ROF_超精读笔记_已填充.md
+│   ├── 分割方法论总览_超精读笔记_已填充.md
+│   ├── Wavelet_Segmentation_on_Sphere_超精读笔记_已填充.md
+│   ├── Radio_Interferometric_Imaging_I_超精读笔记_已填充.md
+│   ├── Radio_Interferometric_Imaging_II_超精读笔记_已填充.md
+│   ├── Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md
+│   └── Proximal_Nested_Sampling_超精读笔记_已填充.md
 │
 └── 📁 reproduce/                         # 复现实验代码
     ├── run_all.py
@@ -45,10 +55,32 @@ D:\Documents\zx\
 
 | 指标 | 数值 |
 |:---|:---:|
-| **PDF论文** | 80篇 |
-| **精读笔记文件** | 108个 |
-| **已填充完整笔记** | 54篇 |
-| **复现实验** | 9个实验（reproduce/） |
+| **第一作者论文** | 15篇 |
+| **PDF论文** | 14篇（+1篇去重版） |
+| **精读笔记** | 16个文件（15篇+1篇UQ补充） |
+| **复现实验** | 15个实验全部完成 |
+
+---
+
+## 📖 15篇论文列表
+
+| # | 论文 | 年份 | 笔记状态 | 复现状态 |
+|:---:|:---|:---:|:---:|:---:|
+| 1 | SLaT三阶段分割 | 2015 | ✅ | ✅ |
+| 2 | Mumford-Shah与ROF联系 | 2018 | ✅ | ✅ |
+| 3 | T-ROF迭代阈值分割 | 2013 | ✅ | ✅ |
+| 4 | 分割恢复联合模型 | 2013 | ✅ | ✅ |
+| 5 | 高维逆问题不确定性量化 | 2018 | ✅ | ✅ |
+| 6 | 高效变分分类 | 2019 | ✅ | ✅ |
+| 7 | 框架管状结构分割 | 2016 | ✅ | ✅ |
+| 8 | 迭代ROF多类分割 | 2014 | ✅ | ✅ |
+| 9 | 分割方法论总览 | 2017 | ✅ | ✅ |
+| 10 | 球面小波分割 | 2016 | ✅ | ✅ |
+| 11 | 无线电干涉成像I | 2017 | ✅ | ✅ |
+| 12 | 无线电干涉成像II | 2017 | ✅ | ✅ |
+| 13 | 在线无线电干涉成像 | 2017 | ✅ | ✅ |
+| 14 | 近端嵌套采样 | 2021 | ✅ | ✅ |
+| 15 | 两阶段图像分割 | 2013 | ✅ | ✅ |
 
 ---
 
@@ -60,59 +92,56 @@ D:\Documents\zx\
 start-server.bat
 ```
 
-访问 http://localhost:8080/docs/ （精读Dashboard）
-或 http://localhost:8080/visualizer_complete/ （完整可视化系统）
+访问 http://localhost:9090/docs/ （精读Dashboard）
 
 ### 查看精读笔记
 
-所有笔记位于 `xiaohao_cai_ultimate_notes/` 目录，命名格式：
+所有笔记位于 `xiaohao_cai_ultimate_notes/` 目录，包含5-Agent辩论分析：
+- 数学家Agent：理论分析
+- 工程师Agent：实现细节
+- 应用专家Agent：应用价值
+- 质疑者Agent：批判性审查
+- 综合者Agent：共识总结
 
+### 运行复现实验
+
+```bash
+cd reproduce
+python run_all.py
 ```
-{主题}_超精读笔记_已填充.md     # 完整版（54篇）
-{主题}_超精读笔记_完整.md       # 精简完整版
-{主题}_超精读笔记_深度版.md     # 深度分析版
-{主题}_超精读笔记.md            # 普通版
-```
-
-### 查看PDF
-
-```
-visualizer_complete/00_papers/          # 全部80篇PDF（346 MB）
-```
-
----
-
-## 📝 精读笔记内容
-
-每篇完整笔记包含5-Agent辩论分析：
-
-1. 📄 论文元信息（标题、作者、年份、arXiv）
-2. 🔢 数学家Agent：理论分析
-3. 🔧 工程师Agent：实现细节
-4. 💼 应用专家Agent：应用价值
-5. 🤨 质疑者Agent：批判性审查
-6. 🎯 综合者Agent：共识总结
 
 ---
 
 ## 🎓 研究领域
 
-- **变分分割**: SLaT, Mumford-Shah, ROF, 多类分割
-- **射电天文**: 无线电干涉成像, 不确定性量化
-- **3D视觉**: 树木分割, 点云分析, LiDAR
-- **医学影像**: MRI重建, 图像分类, 报告生成
-- **张量分解**: Tucker分解, Tensor Train
-- **深度学习**: 多模态, 可解释AI, 目标检测
+- **变分分割**: SLaT, Mumford-Shah, ROF, T-ROF, 多类分割
+- **射电天文**: 无线电干涉成像, 不确定性量化, MAP-UQ
+- **医学影像**: 管状结构分割, 球面小波
+- **贝叶斯推断**: 近端嵌套采样, 模型选择
 
 ---
 
-## 📈 当前进度
+## 📈 复现效果
 
-```
-PDF收集          ████████████████████░░ 80篇
-精读笔记         ██████████████░░░░░░░░ 54/80篇已填充
-复现实验         ████████████░░░░░░░░░░ 进行中
-```
+| 论文 | 复现等级 | 难度 | 效果 |
+|:---|:---:|:---:|:---:|
+| SLaT | partial | 3/5 | 优秀 |
+| Mumford-Shah | toy-to-partial | 3/5 | 优秀 |
+| T-ROF | toy-to-partial | 3/5 | 优秀 |
+| 分割恢复 | toy | 4/5 | 良好 |
+| UQ不确定性 | toy | 4/5 | 良好 |
+| 高效变分 | toy | 4/5 | 良好 |
+| 框架管状 | toy | 4/5 | 良好 |
+| 迭代ROF | toy | 3/5 | 良好 |
+| 分割总览 | toy | 3/5 | 良好 |
+| 球面小波 | toy | 5/5 | 一般 |
+| RI成像I | toy | 4/5 | 良好 |
+| RI成像II | toy | 5/5 | 一般 |
+| 在线RI | toy | 4/5 | 良好 |
+| 近端采样 | toy | 5/5 | 一般 |
+| 两阶段 | partial | 4/5 | 良好 |
+
+**平均难度**: 3.9/5 | **完成率**: 100%
 
 ---
 
