@@ -6,6 +6,25 @@ import { execFileSync } from "node:child_process";
 const repoRoot = path.resolve(process.cwd());
 const docsDir = path.join(repoRoot, "docs");
 const jsDir = path.join(docsDir, "js");
+const notesDir = path.join(repoRoot, "xiaohao_cai_ultimate_notes");
+const reproAssetResultsPath = path.join(docsDir, "assets", "repro", "repro_results.json");
+
+const expectedNoteFiles = [
+  "SLaT_Three-stage_Segmentation_超精读笔记_已填充.md",
+  "Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md",
+  "Two-Stage_Segmentation_2013_超精读笔记_已填充.md",
+  "Variational_Segmentation-Restoration_超精读笔记_已填充.md",
+  "High-Dimensional_Inverse_Problems_UQ_超精读笔记_已填充.md",
+  "高效变分分类方法_Efficient_Variational_Classification_超精读笔记_已填充.md",
+  "框架分割管状结构_Framelet_Tubular_超精读笔记_已填充.md",
+  "多类分割迭代ROF_Iterated_ROF_超精读笔记_已填充.md",
+  "分割方法论总览_SaT_Segmentation_Overview_超精读笔记_已填充.md",
+  "Wavelet_Segmentation_on_Sphere_超精读笔记_已填充.md",
+  "Radio_Interferometric_Imaging_I_超精读笔记_已填充.md",
+  "Radio_Interferometric_Imaging_II_超精读笔记_已填充.md",
+  "Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md",
+  "Proximal_Nested_Sampling_超精读笔记_已填充.md"
+];
 
 const failures = [];
 
@@ -37,9 +56,14 @@ if (data) {
   const { papers, paperNotesV2, reproAssessments } = data;
   check(Array.isArray(papers) && papers.length === 15, "papers 长度不是 15");
   check(Array.isArray(paperNotesV2) && paperNotesV2.length === 15, "paperNotesV2 长度不是 15");
+  check(expectedNoteFiles.length === 14, "独立 Markdown 笔记文件口径不是 14");
+  expectedNoteFiles.forEach((file) => {
+    check(fs.existsSync(path.join(notesDir, file)), `精读笔记文件不存在：${file}`);
+  });
 
   const priorities = papers.map((paper) => paper.priority);
   check(new Set(priorities).size === priorities.length, "paper priority 不唯一");
+  check(priorities.every((priority) => Number.isInteger(priority) && priority >= 1 && priority <= 15), "paper priority 不在 1-15");
 
   const paperPrioritySet = new Set(priorities);
   const notePriorities = paperNotesV2.map((note) => note.priority);
@@ -69,11 +93,15 @@ if (data) {
     const allowedTruthLevels = new Set(["toy-completed", "partial-completed", "paper-level-completed", "assessment-only"]);
     const paperLevelCount = reproAssessments.filter((item) => item.reproductionTruthLevel === "paper-level-completed").length;
     const resultsPath = path.join(repoRoot, "reproduce", "results", "repro_results.json");
-    const runResults = fs.existsSync(resultsPath) ? JSON.parse(readText(resultsPath)) : [];
+    const runResults = fs.existsSync(resultsPath)
+      ? JSON.parse(readText(resultsPath))
+      : (fs.existsSync(reproAssetResultsPath) ? JSON.parse(readText(reproAssetResultsPath)) : []);
     const runResultById = new Map(runResults.map((item) => [item.id, item]));
     const satSource = readText(path.join(repoRoot, "reproduce", "experiments", "sat_rof_trof.py"));
     check(new Set(reproIds).size === reproIds.length, "reproAssessment.id 不唯一");
     check(process.env.ALLOW_PAPER_LEVEL === "1" || paperLevelCount === 0, `paper-level-completed 当前必须为 0，实际为 ${paperLevelCount}`);
+    check(Array.isArray(runResults) && runResults.length === 15, "静态复现实验结果不是 15 条");
+    check(runResults.every((item) => noteIdSet.has(item.id)), "静态复现实验结果存在 15 篇之外的 id");
 
     reproAssessments.forEach((item) => {
       check(noteIdSet.has(item.id), `${item.id} 无法匹配 paperNotesV2.id`);
@@ -122,6 +150,7 @@ const reproductionReportPath = path.join(docsDir, "reproduction_report.html");
 const reproductionReportHtml = fs.existsSync(reproductionReportPath) ? readText(reproductionReportPath) : "";
 const styleCss = readText(path.join(docsDir, "style.css"));
 const dashboardJs = readText(path.join(jsDir, "dashboard.js"));
+const runAllSource = readText(path.join(repoRoot, "reproduce", "run_all.py"));
 const oldReportName = ["agent_team_reading_report", ".md"].join("");
 
 check(!indexHtml.includes(oldReportName), "index.html 仍直接指向旧 Markdown 完整报告");
@@ -138,8 +167,7 @@ check(reproductionReportHtml.includes('src="js/reading-data.js"'), "reproduction
 check(reproductionReportHtml.includes('src="js/reproduction.js"'), "reproduction_report.html 未加载 js/reproduction.js");
 check(!/src=["']app\.js["']/.test(indexHtml + reportHtml + reproductionReportHtml), "HTML 仍加载根目录 app.js");
 check(!/src=["']report\.js["']/.test(indexHtml + reportHtml + reproductionReportHtml), "HTML 仍加载根目录 report.js");
-check(fs.existsSync(path.join(repoRoot, "reproduce", "results", "repro_results.json")), "reproduce/results/repro_results.json 不存在");
-check(fs.existsSync(path.join(repoRoot, "reproduce", "results", "repro_results.csv")), "reproduce/results/repro_results.csv 不存在");
+check(fs.existsSync(reproAssetResultsPath), "docs/assets/repro/repro_results.json 不存在");
 
 check(styleCss.includes("@media (max-width: 1100px)"), "style.css 缺少 @media (max-width: 1100px)");
 check(styleCss.includes("@media (max-width: 900px)"), "style.css 缺少 @media (max-width: 900px)");
@@ -151,6 +179,8 @@ check(styleCss.includes("focus-visible"), "style.css 缺少 focus-visible 样式
 check(dashboardJs.includes("aria-expanded"), "dashboard 展开按钮缺少 aria-expanded");
 check(dashboardJs.includes("aria-controls"), "dashboard 展开按钮缺少 aria-controls");
 check(/setAttribute\(["']aria-expanded["']/.test(dashboardJs), "dashboard 展开/收起未同步 aria-expanded");
+check(!runAllSource.includes("variational_classification"), "run_all.py 仍包含会产生重复分类结果的 variational_classification runner");
+check((runAllSource.match(/^\s+\w+\.run,/gm) || []).length === 9, "run_all.py runner 数量不是 9");
 
 const trackedLegacyScripts = execFileSync("git", ["ls-files", "docs/app.js", "docs/report.js"], {
   cwd: repoRoot,
@@ -184,4 +214,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("validate passed: papers=15, notes=15, reproAssessments=15, PDFs ok, links ok, old refs clean");
+console.log("validate passed: papers=15, structuredNotes=15, markdownNotes=14, reproAssessments=15, PDFs ok, links ok, old refs clean");

@@ -21,7 +21,7 @@
     reproAssessments,
     siteMeta
   } = data;
-  const { byId, escapeHtml, pdfHref, themeLabel, notePdf, createPaperMaps } = shared;
+  const { byId, escapeHtml, pdfHref, themeLabel, notePdf, createPaperMaps, scoreDots: renderScoreDots, metricPairs: renderMetricPairs, resultFiles: renderResultFiles } = shared;
   const { paperByPriority, noteByPriority } = createPaperMaps(data);
 
 let activeTrack = "all";
@@ -30,6 +30,14 @@ let activeNoteTheme = "all";
 let noteQuery = "";
 let activeReproLevel = "all";
 let reproQuery = "";
+
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
 
 
 
@@ -406,42 +414,6 @@ function renderNotes() {
   }).join("");
 }
 
-function renderScoreDots(score, label) {
-  const dots = Array.from({ length: 5 }, (_, index) => (
-    `<span class="${index < score ? "on" : ""}"></span>`
-  )).join("");
-  return `<div class="score-dots" aria-label="${escapeHtml(label)} ${score} / 5">${dots}<strong>${score}/5</strong></div>`;
-}
-
-function renderMetricPairs(metrics) {
-  const entries = Object.entries(metrics || {});
-  if (!entries.length) return "<p>暂无运行指标。</p>";
-  return `
-    <dl class="metric-pairs">
-      ${entries.map(([key, value]) => `
-        <div>
-          <dt>${escapeHtml(key)}</dt>
-          <dd>${escapeHtml(value)}</dd>
-        </div>
-      `).join("")}
-    </dl>
-  `;
-}
-
-function renderResultFiles(item) {
-  if (!item.resultFiles?.length) return "<p>暂无结果文件。</p>";
-  return `
-    <div class="result-file-grid">
-      ${item.resultFiles.map((file) => `
-        <a href="${escapeHtml(file)}" target="_blank" rel="noopener">
-          ${/\.(png|jpg|jpeg|webp)$/i.test(file) ? `<img src="${escapeHtml(file)}" alt="${escapeHtml(item.titleCn)} 复现结果图">` : ""}
-          <span>${escapeHtml(file.replace("assets/repro/", ""))}</span>
-        </a>
-      `).join("")}
-    </div>
-  `;
-}
-
 function renderReproSummary() {
   if (!byId("reproSummary")) return;
   const completed = reproAssessments.filter((item) => item.resultStatus === "completed").length;
@@ -686,11 +658,11 @@ function bindDashboardEvents() {
     item.addEventListener("click", () => switchView(item.dataset.view));
   });
 
-  byId("searchInput").addEventListener("input", (event) => {
+  byId("searchInput").addEventListener("input", debounce((event) => {
     query = event.target.value;
     renderPaperRows();
     switchView("papers");
-  });
+  }, 200));
 
   byId("trackFilters").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-filter]");
@@ -708,10 +680,10 @@ function bindDashboardEvents() {
     renderNotes();
   });
 
-  byId("noteSearchInput").addEventListener("input", (event) => {
+  byId("noteSearchInput").addEventListener("input", debounce((event) => {
     noteQuery = event.target.value;
     renderNotes();
-  });
+  }, 200));
 
   byId("noteGrid").addEventListener("click", (event) => {
     const toggle = event.target.closest("button[data-note-toggle]");
@@ -747,10 +719,10 @@ function bindDashboardEvents() {
     renderReproCards();
   });
 
-  byId("reproSearchInput").addEventListener("input", (event) => {
+  byId("reproSearchInput").addEventListener("input", debounce((event) => {
     reproQuery = event.target.value;
     renderReproCards();
-  });
+  }, 200));
 
   byId("reproCards").addEventListener("click", (event) => {
     const toggle = event.target.closest("button[data-repro-toggle]");

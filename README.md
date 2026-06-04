@@ -1,33 +1,31 @@
 # Xiaohao Cai 学术研究精读与复现项目
 
-> **目标**: 系统精读15篇第一作者论文，复现核心方法
-> **状态**: 15篇精读笔记已全部完成
+> **目标**: 系统精读 15 篇 Xiaohao Cai 第一作者论文，并提供 toy/partial 复现评估
+> **状态**: 15 个结构化精读卡片已完成，14 个独立 Markdown 笔记文件已整理
 
 ---
 
 ## 📁 项目结构
 
 ```
-D:\Documents\zx\
+teacherZ-C/
 │
 ├── 📄 README.md                          # 本文件
 ├── 📄 CLAUDE.md                          # Claude Code 工作指南
-├── 📄 start-server.bat                   # 启动本地服务器脚本
+├── 📄 start-server.sh                    # 启动本地静态服务器脚本
+├── 📄 requirements.txt                   # Python依赖
+├── 📄 .gitignore                         # Git忽略文件
 │
-├── 📁 docs/                              # Web展示系统
+├── 📁 docs/                              # 15篇论文 Web 展示系统
 │   ├── index.html                        # 主页面（精读Dashboard）
 │   ├── reading_report.html               # 阅读报告页
 │   ├── reproduction_report.html          # 复现报告页
 │   ├── style.css / js/                   # 前端资源
-│   ├── assets/repro/                     # 复现实验图片（10张）
+│   ├── scripts/validate.mjs              # 数据验证脚本
+│   ├── assets/repro/                     # 复现实验图片
 │   └── 00_papers_first_author_xiaohao_cai_deduped/  # 15篇PDF
 │
-├── 📁 visualizer_complete/               # 完整可视化系统
-│   ├── 00_papers/                        # 15篇论文PDF（35 MB）
-│   ├── app.js / data.js / index.html    # 前端代码
-│   └── style.css
-│
-├── 📁 xiaohao_cai_ultimate_notes/        # 15篇精读笔记
+├── 📁 xiaohao_cai_ultimate_notes/        # 14个独立 Markdown 精读笔记文件
 │   ├── SLaT_Three-stage_Segmentation_超精读笔记_已填充.md
 │   ├── Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md
 │   ├── Two-Stage_Segmentation_2013_超精读笔记_已填充.md
@@ -43,7 +41,7 @@ D:\Documents\zx\
 │   ├── Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md
 │   └── Proximal_Nested_Sampling_超精读笔记_已填充.md
 │
-└── 📁 reproduce/                         # 复现实验代码
+└── 📁 reproduce/                         # 15项复现评估的 toy/partial 实验代码
     ├── run_all.py
     ├── experiments/
     └── results/
@@ -56,9 +54,10 @@ D:\Documents\zx\
 | 指标 | 数值 |
 |:---|:---:|
 | **第一作者论文** | 15篇 |
-| **PDF论文** | 14篇（+1篇去重版） |
-| **精读笔记** | 16个文件（15篇+1篇UQ补充） |
-| **复现实验** | 15个实验全部完成 |
+| **PDF论文** | 15篇 |
+| **结构化精读卡片** | 15个 |
+| **独立 Markdown 笔记** | 14个文件（Framelet 两篇共用一份长笔记） |
+| **复现实验** | 9个实验脚本，生成15项复现评估 |
 
 ---
 
@@ -66,21 +65,21 @@ D:\Documents\zx\
 
 | # | 论文 | 年份 | 笔记状态 | 复现状态 |
 |:---:|:---|:---:|:---:|:---:|
-| 1 | SLaT三阶段分割 | 2015 | ✅ | ✅ |
-| 2 | Mumford-Shah与ROF联系 | 2018 | ✅ | ✅ |
+| 1 | 分割方法论总览 | 2023 | ✅ | ✅ |
+| 2 | Mumford-Shah与ROF联系 | 2019 | ✅ | ✅ |
 | 3 | T-ROF迭代阈值分割 | 2013 | ✅ | ✅ |
-| 4 | 分割恢复联合模型 | 2013 | ✅ | ✅ |
-| 5 | 高维逆问题不确定性量化 | 2018 | ✅ | ✅ |
-| 6 | 高效变分分类 | 2019 | ✅ | ✅ |
-| 7 | 框架管状结构分割 | 2016 | ✅ | ✅ |
-| 8 | 迭代ROF多类分割 | 2014 | ✅ | ✅ |
-| 9 | 分割方法论总览 | 2017 | ✅ | ✅ |
-| 10 | 球面小波分割 | 2016 | ✅ | ✅ |
-| 11 | 无线电干涉成像I | 2017 | ✅ | ✅ |
-| 12 | 无线电干涉成像II | 2017 | ✅ | ✅ |
-| 13 | 在线无线电干涉成像 | 2017 | ✅ | ✅ |
-| 14 | 近端嵌套采样 | 2021 | ✅ | ✅ |
-| 15 | 两阶段图像分割 | 2013 | ✅ | ✅ |
+| 4 | 分割恢复联合模型 | 2014 | ✅ | ✅ |
+| 5 | Framelet管状结构短版 | 2012 | ✅ | ✅ |
+| 6 | Tight-frame血管分割扩展版 | 2011 | ✅ | ✅ |
+| 7 | SLaT三阶段分割 | 2015 | ✅ | ✅ |
+| 8 | 球面小波分割 | 2016 | ✅ | ✅ |
+| 9 | 高维数据与点云两阶段分类 | 2019 | ✅ | ✅ |
+| 10 | 高效变分分类期刊版 | 2024 | ✅ | ✅ |
+| 11 | 高维逆问题不确定性量化 | 2019 | ✅ | ✅ |
+| 12 | 无线电干涉成像UQ I | 2018 | ✅ | ✅ |
+| 13 | 无线电干涉成像UQ II | 2018 | ✅ | ✅ |
+| 14 | 在线无线电干涉成像 | 2019 | ✅ | ✅ |
+| 15 | 近端嵌套采样 | 2022 | ✅ | ✅ |
 
 ---
 
@@ -89,14 +88,16 @@ D:\Documents\zx\
 ### 启动Web展示系统
 
 ```bash
-start-server.bat
+bash start-server.sh
 ```
 
-访问 http://localhost:9090/docs/ （精读Dashboard）
+访问 http://localhost:8080/docs/ （精读Dashboard）
 
 ### 查看精读笔记
 
-所有笔记位于 `xiaohao_cai_ultimate_notes/` 目录，包含5-Agent辩论分析：
+独立 Markdown 笔记位于 `xiaohao_cai_ultimate_notes/`。Dashboard 中另有 15 个结构化精读卡片，统一来自 `docs/js/reading-data.js`。
+
+笔记包含 5-Agent 辩论分析：
 - 数学家Agent：理论分析
 - 工程师Agent：实现细节
 - 应用专家Agent：应用价值
@@ -108,6 +109,12 @@ start-server.bat
 ```bash
 cd reproduce
 python run_all.py
+```
+
+运行项目一致性校验：
+
+```bash
+node docs/scripts/validate.mjs
 ```
 
 ---
@@ -125,23 +132,15 @@ python run_all.py
 
 | 论文 | 复现等级 | 难度 | 效果 |
 |:---|:---:|:---:|:---:|
-| SLaT | partial | 3/5 | 优秀 |
-| Mumford-Shah | toy-to-partial | 3/5 | 优秀 |
-| T-ROF | toy-to-partial | 3/5 | 优秀 |
+| SaT总览 / Mumford-Shah / T-ROF | toy-to-partial | 3/5 | 优秀 |
 | 分割恢复 | toy | 4/5 | 良好 |
-| UQ不确定性 | toy | 4/5 | 良好 |
-| 高效变分 | toy | 4/5 | 良好 |
-| 框架管状 | toy | 4/5 | 良好 |
-| 迭代ROF | toy | 3/5 | 良好 |
-| 分割总览 | toy | 3/5 | 良好 |
+| Framelet / Tight-frame管状结构 | toy | 4/5 | 良好 |
+| SLaT | partial | 3/5 | 明显 |
 | 球面小波 | toy | 5/5 | 一般 |
-| RI成像I | toy | 4/5 | 良好 |
-| RI成像II | toy | 5/5 | 一般 |
-| 在线RI | toy | 4/5 | 良好 |
-| 近端采样 | toy | 5/5 | 一般 |
-| 两阶段 | partial | 4/5 | 良好 |
+| 两阶段 / 高效变分分类 | partial | 4/5 | 良好 |
+| UQ / RI / Online RI / Nested Sampling | toy | 4-5/5 | 一般到良好 |
 
-**平均难度**: 3.9/5 | **完成率**: 100%
+`completed` 只表示 toy/partial 脚本跑通，不表示论文级完整复现。当前 `paper-level-completed = 0 / 15`。
 
 ---
 
@@ -151,4 +150,4 @@ python run_all.py
 
 ---
 
-**最后更新**: 2026年5月10日
+**最后更新**: 2026年6月4日

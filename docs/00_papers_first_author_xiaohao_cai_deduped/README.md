@@ -1,8 +1,8 @@
 # Xiaohao Cai 第一作者论文去重阅读集
 
-来源：`D:/Documents/zx/docs/00_papers_first_author_xiaohao_cai`
+本目录是当前项目使用的 15 篇 Xiaohao Cai 第一作者论文 PDF 集，也是 `docs/js/reading-data.js` 的 PDF 权威目录。
 
-- 原始第一作者 PDF：16
+- 初始第一作者 PDF：16
 - 去重后保留 PDF：15
 - 内容级重复移除：1
 

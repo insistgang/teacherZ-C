@@ -1379,8 +1379,8 @@ const reproAssessments = paperNotesV2.map((note) => {
 });
 
 const siteMeta = {
-  commit: "9cc8d69",
-  lastUpdated: "2026-04-28"
+  commit: "15-paper-scope",
+  lastUpdated: "2026-06-04"
 };
 
 window.ZX_READING_DATA = {

@@ -4,74 +4,71 @@
 
 ## 项目概述
 
-这是一个学术研究仓库，用于分析和复现蔡晓昊（Xiaohao Cai）的67篇以上论文，涵盖变分方法、张量分解、3D视觉、医学影像和深度学习等领域。项目核心特性是一个多智能体辩论系统，用于协作分析学术论文。
+这是一个学术研究精读与复现项目，口径固定为蔡晓昊（Xiaohao Cai）的 15 篇第一作者论文。项目包含 15 个结构化精读卡片、14 个独立 Markdown 笔记文件、Web 展示系统和 toy/partial 复现实验代码。
 
 ## 常用命令
 
 ```bash
-# 运行多智能体辩论系统
-python debate_system.py
+# 运行复现实验
+cd reproduce && python run_all.py
 
-# 运行交互式辩论模式
-python debate_interactive.py
+# 启动Web展示系统
+python -m http.server 8080
 
-# 运行高级辩论功能
-python debate_advanced.py
-
-# 运行批量论文处理
-python batch_process_papers.py
-
-# 运行算法实现示例
-cd implementations
-python usage_examples.py
+# 校验15篇数据、PDF、笔记和静态复现资产
+node docs/scripts/validate.mjs
 ```
 
 ## 依赖安装
 
 通过以下命令安装：`pip install -r requirements.txt`
-- 核心库：pyyaml, pydantic
-- LLM客户端：anthropic, openai
-- PDF解析：pdfplumber, PyPDF2
+- 核心库：numpy, scipy, matplotlib, scikit-image
+- 缺少依赖时，复现实验 runner 应写入 skipped，而不是伪造 completed 结果。
 
 ## 代码架构
 
-### 多智能体辩论系统 (`debate_system.py`)
-核心系统使用5个专业智能体：
-- **数学家（Mathematician）** - 理论分析
-- **工程师（Engineer）** - 实现评估
-- **应用专家（Application Expert）** - 应用价值评估
-- **质疑者（Skeptic）** - 批判性审查
-- **综合者（Synthesizer）** - 共识构建
+### Web展示系统 (`docs/`)
+- `index.html` - 主页面（精读Dashboard）
+- `reading_report.html` - 阅读报告页
+- `reproduction_report.html` - 复现报告页
+- `style.css` / `js/` - 前端资源
+- `scripts/validate.mjs` - 数据验证脚本
+- `assets/repro/` - 复现实验图片
+- `00_papers_first_author_xiaohao_cai_deduped/` - 15篇PDF
 
-核心类：
-- `AgentRole` - 智能体类型枚举
-- `Paper` - 论文数据结构，包含标题、作者、摘要、正文
-- `AgentMessage` - 智能体消息格式
-- `DebateState` - 跟踪辩论进度和消息
+### 复现实验代码 (`reproduce/`)
+- `run_all.py` - 运行所有复现实验
+- `experiments/` - 实验代码
+- `results/` - 实验结果
 
-### 算法实现 (`implementations/`)
-- `slat_segmentation.py` - SLaT三阶段分割
-- `rof_iterative_segmentation.py` - 迭代ROF多类分割
-- `tucker_decomposition.py` - 随机Sketching Tucker分解
-- `neural_varifold.py` - 神经变分点云分析
-
-### 知识图谱 (`knowledge_graph/`)
-- `queries.py` - 论文关系和方法演进的查询接口
-- JSON文件中定义了实体和关系
-
-### 输出结构
-- `outputs/debate_log_*.md` - 辩论会话日志
-- `outputs/report_*.md` - 分析报告
+### 精读笔记 (`xiaohao_cai_ultimate_notes/`)
+- 14 个独立 Markdown 精读笔记文件；`docs/js/reading-data.js` 中维护 15 个结构化精读卡片。Framelet 短版和 tight-frame 扩展版共用一份长笔记。
+- 笔记包含5-Agent辩论分析：
+  - 数学家Agent：理论分析
+  - 工程师Agent：实现细节
+  - 应用专家Agent：应用价值
+  - 质疑者Agent：批判性审查
+  - 综合者Agent：共识总结
 
 ## 目录结构
 
 ```
-├── debate_system.py          # 多智能体系统主入口
-├── debate_interactive.py    # 交互式模式
-├── debate_advanced.py       # 高级功能
-├── implementations/         # 算法代码实现
-├── knowledge_graph/         # 知识图谱查询
-├── outputs/                 # 生成的分析报告
-├── benchmark/               # 性能基准测试
-└── visualizations/         # 数据可视化
+├── README.md                          # 项目说明文件
+├── CLAUDE.md                          # Claude Code 工作指南
+├── requirements.txt                   # Python依赖
+├── .gitignore                         # Git忽略文件
+├── start-server.sh                    # 启动服务器脚本
+├── docs/                              # Web展示系统
+│   ├── index.html                     # 主页面（精读Dashboard）
+│   ├── reading_report.html            # 阅读报告页
+│   ├── reproduction_report.html       # 复现报告页
+│   ├── style.css / js/                # 前端资源
+│   ├── scripts/validate.mjs           # 数据验证脚本
+│   ├── assets/repro/                  # 复现实验图片
+│   └── 00_papers_first_author_xiaohao_cai_deduped/  # 15篇PDF
+├── xiaohao_cai_ultimate_notes/        # 14个独立 Markdown 精读笔记文件
+└── reproduce/                         # 复现实验代码
+    ├── run_all.py
+    ├── experiments/
+    └── results/
 ```

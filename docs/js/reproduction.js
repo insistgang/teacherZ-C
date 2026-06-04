@@ -7,47 +7,13 @@
   }
 
   const { tracks, papers, reproScoring, reproRecommendedBatches, reproAssessments, siteMeta } = data;
-  const { byId, escapeHtml, pdfHref, createPaperMaps, notePdf } = shared;
+  const { byId, escapeHtml, pdfHref, createPaperMaps, notePdf, scoreDots, metricPairs, resultFiles } = shared;
   const { paperByPriority } = createPaperMaps(data);
-
-  function scoreDots(score, label) {
-    const dots = Array.from({ length: 5 }, (_, index) => `<span class="${index < score ? "on" : ""}"></span>`).join("");
-    return `<div class="score-dots" aria-label="${escapeHtml(label)} ${score} / 5">${dots}<strong>${score}/5</strong></div>`;
-  }
 
   function metricSummary(metrics, maxItems = 4) {
     const entries = Object.entries(metrics || {}).slice(0, maxItems);
     if (!entries.length) return "暂无指标";
     return entries.map(([key, value]) => `${key}: ${value}`).join(" · ");
-  }
-
-  function metricPairs(metrics) {
-    const entries = Object.entries(metrics || {});
-    if (!entries.length) return "<p>暂无运行指标。</p>";
-    return `
-      <dl class="metric-pairs">
-        ${entries.map(([key, value]) => `
-          <div>
-            <dt>${escapeHtml(key)}</dt>
-            <dd>${escapeHtml(value)}</dd>
-          </div>
-        `).join("")}
-      </dl>
-    `;
-  }
-
-  function resultFiles(item) {
-    if (!item.resultFiles?.length) return "<p>暂无结果文件。</p>";
-    return `
-      <div class="result-file-grid">
-        ${item.resultFiles.map((file) => `
-          <a href="${escapeHtml(file)}" target="_blank" rel="noopener">
-            ${/\.(png|jpg|jpeg|webp)$/i.test(file) ? `<img src="${escapeHtml(file)}" alt="${escapeHtml(item.titleCn)} 复现结果图">` : ""}
-            <span>${escapeHtml(file.replace("assets/repro/", ""))}</span>
-          </a>
-        `).join("")}
-      </div>
-    `;
   }
 
   function renderVersion() {
