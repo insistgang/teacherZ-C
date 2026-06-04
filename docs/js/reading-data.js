@@ -1379,7 +1379,7 @@ const reproAssessments = paperNotesV2.map((note) => {
 });
 
 const siteMeta = {
-  commit: "15-paper-scope",
+  scope: "15-paper-scope",
   lastUpdated: "2026-06-04"
 };
 

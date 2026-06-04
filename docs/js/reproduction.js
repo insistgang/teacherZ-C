@@ -19,7 +19,7 @@
   function renderVersion() {
     const target = byId("reproReportVersion");
     if (!target || !siteMeta) return;
-    target.textContent = `commit: ${siteMeta.commit} · last updated: ${siteMeta.lastUpdated}`;
+    target.textContent = `scope: ${siteMeta.scope || siteMeta.commit} · last updated: ${siteMeta.lastUpdated}`;
   }
 
   function renderToc() {
