@@ -15,7 +15,7 @@
 | **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2018 (arXiv v2: 2019) |
 | **arXiv ID** | 1807.10194 |
-| **期刊/会议** | SIAM Journal on Imaging Sciences (相关) |
+| **PDF版本** | arXiv v2 (2019)，PDF 首页未标注期刊正式版本 |
 
 ### 📝 摘要翻译
 
@@ -91,12 +91,17 @@ E(Σ, τ) = Σ_{i=1}^{K-1} Per(Σ_i; Ω) + μ Σ_{i=1}^{K-1} ∫_{Σ_i} (τ_i - 
 
 其中 Σ = {Σ_i}_{i=1}^{K-1} 是嵌套集合序列：Ω ⊇ Σ_1 ⊇ Σ_2 ⊇ ... ⊇ Σ_{K-1} ⊇ ∅
 
-**核心定理 (Theorem 3.4): PCMS与ROF的联系**
+**核心定理A (Theorem 3.4): T-ROF与PCMS的联系**
 
 设 (Σ*_1, τ*_1) 满足T-ROF模型且 0 < |Σ*_1| < |Ω|，则：
 - (Σ*_1, m*_0, m*_1) 是PCMS模型的部分最小化器
-- 其中参数 λ = 2μ/(m*_1 - m*_0)
+- 其中参数 λ = μ/[2(m*_1 - m*_0)]
 - m*_i = mean_f(Ω*_i)
+
+**核心定理B (Theorem 3.6): ROF与PCMS的联系**
+
+设 u* 是ROF模型的解。给定 0 < m_0 < m_1 <= 1，若
+Σ~ = {x ∈ Ω : u*(x) > (m_1 + m_0)/2} 且 0 < |Σ~| < |Ω|，则 Σ~ 是固定 m_0, m_1 时 Chan-Vese/PCMS 模型的最小化子，其中 λ = μ/[2(m_1 - m_0)]。特别地，若 m_0 = mean_f(Ω\Σ~) 且 m_1 = mean_f(Σ~)，则 (Σ~, m_0, m_1) 是PCMS模型的partial minimizer。
 
 **公式解析：**
 
@@ -109,14 +114,14 @@ E(Σ, τ) = Σ_{i=1}^{K-1} Per(Σ_i; Ω) + μ Σ_{i=1}^{K-1} ∫_{Σ_i} (τ_i - 
    - 作为ROF解u的阈值得到分割
 
 3. **数学意义**：
-   - 建立了分割问题和恢复问题的等价性
+   - K=2时建立了分割问题和恢复问题的精确联系
    - 避免了PCMS模型的非凸性
    - ROF模型是凸的，有全局最小值
 
 ### 1.3 理论性质分析
 
 **收敛性分析：**
-- **定理4.1**：T-ROF算法在阈值更新规则下收敛
+- **Theorem 4.6**：T-ROF Algorithm 1 产生的阈值序列 τ^(k) 收敛到 τ*
 - **Lemma 3.2**：对于 0 < τ_1 < τ_2 < 1，有 Σ_1 ⊇ Σ_2（嵌套性质）
 - 收敛速度：实验显示5-15次迭代即可收敛
 
@@ -125,18 +130,18 @@ E(Σ, τ) = Σ_{i=1}^{K-1} Per(Σ_i; Ω) + μ Σ_{i=1}^{K-1} ∫_{Σ_i} (τ_i - 
 - 阈值单调性保证算法稳定
 
 **复杂度界：**
-- ROF求解：O(N) 其中N是像素数
-- 阈值更新：O(K) 其中K是相位数
-- 总复杂度：O(N) 与K无关
+- 主导成本：一次ROF数值求解 + 若干次阈值更新
+- 阈值化/均值更新需要遍历像素，阈值更新与K相关但代价较小
+- 论文强调相对PCMS方法对相位数K更不敏感，但没有给出统一的O(N)复杂度定理
 
 **理论保证：**
 - 全局最小值的凸松弛是tight的（对于K=2）
-- 分割结果可以证明是PCMS模型的驻点
+- fixed m_0, m_1 时的阈值集可成为PCMS/Chan-Vese的最小化子；满足均值条件时得到partial minimizer
 
 ### 1.4 数学创新点
 
 **新的数学工具：**
-1. **部分最小化器概念**：比局部最小值弱，但比驻点强
+1. **部分最小化器概念**：不同于local minimizer；PDF 图3.1 特别说明 partial minimizer 不必是 local minimizer
 2. **嵌套集合结构**：Ω ⊇ Σ_1 ⊇ ... ⊇ Σ_{K-1} ⊇ ∅
 3. **阈值化联系**：通过阈值将恢复解转化为分割
 
@@ -163,19 +168,23 @@ E(Σ, τ) = Σ_{i=1}^{K-1} Per(Σ_i; Ω) + μ Σ_{i=1}^{K-1} ∫_{Σ_i} (τ_i - 
 │  输入: 图像 f ∈ [0,1]^Ω, 相位数 K, 参数 μ                        │
 │                         ↓                                        │
 │  ┌─────────────────────────────────────────┐                   │
-│  │  初始化: 使用FCM聚类获得初始码本 m_i     │                   │
+│  │  初始化: 使用FCM聚类获得初始阈值 τ_i     │                   │
+│  └─────────────────────────────────────────┘                   │
+│                         ↓                                        │
+│  ┌─────────────────────────────────────────┐                   │
+│  │  先解一次ROF模型得到 u                  │                   │
+│  │  论文实验使用ADMM，也可替换为其他TV求解器 │                   │
 │  └─────────────────────────────────────────┘                   │
 │                         ↓                                        │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │            主循环 (直到收敛)                             │   │
 │  │  ┌───────────────────────────────────────────────────┐ │   │
-│  │  │ Step 1: 求解ROF模型                               │ │   │
-│  │  │       min TV(u) + (μ/2)∫(u-f)²dx                  │ │   │
-│  │  │       使用Primal-Dual算法                         │ │   │
+│  │  │ Step 1: 用当前阈值 threshold 已求出的ROF解 u        │ │   │
+│  │  │       Σ_i = {x: u(x) > τ_i}                       │ │   │
 │  │  └───────────────────────────────────────────────────┘ │   │
 │  │                         ↓                               │   │
 │  │  ┌───────────────────────────────────────────────────┐ │   │
-│  │  │ Step 2: 阈值化得到分割                            │ │   │
+│  │  │ Step 2: 差集生成相位分割                          │ │   │
 │  │  │       Ω_i = {x: τ_i < u(x) ≤ τ_{i-1}}            │ │   │
 │  │  └───────────────────────────────────────────────────┘ │   │
 │  │                         ↓                               │   │
@@ -217,19 +226,19 @@ class TROFSegmentation:
         pixels = f.reshape(-1, 1)
         kmeans = KMeans(n_clusters=self.K)
         labels = kmeans.fit_predict(pixels)
-        self.m = np.array([f[labels == i].mean() for i in range(self.K)])
+        self.m = np.sort(np.array([f[labels == i].mean() for i in range(self.K)]))
         self.tau = (self.m[:-1] + self.m[1:]) / 2
 
     def solve_rof(self, f):
-        """使用Chambolle-Pock算法求解ROF模型"""
-        # Primal-Dual算法实现
+        """求解ROF模型。论文实验使用ADMM；这里可替换为任意TV/ROF求解器。"""
+        # 示例求解器骨架；不是论文Algorithm 1的逐行实现。
         u = f.copy()
         p = np.zeros_like(f)  # 对偶变量
         theta = 1
         sigma = 0.1
         tau = 0.1
 
-        for _ in range(35):  # 论文建议35次迭代
+        for _ in range(100):
             # 对偶更新
             div_p = self.divergence(p)
             u_new = (u + tau * (self.mu * f + div_p)) / (1 + tau * self.mu)
@@ -248,11 +257,10 @@ class TROFSegmentation:
     def segment(self, f):
         """执行分割"""
         self.initialize(f)
+        # PDF Algorithm 1: ROF解在阈值循环前计算一次。
+        u = self.solve_rof(f)
 
         for iter in range(self.max_iter):
-            # 求解ROF
-            u = self.solve_rof(f)
-
             # 阈值化
             tau_old = self.tau.copy()
             regions = self.threshold(u, self.tau)
@@ -279,18 +287,18 @@ INPUT: Degraded image f: Ω → [0,1], Number of phases K, Parameter μ > 0
 OUTPUT: Segmentation {Ω_i}_{i=0}^{K-1}
 
 1. INITIALIZATION
-   - Run FCM clustering on f to get initial codebook m = {m_i}_{i=0}^{K-1}
-   - Set initial thresholds τ_i = (m_{i-1} + m_i)/2 for i = 1,...,K-1
+   - Run FCM clustering on f to get initial thresholds τ_i
+   - Compute the solution u of the ROF model once:
+     u* = argmin_u TV(u) + (μ/2)∫_Ω(u - f)²dx
+   - The paper uses ADMM in the numerical section; primal-dual / split-Bregman are possible alternatives.
 
 2. MAIN LOOP (until convergence)
-   a. Solve ROF model:
-      u* = argmin_u TV(u) + (μ/2)∫_Ω(u - f)²dx
-      using Primal-Dual algorithm (35 iterations recommended)
-
-   b. Thresholding:
+   a. Thresholding:
       For i = 0 to K-1:
           Ω_i = {x ∈ Ω : τ_i < u*(x) ≤ τ_{i-1}}
       where τ_0 = 1, τ_K = 0
+
+   b. Apply the criteria (4.2) and (4.5) if zero-measure or unnecessary phases appear.
 
    c. Update means:
       m_i = (1/|Ω_i|)∫_{Ω_i} f(x)dx for i = 0,...,K-1
@@ -308,13 +316,13 @@ OUTPUT: Segmentation {Ω_i}_{i=0}^{K-1}
 
 | 项目 | 复杂度 | 说明 |
 |------|--------|------|
-| ROF求解 (单次) | O(N) | N是像素数，使用Primal-Dual |
+| ROF求解 (单次) | 主导成本 | 论文实验使用ADMM；PDF没有给统一O(N)复杂度定理 |
 | 阈值化 | O(N) | 遍历所有像素 |
 | 均值更新 | O(N) | 统计每个区域的均值 |
 | 阈值更新 | O(K) | K是相位数，通常K<<N |
-| 单次迭代总复杂度 | O(N) | - |
-| **收敛迭代数** | 10-20 | 实验观察 |
-| **总时间复杂度** | O(N) | 与相位数K无关 |
+| 阈值循环成本 | 约O(N+K)每轮 | 不重复ROF求解 |
+| **τ收敛迭代数** | 通常少量 | PDF Fig. 5.8 显示一般十步内左右收敛 |
+| **总成本口径** | 一次ROF + 阈值循环 | 论文强调相对PCMS方法对K更不敏感 |
 
 **计算瓶颈：**
 - ROF模型求解是主要瓶颈
@@ -335,7 +343,7 @@ import numpy as np
 import torch
 
 class ROFSolver:
-    """Chambolle-Pock算法求解ROF模型"""
+    """示例ROF求解器；论文数值实验使用ADMM。"""
 
     def __init__(self, mu, sigma=0.1, tau=0.1, theta=1):
         self.mu = mu
@@ -343,7 +351,7 @@ class ROFSolver:
         self.tau = tau
         self.theta = theta
 
-    def solve(self, f, n_iter=35):
+    def solve(self, f, n_iter=100):
         """
         求解: min TV(u) + (mu/2)||u - f||²
         """
@@ -377,20 +385,22 @@ class ROFSolver:
 **调试验证方法：**
 1. 检查u是否在[0,1]范围内
 2. 验证TV值是否单调下降
-3. 检查阈值是否单调（τ_1 > τ_2 > ... > τ_{K-1}）
+3. 检查阈值是否单调（0 <= τ_1 < τ_2 < ... < τ_{K-1} <= 1）
 4. 可视化每步的分割结果
 
 **性能优化技巧：**
 1. 使用GPU加速TV梯度计算
 2. 多尺度策略：先在低分辨率求解，再上采样
-3. warm start：用上一次的u作为下一次迭代的初值
-4. 并行计算多个ROF问题（如果需要测试多个μ值）
+3. 调整ADMM / primal-dual / split-Bregman 等ROF求解器的停止准则
+4. 并行测试多个μ值时，每个μ对应一次ROF求解
 
 ---
 
 ## 💼 3. 应用专家Agent：价值分析
 
 ### 3.1 应用场景
+
+> 注：本文 PDF 的实验证据主要来自 synthetic missing/noisy/close-intensity 图像、MRI、stripe 和 retina vessel 示例。下面的行业场景中，retina/MRI 与论文实验直接相关，其余是方法延展，不是论文原文实验证据。
 
 **核心领域：**
 - [✓] 医学影像
@@ -409,12 +419,12 @@ class ROFSolver:
 2. **生物孔隙分析**
    - 场景：土壤结构研究，植物根系分析
    - 挑战：3D断层图像，信息丢失
-   - T-ROF优势：可扩展到3D，处理不完整数据
+   - T-ROF优势：潜在可扩展到3D和不完整数据；本文未做3D生物孔隙实验
 
 3. **多相材料分割**
    - 场景：复合材料微观结构分析
    - 挑战：多相位（5-15相），灰度接近
-   - T-ROF优势：复杂度与K无关，自动阈值选择
+   - T-ROF优势：ROF只解一次，阈值更新对相位数K更不敏感，并能自动选择阈值
 
 ### 3.2 技术价值
 
@@ -422,8 +432,8 @@ class ROFSolver:
 
 | 问题 | 传统方法 | T-ROF解决方案 |
 |------|----------|---------------|
-| PCMS非凸优化 | 陷入局部最小值 | 通过ROF凸松弛获得全局解 |
-| 计算复杂度随K增长 | 复杂度O(KN)或更高 | 复杂度O(N)与K无关 |
+| PCMS非凸优化 | 陷入局部最小值 | 通过ROF凸恢复子问题 + 阈值化降低直接非凸优化风险 |
+| 计算复杂度随K增长 | 相位数越高越吃力 | ROF只解一次，阈值更新对K更不敏感 |
 | 退化图像分割 | 效果差 | ROF模型天然去噪 |
 | 相近灰度分割 | 难以分离 | 自适应阈值更新 |
 
@@ -458,22 +468,19 @@ class ROFSolver:
 2. **本地部署**：打包成Docker容器
 3. **嵌入式部署**：优化算法后可运行在边缘设备
 
-### 3.4 商业潜力
+### 3.4 应用延展（非论文原文）
 
-**目标市场：**
-- 医学影像分析（全球市场规模约$100B）
+以下内容是对T-ROF路线的潜在应用延展，不是PDF中的实验或市场分析：
+
+**潜在方向：**
+- 医学影像分析
 - 材料科学研究
 - 工业检测
 
 **竞争优势：**
-1. 理论保证：凸优化，全局最优
+1. 理论抓手：ROF子问题是凸恢复问题，K=2下有PCMS/Chan-Vese partial minimizer联系
 2. 速度快：实时分割能力
 3. 适应性强：处理各种退化图像
-
-**产业化路径：**
-1. 短期：开源Python库，积累用户
-2. 中期：提供云服务API
-3. 长期：医疗设备集成，FDA认证
 
 **潜在价值：**
 - 医疗：辅助诊断，提高诊断准确率
@@ -592,7 +599,7 @@ class ROFSolver:
 |------|----------|----------|
 | 理论 | 建立PCMS与ROF模型之间的数学联系 | ★★★★★ |
 | 方法 | T-ROF算法：通过恢复+阈值化实现分割 | ★★★★☆ |
-| 应用 | 避免非凸优化，复杂度与K无关 | ★★★★☆ |
+| 应用 | 避免直接求解PCMS非凸问题，计算成本对K更不敏感 | ★★★★☆ |
 
 ### 5.2 研究意义
 
@@ -601,11 +608,11 @@ class ROFSolver:
 1. **理论桥梁**：建立了图像分割和图像恢复两个研究领域之间的联系
 2. **方法论创新**：提出"恢复+阈值化"的新分割范式
 3. **理论验证**：证明了SaT方法[15]的数学正确性
-4. **新概念**：引入"部分最小化器"概念，比局部最小值弱但比驻点强
+4. **新概念**：用"部分最小化器"精确描述ROF阈值集与PCMS能量之间的关系
 
 **实际价值：**
 
-1. **效率**：计算复杂度O(N)与相位数K无关，远快于传统PCMS方法
+1. **效率**：ROF只解一次，阈值更新代价较小；实验显示比多种PCMS相关方法更快
 2. **效果**：对退化图像（噪声、模糊、信息丢失）鲁棒
 3. **简洁**：算法简单，易于实现和部署
 4. **通用**：可应用于多种分割场景
