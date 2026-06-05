@@ -168,15 +168,19 @@ const oldReportName = ["agent_team_reading_report", ".md"].join("");
 check(!indexHtml.includes(oldReportName), "index.html 仍直接指向旧 Markdown 完整报告");
 check(fs.existsSync(reproductionReportPath), "docs/reproduction_report.html 不存在");
 check(indexHtml.includes("复现评估"), "index.html 缺少“复现评估”入口");
-check(indexHtml.includes('src="js/shared.js"'), "index.html 未加载 js/shared.js");
-check(indexHtml.includes('src="js/reading-data.js"'), "index.html 未加载 js/reading-data.js");
-check(indexHtml.includes('src="js/dashboard.js"'), "index.html 未加载 js/dashboard.js");
-check(reportHtml.includes('src="js/shared.js"'), "reading_report.html 未加载 js/shared.js");
-check(reportHtml.includes('src="js/reading-data.js"'), "reading_report.html 未加载 js/reading-data.js");
-check(reportHtml.includes('src="js/report.js"'), "reading_report.html 未加载 js/report.js");
-check(reproductionReportHtml.includes('src="js/shared.js"'), "reproduction_report.html 未加载 js/shared.js");
-check(reproductionReportHtml.includes('src="js/reading-data.js"'), "reproduction_report.html 未加载 js/reading-data.js");
-check(reproductionReportHtml.includes('src="js/reproduction.js"'), "reproduction_report.html 未加载 js/reproduction.js");
+function hasScript(html, scriptName) {
+  return new RegExp(`src="js/${scriptName}\\.js(?:[?#][^"]*)?"`).test(html);
+}
+
+check(hasScript(indexHtml, "shared"), "index.html 未加载 js/shared.js");
+check(hasScript(indexHtml, "reading-data"), "index.html 未加载 js/reading-data.js");
+check(hasScript(indexHtml, "dashboard"), "index.html 未加载 js/dashboard.js");
+check(hasScript(reportHtml, "shared"), "reading_report.html 未加载 js/shared.js");
+check(hasScript(reportHtml, "reading-data"), "reading_report.html 未加载 js/reading-data.js");
+check(hasScript(reportHtml, "report"), "reading_report.html 未加载 js/report.js");
+check(hasScript(reproductionReportHtml, "shared"), "reproduction_report.html 未加载 js/shared.js");
+check(hasScript(reproductionReportHtml, "reading-data"), "reproduction_report.html 未加载 js/reading-data.js");
+check(hasScript(reproductionReportHtml, "reproduction"), "reproduction_report.html 未加载 js/reproduction.js");
 check(!/src=["']app\.js["']/.test(indexHtml + reportHtml + reproductionReportHtml), "HTML 仍加载根目录 app.js");
 check(!/src=["']report\.js["']/.test(indexHtml + reportHtml + reproductionReportHtml), "HTML 仍加载根目录 report.js");
 check(fs.existsSync(reproAssetResultsPath), "docs/assets/repro/repro_results.json 不存在");
