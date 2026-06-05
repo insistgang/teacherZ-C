@@ -14,6 +14,7 @@
 |------|------|
 | **标题** | Wavelet-based Segmentation on the Sphere |
 | **作者** | Xiaohao Cai, Christopher G. R. Wallis, Jennifer Y. H. Chan, Jason D. McEwen |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2016 |
 | **arXiv ID** | 1609.06500v2 |
 | **会议/期刊** | arXiv preprint |

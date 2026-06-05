@@ -13,6 +13,7 @@
 |------|------|
 | **标题** | Online Radio Interferometric Imaging: Assimilating and Discarding Visibilities on Arrival |
 | **作者** | Xiaohao Cai, Luke Pratley, Jason D. McEwen |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2017 |
 | **arXiv ID** | 1712.04462 |
 | **期刊** | Monthly Notices of the Royal Astronomical Society |

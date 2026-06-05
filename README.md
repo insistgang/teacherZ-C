@@ -1,7 +1,7 @@
 # Xiaohao Cai 学术研究精读与复现项目
 
 > **目标**: 系统精读 15 篇 Xiaohao Cai 第一作者论文，并提供 toy/partial 复现评估
-> **状态**: 15 个结构化精读卡片已完成，14 个独立 Markdown 笔记文件已整理
+> **状态**: 15 个结构化精读卡片已完成，15 个独立 Markdown 笔记文件已整理
 
 ---
 
@@ -25,21 +25,22 @@ teacherZ-C/
 │   ├── assets/repro/                     # 复现实验图片
 │   └── 00_papers_first_author_xiaohao_cai_deduped/  # 15篇PDF
 │
-├── 📁 xiaohao_cai_ultimate_notes/        # 14个独立 Markdown 精读笔记文件
-│   ├── SLaT_Three-stage_Segmentation_超精读笔记_已填充.md
-│   ├── Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md
-│   ├── Two-Stage_Segmentation_2013_超精读笔记_已填充.md
-│   ├── Variational_Segmentation-Restoration_超精读笔记_已填充.md
+├── 📁 xiaohao_cai_ultimate_notes/        # 15个独立 Markdown 精读笔记文件
+│   ├── Framelet_Based_Tubular_Structures_超精读笔记_已填充.md
 │   ├── High-Dimensional_Inverse_Problems_UQ_超精读笔记_已填充.md
-│   ├── 高效变分分类方法_超精读笔记_已填充.md
-│   ├── 框架分割管状结构_超精读笔记_已填充.md
-│   ├── 多类分割迭代ROF_超精读笔记_已填充.md
-│   ├── 分割方法论总览_超精读笔记_已填充.md
-│   ├── Wavelet_Segmentation_on_Sphere_超精读笔记_已填充.md
+│   ├── Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md
+│   ├── Multiclass_Segmentation_Iterated_ROF_超精读笔记_已填充.md
+│   ├── Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md
+│   ├── Proximal_Nested_Sampling_超精读笔记_已填充.md
 │   ├── Radio_Interferometric_Imaging_I_超精读笔记_已填充.md
 │   ├── Radio_Interferometric_Imaging_II_超精读笔记_已填充.md
-│   ├── Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md
-│   └── Proximal_Nested_Sampling_超精读笔记_已填充.md
+│   ├── SLaT_Three-stage_Segmentation_超精读笔记_已填充.md
+│   ├── Tight_Frame_Vessel_Segmentation_超精读笔记_已填充.md
+│   ├── Two-Stage_Classification_Point_Clouds_超精读笔记_已填充.md
+│   ├── Variational_Segmentation-Restoration_超精读笔记_已填充.md
+│   ├── Wavelet_Segmentation_on_Sphere_超精读笔记_已填充.md
+│   ├── 分割方法论总览_SaT_Segmentation_Overview_超精读笔记_已填充.md
+│   └── 高效变分分类方法_Efficient_Variational_Classification_超精读笔记_已填充.md
 │
 └── 📁 reproduce/                         # 15项复现评估的 toy/partial 实验代码
     ├── run_all.py
@@ -56,7 +57,7 @@ teacherZ-C/
 | **第一作者论文** | 15篇 |
 | **PDF论文** | 15篇 |
 | **结构化精读卡片** | 15个 |
-| **独立 Markdown 笔记** | 14个文件（Framelet 两篇共用一份长笔记） |
+| **独立 Markdown 笔记** | 15个文件（一篇 PDF 对应一份笔记） |
 | **复现实验** | 9个实验脚本，生成15项复现评估 |
 
 ---
@@ -95,14 +96,14 @@ bash start-server.sh
 
 ### 查看精读笔记
 
-独立 Markdown 笔记位于 `xiaohao_cai_ultimate_notes/`。Dashboard 中另有 15 个结构化精读卡片，统一来自 `docs/js/reading-data.js`。
+独立 Markdown 笔记位于 `xiaohao_cai_ultimate_notes/`。Dashboard 中另有 15 个结构化精读卡片，统一来自 `docs/js/reading-data.js`。每篇论文的作者顺序已从 PDF 首页抽取到 `papers[].authors`，校验脚本会要求 15 篇均以 `Xiaohao Cai` 开头。
 
-笔记包含 5-Agent 辩论分析：
-- 数学家Agent：理论分析
-- 工程师Agent：实现细节
-- 应用专家Agent：应用价值
-- 质疑者Agent：批判性审查
-- 综合者Agent：共识总结
+笔记重点覆盖：
+- 论文元信息与第一作者核验
+- 核心问题、难点和方法抓手
+- 关键模型或公式、算法流程、理论保证和实验重点
+- 与其他 14 篇论文的关系、阅读问题和读后产出
+- toy/partial 复现等级、指标、风险和当前运行结果
 
 ### 运行复现实验
 

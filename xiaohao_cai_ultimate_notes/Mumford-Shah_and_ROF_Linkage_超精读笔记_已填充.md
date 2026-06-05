@@ -12,6 +12,7 @@
 |------|------|
 | **标题** | Linkage Between Piecewise Constant Mumford-Shah Model and ROF Model and Its Virtue in Image Segmentation |
 | **作者** | Xiaohao Cai, Raymond Chan, Carola-Bibiane Schönlieb, Gabriele Steidl, Tieyong Zeng |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2018 (arXiv v2: 2019) |
 | **arXiv ID** | 1807.10194 |
 | **期刊/会议** | SIAM Journal on Imaging Sciences (相关) |

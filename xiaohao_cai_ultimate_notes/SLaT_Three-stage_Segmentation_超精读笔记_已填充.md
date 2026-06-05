@@ -12,6 +12,7 @@
 |------|------|
 | **标题** | A Three-stage Approach for Segmenting Degraded Color Images: Smoothing, Lifting and Thresholding (SLaT) |
 | **作者** | Xiaohao Cai, Raymond Chan, Mila Nikolova, Tieyong Zeng |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2015 |
 | **arXiv ID** | 1506.00060 |
 | **期刊** | IEEE Transactions on Image Processing (相关) |

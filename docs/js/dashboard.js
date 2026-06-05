@@ -215,6 +215,7 @@ function renderPaperRows() {
         <td><span class="rank">${paper.priority}</span></td>
         <td>
           <strong>${paper.title}</strong>
+          <small>作者：${paper.authors}</small>
           <small>${paper.position}</small>
           <small>${paper.note}</small>
         </td>

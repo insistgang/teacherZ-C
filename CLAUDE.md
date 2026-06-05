@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-这是一个学术研究精读与复现项目，口径固定为蔡晓昊（Xiaohao Cai）的 15 篇第一作者论文。项目包含 15 个结构化精读卡片、14 个独立 Markdown 笔记文件、Web 展示系统和 toy/partial 复现实验代码。
+这是一个学术研究精读与复现项目，口径固定为蔡晓昊（Xiaohao Cai）的 15 篇第一作者论文。项目包含 15 个结构化精读卡片、15 个独立 Markdown 笔记文件、Web 展示系统和 toy/partial 复现实验代码。
 
 ## 常用命令
 
@@ -42,13 +42,10 @@ node docs/scripts/validate.mjs
 - `results/` - 实验结果
 
 ### 精读笔记 (`xiaohao_cai_ultimate_notes/`)
-- 14 个独立 Markdown 精读笔记文件；`docs/js/reading-data.js` 中维护 15 个结构化精读卡片。Framelet 短版和 tight-frame 扩展版共用一份长笔记。
-- 笔记包含5-Agent辩论分析：
-  - 数学家Agent：理论分析
-  - 工程师Agent：实现细节
-  - 应用专家Agent：应用价值
-  - 质疑者Agent：批判性审查
-  - 综合者Agent：共识总结
+- 15 个独立 Markdown 精读笔记文件；一篇 PDF 对应一份笔记。
+- `docs/js/reading-data.js` 中维护 15 个结构化精读卡片和 `papers[].authors` 作者顺序。
+- 校验脚本会要求 15 篇论文作者顺序均以 `Xiaohao Cai` 开头，并要求独立 Markdown 文件集合严格等于 15 篇口径。
+- 笔记覆盖论文元信息、第一作者核验、核心问题、关键模型或公式、算法流程、理论保证、实验重点、论文关系、阅读问题、读后产出和复现判断。
 
 ## 目录结构
 
@@ -66,7 +63,7 @@ node docs/scripts/validate.mjs
 │   ├── scripts/validate.mjs           # 数据验证脚本
 │   ├── assets/repro/                  # 复现实验图片
 │   └── 00_papers_first_author_xiaohao_cai_deduped/  # 15篇PDF
-├── xiaohao_cai_ultimate_notes/        # 14个独立 Markdown 精读笔记文件
+├── xiaohao_cai_ultimate_notes/        # 15个独立 Markdown 精读笔记文件
 └── reproduce/                         # 复现实验代码
     ├── run_all.py
     ├── experiments/

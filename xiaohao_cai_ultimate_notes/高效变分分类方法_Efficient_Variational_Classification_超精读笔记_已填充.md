@@ -14,6 +14,7 @@
 |------|------|
 | **标题** | An Efficient and Versatile Variational Method for High-Dimensional Data Classification |
 | **作者** | Xiaohao Cai, Raymond H. Chan, Xiaoyu Xie, Tieyong Zeng |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2024 |
 | **期刊** | Journal of Scientific Computing, Vol. 100, Article 81 |
 | **DOI** | 10.1007/s10915-024-02644-9 |

@@ -12,6 +12,7 @@
 |------|------|
 | **标题** | Uncertainty quantification for radio interferometric imaging: II. MAP estimation |
 | **作者** | Xiaohao Cai, Marcelo Pereyra, Jason D. McEwen |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2017 (2018修订) |
 | **期刊** | Monthly Notices of the Royal Astronomical Society (MNRAS) |
 | **arXiv ID** | 1711.04819v2 |

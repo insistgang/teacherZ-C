@@ -3,7 +3,7 @@
 > **超精读笔记** | 5-Agent辩论分析系统
 > 论文：Proximal nested sampling for high-dimensional Bayesian model selection (arXiv:2106.03646v3)
 > 作者：Xiaohao Cai, Jason D. McEwen, Marcelo Pereyra
-> 年份：2021年9月
+> 年份：2022年9月
 > 生成时间：2026-02-16
 
 ---
@@ -14,7 +14,8 @@
 |------|------|
 | **标题** | Proximal nested sampling for high-dimensional Bayesian model selection |
 | **作者** | Xiaohao Cai, Jason D. McEwen, Marcelo Pereyra |
-| **年份** | 2021 |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
+| **年份** | 2022 |
 | **arXiv ID** | 2106.03646v3 |
 | **会议/期刊** | 待定 (arXiv preprint) |
 | **研究领域** | 贝叶斯统计, 计算成像, 模型选择 |

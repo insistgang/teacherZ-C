@@ -12,6 +12,7 @@
 |------|------|
 | **标题** | Quantifying Uncertainty in High Dimensional Inverse Problems by Convex Optimisation |
 | **作者** | Xiaohao Cai (1st), Marcelo Pereyra, Jason D. McEwen |
+| **第一作者核验** | 是，PDF 首页标注 1st Xiaohao Cai |
 | **年份** | 2018/2019 (v1: 2018-11, v2: 2019-09) |
 | **arXiv ID** | 1811.02514 |
 | **期刊** | EUSIPCO 2019 (European Signal Processing Conference) |

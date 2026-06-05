@@ -203,6 +203,7 @@
           <span>${escapeHtml(note.difficulty)}</span>
           <span>${escapeHtml(stageFor(note.priority))}</span>
           <span>${paper.pages} 页</span>
+          <span>作者：${escapeHtml(paper.authors)}</span>
         </div>
 
         ${renderReportExpansion(note)}

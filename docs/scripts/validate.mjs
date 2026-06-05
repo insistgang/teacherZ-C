@@ -10,20 +10,21 @@ const notesDir = path.join(repoRoot, "xiaohao_cai_ultimate_notes");
 const reproAssetResultsPath = path.join(docsDir, "assets", "repro", "repro_results.json");
 
 const expectedNoteFiles = [
-  "SLaT_Three-stage_Segmentation_超精读笔记_已填充.md",
-  "Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md",
-  "Two-Stage_Segmentation_2013_超精读笔记_已填充.md",
-  "Variational_Segmentation-Restoration_超精读笔记_已填充.md",
+  "Framelet_Based_Tubular_Structures_超精读笔记_已填充.md",
   "High-Dimensional_Inverse_Problems_UQ_超精读笔记_已填充.md",
-  "高效变分分类方法_Efficient_Variational_Classification_超精读笔记_已填充.md",
-  "框架分割管状结构_Framelet_Tubular_超精读笔记_已填充.md",
-  "多类分割迭代ROF_Iterated_ROF_超精读笔记_已填充.md",
-  "分割方法论总览_SaT_Segmentation_Overview_超精读笔记_已填充.md",
-  "Wavelet_Segmentation_on_Sphere_超精读笔记_已填充.md",
+  "Mumford-Shah_and_ROF_Linkage_超精读笔记_已填充.md",
+  "Multiclass_Segmentation_Iterated_ROF_超精读笔记_已填充.md",
+  "Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md",
+  "Proximal_Nested_Sampling_超精读笔记_已填充.md",
   "Radio_Interferometric_Imaging_I_超精读笔记_已填充.md",
   "Radio_Interferometric_Imaging_II_超精读笔记_已填充.md",
-  "Online_Radio_Interferometric_Imaging_超精读笔记_已填充.md",
-  "Proximal_Nested_Sampling_超精读笔记_已填充.md"
+  "SLaT_Three-stage_Segmentation_超精读笔记_已填充.md",
+  "Tight_Frame_Vessel_Segmentation_超精读笔记_已填充.md",
+  "Two-Stage_Classification_Point_Clouds_超精读笔记_已填充.md",
+  "Variational_Segmentation-Restoration_超精读笔记_已填充.md",
+  "Wavelet_Segmentation_on_Sphere_超精读笔记_已填充.md",
+  "分割方法论总览_SaT_Segmentation_Overview_超精读笔记_已填充.md",
+  "高效变分分类方法_Efficient_Variational_Classification_超精读笔记_已填充.md"
 ];
 
 const failures = [];
@@ -56,14 +57,25 @@ if (data) {
   const { papers, paperNotesV2, reproAssessments } = data;
   check(Array.isArray(papers) && papers.length === 15, "papers 长度不是 15");
   check(Array.isArray(paperNotesV2) && paperNotesV2.length === 15, "paperNotesV2 长度不是 15");
-  check(expectedNoteFiles.length === 14, "独立 Markdown 笔记文件口径不是 14");
+  check(expectedNoteFiles.length === 15, "独立 Markdown 笔记文件口径不是 15");
   expectedNoteFiles.forEach((file) => {
     check(fs.existsSync(path.join(notesDir, file)), `精读笔记文件不存在：${file}`);
+  });
+  const actualNoteFiles = fs.readdirSync(notesDir).filter((file) => file.endsWith(".md")).sort();
+  const sortedExpectedNoteFiles = [...expectedNoteFiles].sort();
+  check(actualNoteFiles.length === sortedExpectedNoteFiles.length, `独立 Markdown 笔记文件数量不是 15，实际为 ${actualNoteFiles.length}`);
+  check(actualNoteFiles.every((file, index) => file === sortedExpectedNoteFiles[index]), "独立 Markdown 笔记目录存在非 15 篇口径文件");
+  expectedNoteFiles.forEach((file) => {
+    const noteText = readText(path.join(notesDir, file));
+    check(noteText.includes("第一作者核验"), `精读笔记缺少第一作者核验字段：${file}`);
   });
 
   const priorities = papers.map((paper) => paper.priority);
   check(new Set(priorities).size === priorities.length, "paper priority 不唯一");
   check(priorities.every((priority) => Number.isInteger(priority) && priority >= 1 && priority <= 15), "paper priority 不在 1-15");
+  papers.forEach((paper) => {
+    check(typeof paper.authors === "string" && paper.authors.startsWith("Xiaohao Cai"), `${paper.title} 作者顺序未以 Xiaohao Cai 开头`);
+  });
 
   const paperPrioritySet = new Set(priorities);
   const notePriorities = paperNotesV2.map((note) => note.priority);
@@ -214,4 +226,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("validate passed: papers=15, structuredNotes=15, markdownNotes=14, reproAssessments=15, PDFs ok, links ok, old refs clean");
+console.log("validate passed: papers=15, firstAuthorPapers=15, firstAuthorNotes=15, structuredNotes=15, markdownNotes=15, reproAssessments=15, PDFs ok, links ok, old refs clean");

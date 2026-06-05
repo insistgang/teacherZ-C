@@ -14,6 +14,7 @@
 |------|------|
 | **标题** | An Overview of SaT Segmentation Methodology and Its Applications in Image Processing |
 | **作者** | Xiaohao Cai, Raymond H. Chan, Tieyong Zeng |
+| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2023 |
 | **来源** | Springer Handbook of Mathematical Models and Algorithms in Computer Vision and Imaging |
 | **章节** | Chapter 40, pp. 1385-1409 |
