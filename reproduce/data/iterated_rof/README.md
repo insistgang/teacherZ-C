@@ -31,10 +31,30 @@ Readiness audit:
 
 ```bash
 python3 reproduce/experiments/iterated_rof_paper_like.py
+python3 reproduce/experiments/iterated_rof_paper_like.py --sources
 ```
 
 The audit writes:
 
 ```text
 reproduce/results/iterated_rof_paper_like_readiness.json
+```
+
+Recommended first sources:
+
+| Family | Source | URL | Local target |
+|---|---|---|---|
+| texture | Prague Texture Segmentation Benchmark | https://mosaic.utia.cas.cz/index.php?act=bench_form | `texture/images`, `texture/masks` |
+| medical | BrainWeb Simulated Brain MRI Database | https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1 | `medical/images`, `medical/masks` |
+| cartoon | Berkeley Segmentation Dataset and Benchmark (public substitute) | https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/ | `cartoon/images`, `cartoon/masks` |
+
+Backup sources:
+
+- TCIA Pretreat-MetsToBrain-Masks for larger real brain MRI segmentation data.
+- Weizmann Segmentation Evaluation Database for small natural-image segmentation, with stricter research-use terms.
+
+The machine-readable source manifest is:
+
+```text
+reproduce/paper_like/iterated_rof_dataset_sources.json
 ```

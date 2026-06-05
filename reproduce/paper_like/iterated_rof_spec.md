@@ -5,7 +5,7 @@
 1. Start with paper #3, `iterated-rof`, because its partial reproduction already has a real ROF solver and T-ROF threshold loop.
 2. Target `paper-like` first, not `paper-level`. Paper-level requires original cartoon / texture / medical images or an explicitly equivalent experimental protocol.
 3. No dashboard level should be raised until the experiment has real data, baselines, metrics, figures, and synced run output.
-4. Network downloads are not part of the first implementation slice. The first slice records data requirements and audits local dataset readiness.
+4. Network downloads are not automatic. The source manifest records official URLs and download policy; large or license-restricted archives should be downloaded manually after terms review.
 
 ## Objective
 
@@ -41,6 +41,7 @@ Paper-like readiness audit:
 ```bash
 python3 -m unittest reproduce.tests.test_iterated_rof_paper_like_scaffold
 python3 reproduce/experiments/iterated_rof_paper_like.py
+python3 reproduce/experiments/iterated_rof_paper_like.py --sources
 ```
 
 Future paper-like run, after data exists:
@@ -64,6 +65,9 @@ reproduce/data/iterated_rof/
 reproduce/paper_like/iterated_rof_spec.md
   This spec and task plan.
 
+reproduce/paper_like/iterated_rof_dataset_sources.json
+  Candidate source registry with URLs, local target family, download policy, and license notes.
+
 reproduce/tests/test_iterated_rof.py
   Existing partial-level tests.
 
@@ -80,6 +84,19 @@ The paper-like reproduction needs three data families:
 | `cartoon` | At least 1 degraded or clean cartoon-style image, preferably with mask/labels | Missing-pixel or smooth-region T-ROF behavior | Original paper figure and exact degradation protocol |
 | `texture` | At least 1 close-intensity texture image, preferably with mask/labels | T-ROF behavior on texture / stripe-like regions | Original texture image and baseline table |
 | `medical` | At least 1 medical image, preferably MRI-like with mask/labels | Medical-style grayscale segmentation | Original paper medical image and reported labels |
+
+Recommended first sources:
+
+| Family | Source | Fit | URL |
+|---|---|---|---|
+| `texture` | Prague Texture Segmentation Benchmark | Texture mosaics with corresponding ground truth and mask images; best match for paper texture experiments | https://mosaic.utia.cas.cz/index.php?act=bench_form |
+| `medical` | BrainWeb Simulated Brain MRI Database | MRI-like volumes with anatomical labels; stable first medical source before large clinical archives | https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1 |
+| `cartoon` | Berkeley Segmentation Dataset and Benchmark | Natural-image public substitute with human segmentations; useful for smooth-region/cartoon-like checks but not original paper cartoon data | https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/ |
+
+Backup sources:
+
+- TCIA Pretreat-MetsToBrain-Masks: real brain MRI segmentations, but larger and tumor/metastasis-specific.
+- Weizmann Segmentation Evaluation Database: small natural-image segmentation backup with stricter research-use terms.
 
 Expected local layout:
 
@@ -139,6 +156,7 @@ First slice:
 - [x] A readiness-audit script reports missing data explicitly.
 - [x] Tests cover the readiness audit.
 - [x] Existing partial reproduction and dashboard validation still pass.
+- [x] Candidate source manifest exists and records download policy / license notes.
 
 Paper-like milestone:
 
@@ -175,19 +193,24 @@ Paper-level milestone:
   - Verify: `python3 -m unittest reproduce.tests.test_iterated_rof_paper_like_scaffold`
   - Files: `reproduce/tests/test_iterated_rof_paper_like_scaffold.py`
 
+- [x] Task 4: Add candidate source manifest.
+  - Acceptance: Manifest includes Prague, BrainWeb, BSDS500, and backup sources with URL, local target, and redistribution warnings.
+  - Verify: `python3 reproduce/experiments/iterated_rof_paper_like.py --sources`
+  - Files: `reproduce/paper_like/iterated_rof_dataset_sources.json`, `reproduce/experiments/iterated_rof_paper_like.py`
+
 ### Phase 2: Real Data Runner
 
-- [ ] Task 4: Add local image loading and grayscale normalization.
+- [ ] Task 5: Add local image loading and grayscale normalization.
   - Acceptance: Local images can be loaded from each family without changing `run_all.py`.
   - Verify: Manual run on one local image.
 
-- [ ] Task 5: Run T-ROF and baselines on each available family.
+- [ ] Task 6: Run T-ROF and baselines on each available family.
   - Acceptance: Produces per-family metrics and figures.
   - Verify: JSON includes solver, mu, thresholds, runtime, and result files.
 
 ### Phase 3: Dashboard Promotion
 
-- [ ] Task 6: Promote paper-like results into dashboard only after data-backed run exists.
+- [ ] Task 7: Promote paper-like results into dashboard only after data-backed run exists.
   - Acceptance: `sync_to_dashboard.mjs --check` and `validate.mjs` pass.
   - Verify: Full validation commands pass.
 

@@ -1,0 +1,73 @@
+{
+  "texture": [
+    {
+      "source_id": "prague-texture",
+      "name": "Prague Texture Segmentation Benchmark",
+      "url": "https://mosaic.utia.cas.cz/",
+      "download_url": "https://mosaic.utia.cas.cz/index.php?act=bench_form",
+      "target_family": "texture",
+      "priority": 1,
+      "fit": "Best match for the paper's texture experiments: benchmark texture mosaics with corresponding ground-truth and mask images.",
+      "local_layout": "texture/images and texture/masks",
+      "download_policy": "manual_or_site_form",
+      "license_note": "Use only files allowed by the benchmark terms; keep downloaded archives local unless license-safe.",
+      "paper_like_role": "Primary texture source"
+    }
+  ],
+  "medical": [
+    {
+      "source_id": "brainweb",
+      "name": "BrainWeb Simulated Brain MRI Database",
+      "url": "https://brainweb.bic.mni.mcgill.ca/brainweb/",
+      "download_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "target_family": "medical",
+      "priority": 1,
+      "fit": "Stable MRI-like source with simulated volumes and anatomical labels; suitable for grayscale multiclass segmentation before using heavier clinical datasets.",
+      "local_layout": "medical/images and medical/masks",
+      "download_policy": "manual_form_or_script_after_terms_check",
+      "license_note": "Verify BrainWeb terms before redistributing; prefer keeping raw volumes local.",
+      "paper_like_role": "Primary medical source"
+    },
+    {
+      "source_id": "tcia-pretreat-metstobrain-masks",
+      "name": "TCIA Pretreat-MetsToBrain-Masks",
+      "url": "https://www.cancerimagingarchive.net/collection/pretreat-metstobrain-masks/",
+      "download_url": "https://www.cancerimagingarchive.net/collection/pretreat-metstobrain-masks/",
+      "target_family": "medical",
+      "priority": 2,
+      "fit": "Real brain MRI segmentations, but much larger and tumor/metastasis-specific; useful after BrainWeb.",
+      "local_layout": "medical/images and medical/masks",
+      "download_policy": "manual_large_dataset",
+      "license_note": "Large clinical archive; check TCIA usage and citation requirements before committing derived assets.",
+      "paper_like_role": "Secondary real-medical source"
+    }
+  ],
+  "cartoon": [
+    {
+      "source_id": "bsds500",
+      "name": "Berkeley Segmentation Dataset and Benchmark",
+      "url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/",
+      "download_url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/",
+      "target_family": "cartoon",
+      "priority": 1,
+      "fit": "Natural-image public substitute with human segmentations; useful for smooth-region / cartoon-like qualitative checks, but not the original paper cartoon data.",
+      "local_layout": "cartoon/images and cartoon/masks",
+      "download_policy": "manual_download",
+      "license_note": "Use according to Berkeley dataset terms; keep original archives local unless redistribution is permitted.",
+      "paper_like_role": "Primary cartoon/smooth-natural substitute"
+    },
+    {
+      "source_id": "weizmann-segmentation-db",
+      "name": "Weizmann Segmentation Evaluation Database",
+      "url": "https://www.wisdom.weizmann.ac.il/~vision/Seg_Evaluation_DB/dl.html",
+      "download_url": "https://www.wisdom.weizmann.ac.il/~vision/Seg_Evaluation_DB/dl.html",
+      "target_family": "cartoon",
+      "priority": 2,
+      "fit": "Small natural-image segmentation database with ground truth; useful as backup if BSDS setup is inconvenient.",
+      "local_layout": "cartoon/images and cartoon/masks",
+      "download_policy": "manual_download_research_only",
+      "license_note": "Research-use disclaimer and image-source terms are restrictive; do not commit images without review.",
+      "paper_like_role": "Backup cartoon/smooth-natural source"
+    }
+  ]
+}

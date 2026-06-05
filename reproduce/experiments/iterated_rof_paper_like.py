@@ -7,6 +7,7 @@ from common import REPO_ROOT, RESULTS_DIR
 
 DATA_ROOT = REPO_ROOT / "reproduce" / "data" / "iterated_rof"
 REPORT_PATH = RESULTS_DIR / "iterated_rof_paper_like_readiness.json"
+SOURCE_MANIFEST_PATH = REPO_ROOT / "reproduce" / "paper_like" / "iterated_rof_dataset_sources.json"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
 
 DATA_FAMILIES = {
@@ -28,6 +29,25 @@ def _display_path(path):
         return str(path.relative_to(REPO_ROOT))
     except ValueError:
         return str(path)
+
+
+def load_source_manifest(path=SOURCE_MANIFEST_PATH):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _source_summary(source):
+    keys = [
+        "source_id",
+        "name",
+        "url",
+        "download_url",
+        "priority",
+        "fit",
+        "download_policy",
+        "license_note",
+        "local_layout",
+    ]
+    return {key: source[key] for key in keys if key in source}
 
 
 def scan_family(root, family):
@@ -54,10 +74,15 @@ def scan_family(root, family):
     }
 
 
-def build_readiness_report(root=DATA_ROOT):
+def build_readiness_report(root=DATA_ROOT, source_manifest=None):
+    source_manifest = source_manifest or load_source_manifest()
     families = [scan_family(root, family) for family in DATA_FAMILIES]
     missing = [item["family"] for item in families if item["status"] == "missing"]
     quantitative = [item["family"] for item in families if item["status"] == "ready_quantitative"]
+    recommended_sources = {
+        family: [_source_summary(source) for source in sorted(source_manifest.get(family, []), key=lambda item: item["priority"])]
+        for family in DATA_FAMILIES
+    }
 
     if missing:
         status = "blocked_missing_data"
@@ -79,6 +104,7 @@ def build_readiness_report(root=DATA_ROOT):
         "status": status,
         "data_root": _display_path(root),
         "families": families,
+        "recommended_sources": recommended_sources,
         "blockers": blockers,
         "claim_boundary": (
             "Do not promote dashboard level beyond partial until real/local images, baselines, metrics, "
@@ -98,6 +124,11 @@ def main(argv=None):
     parser.add_argument("--data-root", default=str(DATA_ROOT), help="Local iterated-rof data root")
     parser.add_argument("--output", default=str(REPORT_PATH), help="Readiness JSON output path")
     parser.add_argument(
+        "--sources",
+        action="store_true",
+        help="Print recommended dataset sources and still write the readiness JSON report.",
+    )
+    parser.add_argument(
         "--run",
         action="store_true",
         help="Reserved for future dataset-backed paper-like execution; currently still audits readiness.",
@@ -112,6 +143,12 @@ def main(argv=None):
         print("blockers:")
         for blocker in report["blockers"]:
             print(f"- {blocker}")
+    if args.sources:
+        print("recommended sources:")
+        for family, sources in report["recommended_sources"].items():
+            print(f"- {family}:")
+            for source in sources:
+                print(f"  - {source['source_id']}: {source['download_url']}")
     return 0
 
 
