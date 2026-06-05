@@ -5,7 +5,7 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "toy-to-partial",
     "status": "completed",
-    "runtime_seconds": 0.6566,
+    "runtime_seconds": 0.7057,
     "metrics": {
       "direct_accuracy": 0.659,
       "sat_accuracy": 0.9799,
@@ -22,7 +22,7 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "toy-to-partial",
     "status": "completed",
-    "runtime_seconds": 0.6566,
+    "runtime_seconds": 0.7057,
     "metrics": {
       "direct_dice": 0.8989,
       "rof_threshold_dice": 0.9962,
@@ -39,7 +39,7 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.6566,
+    "runtime_seconds": 0.7057,
     "metrics": {
       "raw_kmeans_accuracy": 0.565,
       "gaussian_proxy_trof_accuracy": 0.9438,
@@ -57,9 +57,9 @@
       "k2_rof_threshold_dice": 0.9976,
       "k2_chanvese_proxy_dice": 0.8994,
       "k2_segmentation_disagreement": 0.0476,
-      "runtime_seconds_total": 0.6566,
-      "runtime_seconds_rof": 0.0169,
-      "runtime_seconds_threshold": 0.0005
+      "runtime_seconds_total": 0.7057,
+      "runtime_seconds_rof": 0.0255,
+      "runtime_seconds_threshold": 0.001
     },
     "resultFiles": [
       "assets/repro/sat_demo.png",
@@ -75,7 +75,7 @@
     "experiment_id": "segmentation_restoration",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1064,
+    "runtime_seconds": 0.111,
     "metrics": {
       "direct_accuracy": 0.5332,
       "joint_toy_accuracy": 0.9604,
@@ -93,7 +93,7 @@
     "experiment_id": "tubular_tight_frame",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.075,
+    "runtime_seconds": 0.076,
     "metrics": {
       "dice": 0.9981,
       "iou": 0.9962,
@@ -112,7 +112,7 @@
     "experiment_id": "tubular_tight_frame",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.075,
+    "runtime_seconds": 0.076,
     "metrics": {
       "dice": 0.9981,
       "iou": 0.9962,
@@ -131,7 +131,7 @@
     "experiment_id": "slat_color",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.0999,
+    "runtime_seconds": 0.1102,
     "metrics": {
       "rgb_only_accuracy": 0.7092,
       "rgb_lab_accuracy": 0.7145,
@@ -148,7 +148,7 @@
     "experiment_id": "sphere_wavelet_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0667,
+    "runtime_seconds": 0.0723,
     "metrics": {
       "dice": 0.8418,
       "gradient_threshold_quantile": 0.93
@@ -164,7 +164,7 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.091,
+    "runtime_seconds": 0.0904,
     "metrics": {
       "initial_accuracy": 0.8,
       "smoothed_accuracy": 0.8139,
@@ -182,7 +182,7 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.091,
+    "runtime_seconds": 0.0904,
     "metrics": {
       "initial_accuracy": 0.8,
       "smoothed_accuracy": 0.8139,
@@ -200,7 +200,7 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0722,
+    "runtime_seconds": 0.0749,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
@@ -220,7 +220,7 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0722,
+    "runtime_seconds": 0.0749,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
@@ -240,7 +240,7 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0722,
+    "runtime_seconds": 0.0749,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
@@ -260,7 +260,7 @@
     "experiment_id": "online_ri_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0738,
+    "runtime_seconds": 0.07,
     "metrics": {
       "offline_psnr": 12.3359,
       "online_psnr": 12.3359,
@@ -280,7 +280,7 @@
     "experiment_id": "nested_sampling_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0452,
+    "runtime_seconds": 0.0419,
     "metrics": {
       "estimated_log_evidence": -5.5996,
       "reference_log_evidence": -3.1319,

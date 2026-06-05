@@ -1054,7 +1054,7 @@ const reproDetails = {
     verificationPlan: "比较 direct K-means 与 SaT toy segmentation 的 pixel accuracy，并检查输出图是否展示平滑后类别更稳定。",
     resultStatus: "completed",
     experimentId: "sat_rof_trof",
-    runtimeSeconds: 0.6566,
+    runtimeSeconds: 0.7057,
     runMetrics: { direct_accuracy: 0.659, sat_accuracy: 0.9799, accuracy_gain: 0.321 },
     resultFiles: ["assets/repro/sat_demo.png"],
     fidelityWarning: "Uses Gaussian proxy smoothing, not an exact convex ROF/TV minimizer.",
@@ -1077,7 +1077,7 @@ const reproDetails = {
     verificationPlan: "对比 noisy direct threshold 与 ROF-threshold Dice，并记录 perimeter + data fitting 的 PCMS-like energy。",
     resultStatus: "completed",
     experimentId: "sat_rof_trof",
-    runtimeSeconds: 0.6566,
+    runtimeSeconds: 0.7057,
     runMetrics: { direct_dice: 0.8989, rof_threshold_dice: 0.9962, pcms_like_energy: 204.0 },
     resultFiles: ["assets/repro/sat_demo.png"],
     fidelityWarning: "Uses proxy smoothing; does not solve the exact ROF model.",
@@ -1100,8 +1100,8 @@ const reproDetails = {
     verificationPlan: "对比 raw K-means / Gaussian proxy T-ROF / Chambolle-Pock ROF T-ROF / Split-Bregman T-ROF；检查 Lemma 2 单调性、Lemma 3 sign changes、K=2 lambda 关系，并保存 convergence 与 Chan-Vese proxy 图。",
     resultStatus: "completed",
     experimentId: "sat_rof_trof",
-    runtimeSeconds: 0.6566,
-    runMetrics: { raw_kmeans_accuracy: 0.565, gaussian_proxy_trof_accuracy: 0.9438, rof_trof_accuracy: 0.9463, split_bregman_trof_accuracy: 0.951, threshold_iterations: 3, max_threshold_drift: 0.0, monotonicity_violated: false, sign_changes_final: 0, sign_changes_nonincreasing: true, assumption_a_violations: 0, rof_iterations_chambolle_pock: 240, rof_iterations_split_bregman: 70, k2_lambda_derived: 7.7416, k2_rof_threshold_dice: 0.9976, k2_chanvese_proxy_dice: 0.8994, k2_segmentation_disagreement: 0.0476, runtime_seconds_total: 0.6566, runtime_seconds_rof: 0.0169, runtime_seconds_threshold: 0.0005 },
+    runtimeSeconds: 0.7057,
+    runMetrics: { raw_kmeans_accuracy: 0.565, gaussian_proxy_trof_accuracy: 0.9438, rof_trof_accuracy: 0.9463, split_bregman_trof_accuracy: 0.951, threshold_iterations: 3, max_threshold_drift: 0.0, monotonicity_violated: false, sign_changes_final: 0, sign_changes_nonincreasing: true, assumption_a_violations: 0, rof_iterations_chambolle_pock: 240, rof_iterations_split_bregman: 70, k2_lambda_derived: 7.7416, k2_rof_threshold_dice: 0.9976, k2_chanvese_proxy_dice: 0.8994, k2_segmentation_disagreement: 0.0476, runtime_seconds_total: 0.7057, runtime_seconds_rof: 0.0255, runtime_seconds_threshold: 0.001 },
     resultFiles: ["assets/repro/sat_demo.png", "assets/repro/trof_thresholds.png", "assets/repro/iterated_rof_convergence.png", "assets/repro/iterated_rof_chanvese.png"],
     fidelityWarning: "Partial reproduction uses Chambolle-Pock dual projection as the ROF solver, with Split-Bregman as a solver cross-check rather than a paper baseline. Threshold update uses mean_f(Omega_i) on raw f per Eq. (15), not on smoothed u. Lemma 2 monotonicity and Lemma 3 sign changes are checked, but Theorem 1 projected-T-ROF full convergence proof is not numerically reproduced. Paper-level still requires real cartoon/texture/medical data and paper Table 1-2 baseline comparison.",
     notes: "Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. A Gaussian proxy T-ROF baseline is preserved for comparison; still toy/partial, not paper-level."
@@ -1123,7 +1123,7 @@ const reproDetails = {
     verificationPlan: "比较 degraded direct segmentation 与 AM toy segmentation 的 accuracy，并保存恢复图、分割图和 ground truth。",
     resultStatus: "completed",
     experimentId: "segmentation_restoration",
-    runtimeSeconds: 0.1064,
+    runtimeSeconds: 0.111,
     runMetrics: { direct_accuracy: 0.5332, joint_toy_accuracy: 0.9604, accuracy_gain: 0.4272, alternating_iterations: 8 },
     resultFiles: ["assets/repro/segmentation_restoration_toy.png"],
     notes: "Toy alternating restoration-segmentation over g, class means and labels; not full variational AM proof reproduction."
@@ -1145,7 +1145,7 @@ const reproDetails = {
     verificationPlan: "记录 Lambda size per iteration、Dice/IoU，并检查候选区域是否随迭代收缩。",
     resultStatus: "completed",
     experimentId: "tubular_tight_frame",
-    runtimeSeconds: 0.075,
+    runtimeSeconds: 0.076,
     runMetrics: { dice: 0.9981, iou: 0.9962, lambda_initial: 651, lambda_final: 2, iterations: 12 },
     resultFiles: ["assets/repro/tubular_lambda_shrinkage.png"],
     notes: "Approximate toy reproduction: Gaussian smoothing stands in for framelet smoothing inside uncertain boundary interval. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance."
@@ -1167,7 +1167,7 @@ const reproDetails = {
     verificationPlan: "检查 Lambda size 单调收缩、最终二值图与 ground truth 的 Dice/IoU。",
     resultStatus: "completed",
     experimentId: "tubular_tight_frame",
-    runtimeSeconds: 0.075,
+    runtimeSeconds: 0.076,
     runMetrics: { dice: 0.9981, iou: 0.9962, lambda_initial: 651, lambda_final: 2, iterations: 12 },
     resultFiles: ["assets/repro/tubular_lambda_shrinkage.png"],
     notes: "Approximate toy reproduction: Lambda boundary set shrinkage and finite convergence pattern on synthetic 2D vessel network. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance."
@@ -1189,7 +1189,7 @@ const reproDetails = {
     verificationPlan: "比较 RGB-only 与 RGB+Lab-like 的 pixel accuracy，并检查输出图中颜色区域边界是否更稳定。",
     resultStatus: "completed",
     experimentId: "slat_color",
-    runtimeSeconds: 0.0999,
+    runtimeSeconds: 0.1102,
     runMetrics: { rgb_only_accuracy: 0.7092, rgb_lab_accuracy: 0.7145, accuracy_gain: 0.0053 },
     resultFiles: ["assets/repro/slat_rgb_vs_rgblab.png"],
     notes: "Toy SLaT: channel smoothing, RGB plus Lab-like luminance/chroma lifting, K-means on synthetic degraded color image. Current toy shows only a small metric gain; a better synthetic color case is needed to highlight Lab lifting."
@@ -1211,7 +1211,7 @@ const reproDetails = {
     verificationPlan: "记录 Dice 和 spherical-gradient threshold，图中标注这是 approximation toy。",
     resultStatus: "completed",
     experimentId: "sphere_wavelet_toy",
-    runtimeSeconds: 0.0667,
+    runtimeSeconds: 0.0723,
     runMetrics: { dice: 0.8418, gradient_threshold_quantile: 0.93 },
     resultFiles: ["assets/repro/sphere_wavelet_toy.png"],
     notes: "Approximate sphere toy: equirectangular smoothing plus spherical-gradient correction; no S2LET/SSHT/SO3 stack."
@@ -1233,7 +1233,7 @@ const reproDetails = {
     verificationPlan: "比较 warm init 与 smoothing 后 accuracy，并保存 before/after decision colors。",
     resultStatus: "completed",
     experimentId: "graph_classification",
-    runtimeSeconds: 0.091,
+    runtimeSeconds: 0.0904,
     runMetrics: { initial_accuracy: 0.8, smoothed_accuracy: 0.8139, accuracy_gain: 0.0139, iterations: 18 },
     resultFiles: ["assets/repro/graph_classification_before_after.png"],
     notes: "Toy graph classification: centroid warm initialization, kNN graph smoothing, argmax projection."
@@ -1255,7 +1255,7 @@ const reproDetails = {
     verificationPlan: "记录 repeated iteration 的最终 accuracy 和运行时间，页面上明确 partial reproduction。",
     resultStatus: "completed",
     experimentId: "graph_classification",
-    runtimeSeconds: 0.091,
+    runtimeSeconds: 0.0904,
     runMetrics: { initial_accuracy: 0.8, smoothed_accuracy: 0.8139, accuracy_gain: 0.0139, iterations: 18 },
     resultFiles: ["assets/repro/graph_classification_before_after.png"],
     notes: "Toy repeated graph smoothing: demonstrates independent label-function update idea without full graph TV primal-dual solver."
@@ -1277,7 +1277,7 @@ const reproDetails = {
     verificationPlan: "记录 MAP PSNR/SNR、gamma alpha toy 值和 interval length map。",
     resultStatus: "completed",
     experimentId: "map_uq_toy",
-    runtimeSeconds: 0.0722,
+    runtimeSeconds: 0.0749,
     runMetrics: { map_psnr: 18.7123, map_snr: 9.6004, map_runtime_seconds: 0.0017, mcmc_runtime_seconds: 0.0041, gamma_alpha_toy: 939.9229, mean_interval_length: 0.1739 },
     resultFiles: ["assets/repro/map_uq_reconstruction_uncertainty.png"],
     notes: "Toy MAP-UQ: small Fourier undersampling inverse problem with approximate HPD and local interval map. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."
@@ -1299,7 +1299,7 @@ const reproDetails = {
     verificationPlan: "记录 toy sampler runtime、interval map，并在页面明确 no RI operator / no MCMC diagnostics。",
     resultStatus: "completed",
     experimentId: "map_uq_toy",
-    runtimeSeconds: 0.0722,
+    runtimeSeconds: 0.0749,
     runMetrics: { map_psnr: 18.7123, map_snr: 9.6004, map_runtime_seconds: 0.0017, mcmc_runtime_seconds: 0.0041, gamma_alpha_toy: 939.9229, mean_interval_length: 0.1739 },
     resultFiles: ["assets/repro/map_uq_reconstruction_uncertainty.png"],
     notes: "Toy proximal-MCMC-style sampling on a 32x32 Fourier inverse problem; no RI operator or MCMC diagnostics. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."
@@ -1321,7 +1321,7 @@ const reproDetails = {
     verificationPlan: "保存 MAP reconstruction + uncertainty map，并记录 MAP/MCMC toy runtimes。",
     resultStatus: "completed",
     experimentId: "map_uq_toy",
-    runtimeSeconds: 0.0722,
+    runtimeSeconds: 0.0749,
     runMetrics: { map_psnr: 18.7123, map_snr: 9.6004, map_runtime_seconds: 0.0017, mcmc_runtime_seconds: 0.0041, gamma_alpha_toy: 939.9229, mean_interval_length: 0.1739 },
     resultFiles: ["assets/repro/map_uq_reconstruction_uncertainty.png"],
     notes: "Toy MAP-UQ is faster than the toy sampler and gives a similar uncertainty pattern; not a paper-level SKA experiment. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."
@@ -1343,7 +1343,7 @@ const reproDetails = {
     verificationPlan: "比较 offline/online PSNR/SNR 与 peak stored measurements，并输出 storage-quality 图。",
     resultStatus: "completed",
     experimentId: "online_ri_toy",
-    runtimeSeconds: 0.0738,
+    runtimeSeconds: 0.07,
     runMetrics: { offline_psnr: 12.3359, online_psnr: 12.3359, offline_snr: 2.6069, online_snr: 2.6069, peak_stored_measurements_offline: 585, peak_stored_measurements_online: 98 },
     resultFiles: ["assets/repro/online_ri_storage_quality.png"],
     notes: "Toy online RI: split Fourier measurements into blocks, assimilate each block, then discard it conceptually."
@@ -1365,7 +1365,7 @@ const reproDetails = {
     verificationPlan: "比较 estimated/reference log evidence，记录 absolute error，并保存 evidence trace。",
     resultStatus: "completed",
     experimentId: "nested_sampling_toy",
-    runtimeSeconds: 0.0452,
+    runtimeSeconds: 0.0419,
     runMetrics: { estimated_log_evidence: -5.5996, reference_log_evidence: -3.1319, absolute_log_error: 2.4676, live_points: 80, iterations: 180 },
     resultFiles: ["assets/repro/nested_sampling_evidence_trace.png"],
     resultQuality: "rough illustrative",
