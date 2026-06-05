@@ -146,7 +146,7 @@ function renderThesis() {
 
 function renderMetrics() {
   const metrics = [
-    { label: "第一作者论文", value: "15", detail: "Xiaohao Cai 去重阅读集" },
+    { label: "第一作者论文", value: "15", detail: "Xiaohao Cai 阅读集" },
     { label: "研究方向", value: "5", detail: "SaT / ROF / Framelet / 分类 / UQ" },
     { label: "结构化精读卡片", value: "15", detail: "逐篇模型、算法、实验和关系" },
     { label: "阅读阶段", value: "7", detail: "按知识依赖排序" }

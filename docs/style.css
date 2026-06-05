@@ -245,8 +245,7 @@ h3 {
 .track-card,
 .track-detail,
 .thesis-card,
-.note-card,
-.dedup-card {
+.note-card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -351,7 +350,6 @@ h3 {
 .track-detail p,
 .thesis-card p,
 .note-card p,
-.dedup-card p,
 .reading-list p,
 td small {
   margin: 0;
@@ -1540,21 +1538,6 @@ td small {
   margin-top: 6px;
 }
 
-.dedup-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.dedup-card {
-  padding: 18px;
-  border-top: 4px solid var(--rose);
-}
-
-.dedup-card.keep {
-  border-top-color: var(--accent);
-}
-
 .status-badge {
   display: inline-flex;
   border-radius: 6px;
@@ -1626,7 +1609,6 @@ td small {
 
   .metric-grid,
   .timeline,
-  .dedup-layout,
   .repro-method-grid,
   .repro-ranking-grid {
     grid-template-columns: 1fr 1fr;
@@ -1700,7 +1682,6 @@ td small {
   .layer-grid,
   .week-grid,
   .topic-grid,
-  .dedup-layout,
   .repro-summary-grid,
   .repro-grid,
   .result-file-grid,
