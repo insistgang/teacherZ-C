@@ -35,7 +35,7 @@ python reproduce/run_all.py
 
 - `toy`：使用 synthetic/toy 数据，只验证论文核心思想的一个小型可运行片段。
 - `toy-to-partial`：实现了论文算法路线的一部分，但关键求解器使用轻量 proxy，例如 Gaussian smoothing 代替严格 ROF/TV minimization。
-- `partial`：复现论文核心算法路线的一部分，例如 SaT smoothing + thresholding、SLaT RGB+Lab、graph smoothing。
+- `partial`：复现论文核心算法路线的一部分，例如 iterated ROF 的 Chambolle-Pock ROF + threshold update、SLaT RGB+Lab、graph smoothing。
 - `paper-level`：接近论文实验设置。当前没有把任何重依赖论文标成 paper-level。
 - `assessment-only`：只做难度评估，不运行实验。当前 15 篇都至少有 toy 或 partial 实验。
 
@@ -53,6 +53,7 @@ python reproduce/run_all.py
 以下方向的 full reproduction 需要真实数据、专门库或长时间运行，本仓库只提供 toy/partial 演示：
 
 - Tight-frame vessel：需要真实 2D/3D MRA 数据和严格 tight-frame/DCWT 实现。
+- Iterated ROF：当前 partial 已实现 Chambolle-Pock ROF、Split-Bregman 对照、raw `mean_f(Omega_i)` threshold update 与 K=2 proxy 检查，但 full reproduction 仍需要 cartoon/texture/medical 数据和论文 Table 1-2 baseline 对照。
 - Wavelet sphere：需要 S2LET/SSHT/SO3 等球面小波栈和球面数据。
 - RI UQ I：需要 radio interferometric operators、大规模 MCMC、诊断与真实 RI 数据。
 - Online RI：需要大规模 visibility streams 才能接近论文实验。

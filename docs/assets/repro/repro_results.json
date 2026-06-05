@@ -5,7 +5,7 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "toy-to-partial",
     "status": "completed",
-    "runtime_seconds": 0.4396,
+    "runtime_seconds": 0.6566,
     "metrics": {
       "direct_accuracy": 0.659,
       "sat_accuracy": 0.9799,
@@ -14,7 +14,7 @@
     "resultFiles": [
       "assets/repro/sat_demo.png"
     ],
-    "notes": "Gaussian smoothing is used as a lightweight proxy for convex ROF/TV smoothing on a synthetic toy image."
+    "notes": "Gaussian proxy smoothing is used as a lightweight proxy for convex ROF/TV smoothing on a synthetic toy image."
   },
   {
     "priority": 2,
@@ -22,10 +22,10 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "toy-to-partial",
     "status": "completed",
-    "runtime_seconds": 0.4396,
+    "runtime_seconds": 0.6566,
     "metrics": {
       "direct_dice": 0.8989,
-      "rof_threshold_dice": 0.996,
+      "rof_threshold_dice": 0.9962,
       "pcms_like_energy": 204.0
     },
     "resultFiles": [
@@ -37,19 +37,37 @@
     "priority": 3,
     "id": "iterated-rof",
     "experiment_id": "sat_rof_trof",
-    "reproductionLevel": "toy-to-partial",
+    "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.4396,
+    "runtime_seconds": 0.6566,
     "metrics": {
-      "raw_kmeans_accuracy": 0.659,
-      "trof_accuracy": 0.9799,
-      "threshold_iterations": 3
+      "raw_kmeans_accuracy": 0.565,
+      "gaussian_proxy_trof_accuracy": 0.9438,
+      "rof_trof_accuracy": 0.9463,
+      "split_bregman_trof_accuracy": 0.951,
+      "threshold_iterations": 3,
+      "max_threshold_drift": 0.0,
+      "monotonicity_violated": false,
+      "sign_changes_final": 0,
+      "sign_changes_nonincreasing": true,
+      "assumption_a_violations": 0,
+      "rof_iterations_chambolle_pock": 240,
+      "rof_iterations_split_bregman": 70,
+      "k2_lambda_derived": 7.7416,
+      "k2_rof_threshold_dice": 0.9976,
+      "k2_chanvese_proxy_dice": 0.8994,
+      "k2_segmentation_disagreement": 0.0476,
+      "runtime_seconds_total": 0.6566,
+      "runtime_seconds_rof": 0.0169,
+      "runtime_seconds_threshold": 0.0005
     },
     "resultFiles": [
       "assets/repro/sat_demo.png",
-      "assets/repro/trof_thresholds.png"
+      "assets/repro/trof_thresholds.png",
+      "assets/repro/iterated_rof_convergence.png",
+      "assets/repro/iterated_rof_chanvese.png"
     ],
-    "notes": "This synthetic toy implements the threshold update tau_i = 1/2(m_{i-1}+m_i) after proxy smoothing; strict T-ROF should solve ROF once."
+    "notes": "Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. A Gaussian proxy T-ROF baseline is preserved for comparison; still toy/partial, not paper-level."
   },
   {
     "priority": 4,
@@ -57,7 +75,7 @@
     "experiment_id": "segmentation_restoration",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1208,
+    "runtime_seconds": 0.1064,
     "metrics": {
       "direct_accuracy": 0.5332,
       "joint_toy_accuracy": 0.9604,
@@ -75,7 +93,7 @@
     "experiment_id": "tubular_tight_frame",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0784,
+    "runtime_seconds": 0.075,
     "metrics": {
       "dice": 0.9981,
       "iou": 0.9962,
@@ -94,7 +112,7 @@
     "experiment_id": "tubular_tight_frame",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0784,
+    "runtime_seconds": 0.075,
     "metrics": {
       "dice": 0.9981,
       "iou": 0.9962,
@@ -113,7 +131,7 @@
     "experiment_id": "slat_color",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.0881,
+    "runtime_seconds": 0.0999,
     "metrics": {
       "rgb_only_accuracy": 0.7092,
       "rgb_lab_accuracy": 0.7145,
@@ -130,7 +148,7 @@
     "experiment_id": "sphere_wavelet_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0714,
+    "runtime_seconds": 0.0667,
     "metrics": {
       "dice": 0.8418,
       "gradient_threshold_quantile": 0.93
@@ -146,7 +164,7 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.0898,
+    "runtime_seconds": 0.091,
     "metrics": {
       "initial_accuracy": 0.8,
       "smoothed_accuracy": 0.8139,
@@ -164,7 +182,7 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.0898,
+    "runtime_seconds": 0.091,
     "metrics": {
       "initial_accuracy": 0.8,
       "smoothed_accuracy": 0.8139,
@@ -182,12 +200,12 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.075,
+    "runtime_seconds": 0.0722,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0016,
-      "mcmc_runtime_seconds": 0.004,
+      "map_runtime_seconds": 0.0017,
+      "mcmc_runtime_seconds": 0.0041,
       "gamma_alpha_toy": 939.9229,
       "mean_interval_length": 0.1739
     },
@@ -202,12 +220,12 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.075,
+    "runtime_seconds": 0.0722,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0016,
-      "mcmc_runtime_seconds": 0.004,
+      "map_runtime_seconds": 0.0017,
+      "mcmc_runtime_seconds": 0.0041,
       "gamma_alpha_toy": 939.9229,
       "mean_interval_length": 0.1739
     },
@@ -222,12 +240,12 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.075,
+    "runtime_seconds": 0.0722,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0016,
-      "mcmc_runtime_seconds": 0.004,
+      "map_runtime_seconds": 0.0017,
+      "mcmc_runtime_seconds": 0.0041,
       "gamma_alpha_toy": 939.9229,
       "mean_interval_length": 0.1739
     },
@@ -242,7 +260,7 @@
     "experiment_id": "online_ri_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0665,
+    "runtime_seconds": 0.0738,
     "metrics": {
       "offline_psnr": 12.3359,
       "online_psnr": 12.3359,
@@ -262,7 +280,7 @@
     "experiment_id": "nested_sampling_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0591,
+    "runtime_seconds": 0.0452,
     "metrics": {
       "estimated_log_evidence": -5.5996,
       "reference_log_evidence": -3.1319,

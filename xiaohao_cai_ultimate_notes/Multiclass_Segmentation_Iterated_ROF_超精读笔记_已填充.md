@@ -93,34 +93,54 @@ ROF: min_u TV(u)+μ/2∫(u-f)^2dx; T-ROF: E(Σ,τ)=Σ_i[Per(Σ_i;Ω)+μ∫_{Σ_i
 
 | 字段 | 内容 |
 | --- | --- |
-| 复现等级 | toy-to-partial |
+| 复现等级 | partial |
 | 真实性等级 | partial-completed |
 | 难度 | 中 |
-| 效果 | 很明显 |
-| 最小实验 | close-gray-value multiphase synthetic image，先解一次 ROF/TV-like smoothing，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)。 |
-| 预期产出 | 比 direct K-means/no smoothing 更能分出接近灰度类别；toy accuracy 从 0.6590 提升到 0.9799，阈值迭代 3 次。 |
+| 效果 | 明显 |
+| 最小实验 | close-gray-value (差 0.04) 4-phase synthetic image + K=2 synthetic case；先解一次 Chambolle-Pock ROF，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)，其中 m_i := mean_f(Omega_i) on raw f。 |
+| 预期产出 | partial 复现显示 ROF T-ROF 可从 raw K-means 0.5650 提升到 0.9463；Gaussian proxy baseline 为 0.9438，Split-Bregman 对照为 0.9510。 |
 | 依赖 | numpy / scipy / matplotlib |
-| 数据需求 | synthetic close-gray-value 4-phase image。 |
+| 数据需求 | synthetic close-gray-value 4-phase image + K=2 synthetic two-phase image；不需要下载真实数据。 |
 | 算力需求 | CPU，约 1 秒内。 |
-| 实现风险 | 使用近似 TV smoothing，不等同于论文中的完整 ROF 数值实现和收敛条件验证。 |
+| 实现风险 | partial 升级已用 ROF solver 替代 Gaussian proxy 主路径，并按 Eq. (15) 用 raw f 计算 mean_f(Omega_i)；仍不等同于 Theorem 1 完整证明或论文真实数据实验。 |
 
 ### 复现指标
 
 - raw_kmeans_accuracy
-- trof_accuracy
+- gaussian_proxy_trof_accuracy
+- rof_trof_accuracy
+- split_bregman_trof_accuracy
 - threshold_iterations
+- max_threshold_drift
+- monotonicity_violated
+- sign_changes_final
+- sign_changes_nonincreasing
+- assumption_a_violations
+- rof_iterations_chambolle_pock
+- rof_iterations_split_bregman
+- k2_lambda_derived
+- k2_rof_threshold_dice
+- k2_chanvese_proxy_dice
+- k2_segmentation_disagreement
 - runtime_seconds
 
 ### 验证计划
 
-记录每轮阈值变化、最终 pixel accuracy，并保存 threshold history 图。
+对比 raw K-means / Gaussian proxy T-ROF / Chambolle-Pock ROF T-ROF / Split-Bregman T-ROF；检查 Lemma 2 单调性、Lemma 3 sign changes、K=2 lambda 关系，并保存 threshold history、convergence 与 Chan-Vese proxy 图。
 
 ### 当前运行结果
 
-- raw_kmeans_accuracy: 0.659
-- trof_accuracy: 0.9799
+- raw_kmeans_accuracy: 0.565
+- gaussian_proxy_trof_accuracy: 0.9438
+- rof_trof_accuracy: 0.9463
+- split_bregman_trof_accuracy: 0.951
 - threshold_iterations: 3
+- monotonicity_violated: false
+- sign_changes_final: 0
+- assumption_a_violations: 0
+- k2_rof_threshold_dice: 0.9976
+- k2_chanvese_proxy_dice: 0.8994
 
 ### 结果说明
 
-This synthetic toy implements the threshold update tau_i = 1/2(m_{i-1}+m_i) after proxy smoothing; strict T-ROF should solve ROF once.
+Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. A Gaussian proxy T-ROF baseline is preserved for comparison; still toy/partial, not paper-level.
