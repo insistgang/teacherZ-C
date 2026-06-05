@@ -36,7 +36,7 @@ def run():
     for row, cols in enumerate(neigh):
         graph[row, cols] = 1.0
     graph = np.maximum(graph, graph.T)
-    degree = np.maximum(graph.sum(axis=1), 1.0)
+    neighbors = [np.flatnonzero(graph[row]) for row in range(len(x))]
     labels = warm.copy()
     probs = np.zeros((len(y), 2), dtype=float)
     probs[np.arange(len(y)), labels] = 1.0
@@ -44,7 +44,11 @@ def run():
     probs[labeled, y[labeled]] = 1.0
     acc_trace = [initial_acc]
     for _ in range(18):
-        probs = 0.72 * probs + 0.28 * (graph @ probs) / degree[:, None]
+        neighbor_avg = np.vstack([
+            probs[cols].mean(axis=0) if len(cols) else probs[row]
+            for row, cols in enumerate(neighbors)
+        ])
+        probs = 0.72 * probs + 0.28 * neighbor_avg
         probs[labeled] = 0
         probs[labeled, y[labeled]] = 1.0
         labels = probs.argmax(axis=1)

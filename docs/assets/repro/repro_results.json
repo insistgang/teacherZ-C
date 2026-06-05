@@ -5,7 +5,7 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "toy-to-partial",
     "status": "completed",
-    "runtime_seconds": 0.529,
+    "runtime_seconds": 0.4396,
     "metrics": {
       "direct_accuracy": 0.659,
       "sat_accuracy": 0.9799,
@@ -22,7 +22,7 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "toy-to-partial",
     "status": "completed",
-    "runtime_seconds": 0.529,
+    "runtime_seconds": 0.4396,
     "metrics": {
       "direct_dice": 0.8989,
       "rof_threshold_dice": 0.996,
@@ -39,7 +39,7 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "toy-to-partial",
     "status": "completed",
-    "runtime_seconds": 0.529,
+    "runtime_seconds": 0.4396,
     "metrics": {
       "raw_kmeans_accuracy": 0.659,
       "trof_accuracy": 0.9799,
@@ -57,7 +57,7 @@
     "experiment_id": "segmentation_restoration",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.2356,
+    "runtime_seconds": 0.1208,
     "metrics": {
       "direct_accuracy": 0.5332,
       "joint_toy_accuracy": 0.9604,
@@ -75,7 +75,7 @@
     "experiment_id": "tubular_tight_frame",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1355,
+    "runtime_seconds": 0.0784,
     "metrics": {
       "dice": 0.9981,
       "iou": 0.9962,
@@ -94,7 +94,7 @@
     "experiment_id": "tubular_tight_frame",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1355,
+    "runtime_seconds": 0.0784,
     "metrics": {
       "dice": 0.9981,
       "iou": 0.9962,
@@ -113,7 +113,7 @@
     "experiment_id": "slat_color",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.1806,
+    "runtime_seconds": 0.0881,
     "metrics": {
       "rgb_only_accuracy": 0.7092,
       "rgb_lab_accuracy": 0.7145,
@@ -130,7 +130,7 @@
     "experiment_id": "sphere_wavelet_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.131,
+    "runtime_seconds": 0.0714,
     "metrics": {
       "dice": 0.8418,
       "gradient_threshold_quantile": 0.93
@@ -146,7 +146,7 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.1197,
+    "runtime_seconds": 0.0898,
     "metrics": {
       "initial_accuracy": 0.8,
       "smoothed_accuracy": 0.8139,
@@ -164,7 +164,7 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.1197,
+    "runtime_seconds": 0.0898,
     "metrics": {
       "initial_accuracy": 0.8,
       "smoothed_accuracy": 0.8139,
@@ -182,12 +182,12 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1224,
+    "runtime_seconds": 0.075,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0031,
-      "mcmc_runtime_seconds": 0.0067,
+      "map_runtime_seconds": 0.0016,
+      "mcmc_runtime_seconds": 0.004,
       "gamma_alpha_toy": 939.9229,
       "mean_interval_length": 0.1739
     },
@@ -202,12 +202,12 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1224,
+    "runtime_seconds": 0.075,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0031,
-      "mcmc_runtime_seconds": 0.0067,
+      "map_runtime_seconds": 0.0016,
+      "mcmc_runtime_seconds": 0.004,
       "gamma_alpha_toy": 939.9229,
       "mean_interval_length": 0.1739
     },
@@ -222,12 +222,12 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1224,
+    "runtime_seconds": 0.075,
     "metrics": {
       "map_psnr": 18.7123,
       "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0031,
-      "mcmc_runtime_seconds": 0.0067,
+      "map_runtime_seconds": 0.0016,
+      "mcmc_runtime_seconds": 0.004,
       "gamma_alpha_toy": 939.9229,
       "mean_interval_length": 0.1739
     },
@@ -242,7 +242,7 @@
     "experiment_id": "online_ri_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.1157,
+    "runtime_seconds": 0.0665,
     "metrics": {
       "offline_psnr": 12.3359,
       "online_psnr": 12.3359,
@@ -262,7 +262,7 @@
     "experiment_id": "nested_sampling_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0723,
+    "runtime_seconds": 0.0591,
     "metrics": {
       "estimated_log_evidence": -5.5996,
       "reference_log_evidence": -3.1319,

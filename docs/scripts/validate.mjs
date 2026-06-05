@@ -153,6 +153,16 @@ if (data) {
         check(notesLower.includes("proxy smoothing") || (notesLower.includes("gaussian") && notesLower.includes("proxy")), `${item.id} 使用 gaussian_filter 但 notes 未说明 proxy smoothing / Gaussian proxy`);
       }
     });
+
+    try {
+      execFileSync(process.execPath, [path.join(repoRoot, "reproduce", "sync_to_dashboard.mjs"), "--check"], {
+        cwd: repoRoot,
+        encoding: "utf8"
+      });
+    } catch (error) {
+      const detail = String(error.stdout || error.stderr || error.message || "").trim();
+      check(false, `dashboard 复现字段未同步最新 run results：${detail}`);
+    }
   }
 }
 
@@ -230,4 +240,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("validate passed: papers=15, firstAuthorPapers=15, firstAuthorNotes=15, structuredNotes=15, markdownNotes=15, reproAssessments=15, PDFs ok, links ok, old refs clean");
+console.log("validate passed: papers=15, firstAuthorPapers=15, firstAuthorNotes=15, structuredNotes=15, markdownNotes=15, reproAssessments=15, repro sync ok, PDFs ok, links ok, old refs clean");

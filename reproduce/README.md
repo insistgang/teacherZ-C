@@ -64,5 +64,8 @@ python reproduce/run_all.py
 
 ```bash
 python reproduce/run_all.py
+node reproduce/sync_to_dashboard.mjs --check
 node docs/scripts/validate.mjs
 ```
+
+`sync_to_dashboard.mjs` 会对比 `reproduce/results/repro_results.json` 与 `docs/js/reading-data.js` 中的 `reproDetails` 手工字段，检查 `resultStatus`、`runtimeSeconds`、`runMetrics`、`resultFiles`、`notes`、`warning` 等是否一致。它不改写人工评注字段，例如 `difficultyScore`、`effectScore`、`fidelityWarning`。

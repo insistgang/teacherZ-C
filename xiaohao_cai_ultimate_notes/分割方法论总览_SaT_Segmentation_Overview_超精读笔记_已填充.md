@@ -90,17 +90,19 @@ $$\inf_{g \in W^{1,2}(\Omega)} \left\{\frac{\mu}{2} \int_{\Omega} (f - Ag)^2 dx 
 
 ### 3.2 定理1（存在性与唯一性）
 
-**定理**：设 $\Omega$ 为具有Lipschitz边界的有界连通开集，$f \in L^2(\Omega)$，且 $\text{Ker}(A) \cap \text{Ker}(\nabla) = \{0\}$，则上述问题在 $W^{1,2}(\Omega)$ 中存在唯一最小解。
+**定理**：设 $\Omega$ 为具有Lipschitz边界的有界连通开集，$f \in L^2(\Omega)$，且 $\text{Ker}(A) \supseteq \text{Ker}(\nabla) = \{0\}$，则上述问题在 $W^{1,2}(\Omega)$ 中存在唯一最小解。
 
 ### 3.3 定理2（ROF与PCMS的关系）
 
-**定理**：设 $K=2$，$u^* \in BV(\Omega)$ 是ROF模型的解。给定 $0 < m_0 < m_1 \leq 1$，设 $\tilde{\Sigma} := \{x \in \Omega: u^*(x) > \frac{m_1+m_0}{2}\}$ 满足 $0 < |\tilde{\Sigma}| < |\Omega|$。则 $\tilde{\Sigma}$ 是PCMS模型对于 $\lambda := \frac{\mu}{2(m_1-m_0)}$ 和固定 $m_0, m_1$ 的最小化子。
+**定理**：设 $K=2$，$u^* \in BV(\Omega)$ 是ROF模型的解。给定 $0 < m_0 < m_1 \leq 1$，设 $\tilde{\Sigma} := \{x \in \Omega: u^*(x) > \frac{m_1+m_0}{2}\}$ 满足 $0 < |\tilde{\Sigma}| < |\Omega|$。则 $\tilde{\Sigma}$ 是PCMS模型对于 $\lambda := \frac{\mu}{2(m_1-m_0)}$ 和固定 $m_0, m_1$ 的最小化子。特别地，若 $m_0 = \text{mean}_f(\Omega \setminus \tilde{\Sigma})$ 且 $m_1 = \text{mean}_f(\tilde{\Sigma})$，则 $(\tilde{\Sigma}, m_0, m_1)$ 进一步构成PCMS模型的partial minimizer。
 
 **意义**：
 - 建立了图像分割与图像恢复之间的桥梁
 - 证明了SaT方法的理论有效性
 
 ### 3.4 Split-Bregman算法求解
+
+> 注：本节迭代格式来自标准 Split-Bregman 求解器背景（Goldstein and Osher 2009），不属于 SaT 综述原文的展开公式。SaT 综述只把 split-Bregman / Chambolle-Pock 列为可用快速求解器。
 
 **变量分裂**：引入辅助变量 $d_x = \nabla_x g$, $d_y = \nabla_y g$
 
@@ -137,6 +139,8 @@ $$\int_{\Omega} (f e^{-w} + w) dx + \beta \int_{\Omega} |\nabla w| dx$$
 
 #### Tight-Frame算法
 
+> 注：下面的 tight-frame 通用迭代式来自相关 tight-frame 分割文献脉络，本轮仅在 SaT 综述中确认其应用入口；具体公式出处待 Batch B 核对 `framelet-tubular` / `tight-frame-vessel` 原文。
+
 **通用形式**：
 
 $$\begin{aligned}
@@ -167,6 +171,8 @@ $$t_{\lambda_k}(v_k) = \begin{cases}
 - **第二阶段**：SaT模型优化概率图
 
 $$\inf_{g_k} \left\{\frac{\mu}{2} \int_{\Omega} (f_k - Ag_k)^2 dx + \frac{\lambda}{2} \int_{\Omega} |\nabla g_k|^2 dx + \int_{\Omega} |\nabla g_k| dx\right\}$$
+
+约束条件：$g_k|_{\Omega_{train}} = f_k|_{\Omega_{train}}$，即训练像素上的 $g_k$ 必须等于 SVM 给出的概率图 $f_k$。
 
 标签分配：$\text{Label}(x) = \arg\max_{k} g_k(x)$
 
