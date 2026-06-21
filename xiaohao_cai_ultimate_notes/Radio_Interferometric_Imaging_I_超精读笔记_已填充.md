@@ -611,16 +611,17 @@ $C_\alpha=\{x:f(x)+g(x)\le\gamma_\alpha\}$，即 log-posterior 的一个 level-s
 
 | 维度 | 判断 |
 |------|------|
-| 本仓库复现等级 | **toy**（`reproductionTruthLevel = toy-completed`） |
+| 本仓库复现等级 | **toy**（`reproductionTruthLevel = toy-completed`）；核心优化/UQ 机制已升级为真实算法 |
 | runner | `reproduce/experiments/map_uq_toy.py`（priority 11/12/13 共享） |
-| 实际做了什么 | 32×32 Fourier 欠采样玩具问题：梯度下降 + Gaussian smoothing 当 MAP/proxy；随机游走 + 平滑当"采样"，取经验分位差当 interval map |
-| 当前 runMetrics | `map_psnr=18.7123`、`map_snr=9.6004`、`map_runtime_seconds=0.0017`、`mcmc_runtime_seconds=0.0041`、`gamma_alpha_toy=939.9229`、`mean_interval_length=0.1739` |
-| 产物图 | `assets/repro/map_uq_reconstruction_uncertainty.png`（truth / MAP toy / HPD approx / MCMC interval 四联图） |
-| 与论文的可比性 | **不可比**。无真正 RI 算子 Φ、无 Daubechies 8 字典、无 $\ell_1$ 后验、无 Moreau-Yosida/MYULA/Px-MALA、无 HPD isocontour、无 hypothesis test、无 MCMC 诊断 |
-| 距 paper-like 的关键缺口 | (1) prox-Langevin 采样器（MYULA+软阈值 prox+$\nabla g$）；(2) 真实天图（M31 等 256²）+ Daubechies 8 + 10% Fourier 覆盖 + 30 dB；(3) UQ 产品（interval/HPD/hypothesis test）与 MCMC 诊断 |
-| paper-level | **0/15**，本篇亦为 0；纪律：禁止把 toy 的秒级 runtime 或 `map_psnr` 当作论文级证据 |
+| 实际做了什么 | 64×64 Shepp-Logan + low-freq-biased Fourier 欠采样（≈9.8%，SNR=30 dB）：**真实 ℓ1-wavelet（db8）MAP via FISTA/forward-backward + 闭式软阈值 prox**；**真实 HPD 阈值** `γ'_α=f+g+√(16log(3/α))√N+N`；**真实 superpixel 二分搜索 local credible interval** |
+| 当前 runMetrics | `map_psnr=22.2878`、`map_snr=9.1586`、`dirty_snr=7.4821`、`snr_gain_over_dirty_db=1.6766`、`sampling_rate=0.0979`、`gamma_alpha_hpd=6180.6593`、`mean_interval_length=0.3709` |
+| 产物图 | `assets/repro/map_uq_reconstruction_uncertainty.png`（truth / dirty Φ†y / ℓ1-wavelet MAP / LCI width 四联图） |
+| 已实现（真实） | Daubechies-8 字典、$\ell_1$ analysis 后验、forward-backward MAP（$\nabla g=\Phi^\dagger(\Phi x-y)/\sigma^2$ + 软阈值 prox）、concentration-inequality HPD 阈值、local credible interval；MAP 比 dirty 基线 SNR 高 **+1.68 dB** |
+| 与论文的可比性 | **走的是优化（MAP）路线，非论文 I 的采样路线**。仍无真正 RI 算子 Φ（NUFFT）、无 MYULA/Px-MALA（Langevin/MH）、无样本式 HPD isocontour、无 hypothesis test；指标用标准测试图，非论文报告值 |
+| 距 paper-like 的关键缺口 | (1) **prox-Langevin 采样器 MYULA + Px-MALA**（本篇核心，仍缺）；(2) 真实天图（M31 等 256²）+ 真正 RI 算子；(3) 样本式 HPD/pixel interval、hypothesis test 与 MCMC 诊断 |
+| paper-level | **0/15**，本篇亦为 0；纪律：禁止把亚秒级 runtime 当作论文级加速证据 |
 
-> 诚实声明：runner 的 `notes` 已标注 "no RI operator or MCMC diagnostics" 且 "Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim"。本笔记中第 6 节引用的论文数值（Table 1 分钟数、Table 2/3 判定值）仅供对照，**当前实现不复现这些数值**。
+> 诚实声明：runner 已实现论文的优化/MAP-UQ 机制（与配套 II 篇路线一致），但**未**实现论文 I 的核心采样器 MYULA/Px-MALA。`fidelityWarning` 已标注 "implements the optimisation/UQ machinery but NOT the paper's proximal-MCMC samplers (MYULA/Px-MALA), nor a true RI measurement operator, nor M31/Cygnus A/W28/3C288 data"。第 6 节引用的论文数值（Table 1 分钟数、Table 2/3 判定值）仅供对照，**当前实现不复现这些数值**。
 
 ---
 

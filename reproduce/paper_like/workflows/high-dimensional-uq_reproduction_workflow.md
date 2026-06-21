@@ -160,46 +160,51 @@ SARA 字典定义（ref [13]，Carrillo-McEwen-Wiaux）：nine bases 的拼接 =
 
 ## 7. 本仓库当前复现实现
 
-- **runnerFile**：`reproduce/experiments/map_uq_toy.py`（被第 11/12/13 三篇 RI-UQ 论文 runner 共用，统一 experiment_id = `map_uq_toy`）。
-- **实际做了什么**：
-  1. 构造 32×32 合成图（两个 disk）作为 ground truth；
-  2. `mask = rng.random < 0.34` 的随机 Fourier 欠采样掩模，`y = mask·(FFT(x) + noise)`；
-  3. **MAP 代理**：从 `ifft2(y)` 起，35 步 "梯度下降（对掩模残差）+ `gaussian_filter(sigma=0.45)` + clip[0,1]"，**用 Gaussian smoothing 代替 ℓ1 proximal / TV 正则**；
-  4. **HPD 代理**：`gamma_alpha = Σ(mask 残差实部)² + √(N)`，是 Eq.(6) 的极简教学版（未含 `μ f(x*) + √(16 log(3/α))·√N + N` 的完整结构）；
-  5. **uncertainty map 代理**：`gaussian_filter(σ·ones) + 0.15·|∇recon|`，非 Eq.(7-9) 的二分搜索区间；
-  6. **"MCMC interval" 代理**：120 步加噪 + 平滑的随机游走，取 5%/95% 分位差，**不是** Px-MALA；
-  7. 输出四联图 `assets/repro/map_uq_reconstruction_uncertainty.png`（truth / MAP toy / HPD approx map / MCMC interval）。
-- **当前 runMetrics（取自 reproStructured，toy 合成图结果）：**
+- **runnerFile**：`reproduce/experiments/map_uq_toy.py`（被第 11/12/13 三篇 RI-UQ 论文 runner 共用，统一 experiment_id = `map_uq_toy`）。`reproductionLevel = toy`，但**已从 Gaussian 平滑代理升级为论文真实方法的可运行实现**。
+- **实际做了什么（真实算法，非论文数据）**：
+  1. **真值图**：`skimage` 的 64×64 Shepp-Logan phantom（**标准测试图，非论文 M31/BrainWeb**），归一化到 [0,1]；
+  2. **前向算子 A**：低频偏置的 variable-density Fourier 欠采样掩模（`prob = exp(-(r/0.18)²)`），实际采样率 ≈ **9.8%**（对齐论文 `M = N/10`）；`A(x) = mask·FFT(x)/√N`、`Aᴴ(y) = √N·Re ifft2(mask·y)`，构成 subsampled-unitary 算子（`‖A‖ ≤ 1`）；
+  3. **噪声**：i.i.d. 复 Gaussian，按论文约定 **SNR = 30 dB** 设 `σ = sig_power·10^{-30/20}`；
+  4. **真实 MAP（FISTA / forward-backward splitting）**：求 `x*_μ = argmin μ‖Ψ†x‖₁ + ‖y-Ax‖²/2σ²`。Ψ = **Daubechies-8 正交小波（pywt，level 2，periodization）**，`Ψ†Ψ=I` ⇒ analysis prox 闭式 `x + Ψ(soft_{tμ}(Ψ†x) − Ψ†x)`；梯度步 `∇g = Aᴴ(Ax−y)/σ²`，步长 `1/L = σ²`（`L = ‖AᴴA‖/σ² = 1/σ²`），FISTA 动量加速，250 次迭代，初值取 dirty image `Aᴴy`；`μ = 3σ`；
+  5. **真实 HPD 阈值（完整 Eq.(6)）**：`γ'_α = f(x*) + g(x*) + √(16 log(3/α))·√N + N`，**α = 0.01（99% 可信度）**，`τ_α = √(16 log(3/α))`；
+  6. **真实 local credible interval（Eq.(7-9) 二分搜索）**：把图划成 **8×8 像素的 superpixel**；对每个区域，固定区域外为 `x*`、把区域内统一设常数 ξ，二分搜索使 `f(x_{i,ξ})+g(x_{i,ξ}) ≤ γ'_α` 的最小/最大 ξ（各 30 次二分），得 `ξ_-, ξ_+`，区间宽度 `ξ_+ − ξ_-`；
+  7. 输出四联图 `assets/repro/map_uq_reconstruction_uncertainty.png`（truth / dirty Aᴴy / ℓ1-wavelet MAP / LCI width）。
+- **当前 runMetrics（真实算法，Shepp-Logan 标准测试图结果）：**
 
 | 指标 | 值 | 说明 |
 |------|-----|------|
-| `map_psnr` | 18.7123 | toy MAP 重建 PSNR |
-| `map_snr` | 9.6004 | toy MAP 重建 SNR（与论文 Table I 的 19-31 不可比） |
-| `map_runtime_seconds` | 0.0017 | toy MAP 运行时 |
-| `mcmc_runtime_seconds` | 0.0041 | toy 采样代理运行时 |
-| `gamma_alpha_toy` | 939.9229 | toy HPD 阈值（非论文 Fig. 3 数值） |
-| `mean_interval_length` | 0.1739 | toy 平均区间长度 |
-| `runtimeSeconds`（整体） | 0.0749 | runner 总耗时 |
+| `map_psnr` | 22.2878 | 真实 ℓ1-wavelet MAP 重建 PSNR |
+| `map_snr` | 9.1586 | MAP 重建 SNR |
+| `dirty_snr` | 7.4821 | dirty image 基线 SNR |
+| `snr_gain_over_dirty_db` | 1.6766 | **MAP 优于 dirty 基线 +1.68 dB**（验证真实先验有效） |
+| `sampling_rate` | 0.0979 | Fourier 采样率（≈10%，对齐论文） |
+| `noise_sigma` | 0.019635 | SNR=30 dB 对应噪声标准差 |
+| `map_runtime_seconds` | 0.0588 | FISTA MAP 求解时间 |
+| `lci_runtime_seconds` | 0.3156 | local credible interval 二分搜索时间 |
+| `gamma_alpha_hpd` | 6180.6593 | 真实 HPD 阈值 γ'_α（完整 Eq.(6)，α=0.01） |
+| `mean_interval_length` | 0.3709 | 平均 superpixel 可信区间宽度 |
+| `runtimeSeconds`（整体） | ≈0.58 | runner 总耗时（< 8 s 目标） |
 
+- **fidelityWarning（runner `extra` 字段已写）**：已实现真实 ℓ1-wavelet（db8）MAP + 真实局部可信区间方法，但用的是标准 Shepp-Logan 测试图而非论文 M31/BrainWeb 数据，且无真实射电干涉（NUFFT）算子、无 auto-μ、无 SARA 字典、无 Px-MALA/MCMC；指标与论文 Table I 及 O(10⁵) 加速**不可对照**。
 - **resultFiles**：`assets/repro/map_uq_reconstruction_uncertainty.png`。
-- **依赖**：numpy, scipy, scikit-image, matplotlib（缺失时 runner 写 skipped，不伪造 completed）。
+- **依赖**：numpy, scipy, scikit-image, matplotlib, **pywt（PyWavelets）**（缺失时 runner 写 skipped，不伪造 completed）。
 
 ---
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
-| 维度 | 当前 toy | paper-like 目标 | 缺口 |
+| 维度 | 当前实现（升级后） | paper-like 目标 | 缺口 |
 |------|----------|-----------------|------|
-| **数据** | 32×32 双 disk 合成图 | 256×256 M31 + BrainWeb MRI | 需引入真实干净图（公开可得，门槛低） |
-| **观测算子** | 随机 mask·FFT，采样率 0.34 | Fourier + downsampling mask，`M = N/10`（10%） | 采样率与掩模结构需对齐 |
-| **MAP 求解器** | Gaussian smoothing 迭代代理 | 真正的 forward-backward splitting 解 `μ‖Ψ†x‖_1 + ‖y-Φx‖²/2σ²` | **核心缺口**：需实现 ℓ1 proximal（软阈值）+ FFT 算子 |
-| **字典 Ψ** | 无（像素域） | DB8 orthonormal + SARA (DB1-DB8 + Dirac) | 需接入 PyWavelets / SARA 拼接 |
-| **自动 μ** | 无（未估 μ） | 算法 (4)，10 次迭代，γ=β=k=1 | 需实现联合 MAP 不动点迭代 |
-| **HPD 阈值** | 极简 `Σres² + √N` | 完整 Eq.(6) `μf+g_y+√(16log(3/α))√N+N` | 需补全结构与 α=0.01 |
-| **local credible interval** | smoothing 代理 | Eq.(7-9) 二分搜索 superpixel 区间，grid 10×10 / 15×15 | **核心缺口**：未实现 superpixel 饱和搜索 |
-| **基线** | 随机游走 "MCMC" 代理 | Px-MALA（ref [6]）作 ground-truth benchmark | 需实现/接入 proximal MALA 采样器 |
-| **指标对照** | toy PSNR/SNR | Table I 的 SNR & μ、Fig. 5 的 <5% 相对误差曲线 | 需复现表格量级与误差-grid 曲线 |
-| **置信水平** | 无显式 α | α = 0.01（99%） | 需在阈值与区间中显式使用 |
+| **数据** | 64×64 Shepp-Logan 标准测试图 | 256×256 M31 + BrainWeb MRI | **仍缺**：需引入论文真实干净图（公开可得，门槛低）并放大到 256² |
+| **观测算子** | low-freq-biased variable-density mask·FFT，采样率 ≈9.8% | Fourier + downsampling mask，`M = N/10`（10%） | 采样率已对齐；掩模 profile 仍为 toy 近似，非论文具体 mask |
+| **MAP 求解器** | ✅ **真实 FISTA / forward-backward splitting**（ℓ1 软阈值 prox + FFT 算子） | 真正的 forward-backward splitting 解 `μ‖Ψ†x‖_1 + ‖y-Φx‖²/2σ²` | **已实现**（algorithm 已对齐，差别只在数据规模与字典） |
+| **字典 Ψ** | ✅ **Daubechies-8 正交小波（pywt）** | DB8 orthonormal + SARA (DB1-DB8 + Dirac) | DB8 已接入；**仍缺 SARA over-complete 字典**与 synthesis-vs-analysis 对照 |
+| **自动 μ** | 无（μ 固定 = 3σ） | 算法 (4)，10 次迭代，γ=β=k=1 | **仍缺**：需实现联合 MAP 不动点迭代估 μ |
+| **HPD 阈值** | ✅ **完整 Eq.(6)** `f(x*)+g(x*)+√(16log(3/α))√N+N`，α=0.01 | 完整 Eq.(6) | **已实现** |
+| **local credible interval** | ✅ **Eq.(7-9) superpixel 二分搜索**（8×8 grid） | Eq.(7-9) 二分搜索 superpixel 区间，grid 10×10 / 15×15 | **已实现**；grid 尺度可调到论文 10×10 / 15×15 |
+| **基线** | dirty image（Aᴴy）作重建下界对照 | Px-MALA（ref [6]）作 ground-truth benchmark | **仍缺**：需实现/接入 proximal MALA 采样器对照 |
+| **指标对照** | MAP SNR 9.16 / PSNR 22.29，比 dirty +1.68 dB | Table I 的 SNR & μ、Fig. 5 的 <5% 相对误差曲线 | **仍缺**：换论文数据后才能比 Table I 量级；缺误差-grid 曲线 |
+| **置信水平** | ✅ α = 0.01（99%）显式用于阈值与区间 | α = 0.01（99%） | **已实现** |
 
 paper-level 额外门槛：严格复现 Table I 四行 SNR/μ 的具体数值、Fig. 3 的 γ'_α 曲线、Fig. 4 的区间长度图、Fig. 5 相对 Px-MALA 的逐点相对误差曲线，且 synthesis vs analysis、orthonormal vs SARA 四组合全部跑通。
 
@@ -227,12 +232,16 @@ python run_all.py            # 运行全部实验；本篇 experiment_id = map_u
 
 ## 10. 风险与代理说明
 
-- **Gaussian smoothing ≠ ℓ1/TV proximal**：当前 MAP 代理用高斯滤波平滑，丢失了 sparsity-promoting 先验的结构，因此 PSNR/SNR 与论文 Table I（19–31 dB）量级不同，**不可对照**。
-- **HPD 阈值是教学化简**：`gamma_alpha_toy=939.9229` 缺少 `μ f(x*_μ)`、`√(16 log(3/α))·√N` 等项，**不校准** posterior coverage，不能解释为 99% credible region。
-- **"MCMC interval" 不是 Px-MALA**：随机游走平滑代理无 Langevin/proximal 结构，runtime 对比无意义；论文的 **O(10^5) 加速**结论**绝不能**用 toy 的 `map_runtime/mcmc_runtime`（0.0017 vs 0.0041）佐证。
-- **无字典 / 无 synthesis-vs-analysis 对照**：当前在像素域工作，无法复现论文关于 over-complete SARA 下 synthesis/analysis 差异的核心发现。
-- **维度太小**：32×32 远小于论文 256×256，而 Eq.(6) 的近似精度依赖大 N 渐近，小图上近似本身就偏弱。
-- **结论外推红线**：当前实现仅能演示"MAP + 不确定性可视化"的直觉骨架，**任何**关于具体 SNR、μ、区间覆盖、加速比的论文级断言都不应基于本 toy 给出。
+**升级后已消除的代理**（不再适用）：~~Gaussian smoothing 代替 ℓ1 prox~~、~~极简 `Σres²+√N` 代替 HPD 阈值~~、~~随机游走代替区间搜索~~。现在 MAP 求解（FISTA + 软阈值 prox）、HPD 阈值（完整 Eq.(6)）、local credible interval（Eq.(7-9) 二分搜索）均为**论文真实方法的可运行实现**，且 MAP 比 dirty 基线 SNR 高 +1.68 dB，验证 ℓ1-wavelet 先验确实有效。
+
+**仍存在的局限 / 代理（诚实标注）**：
+- **非论文数据**：用的是 skimage Shepp-Logan 标准测试图（64×64），**不是**论文的 M31 星系图或 BrainWeb MRI。因此 `map_snr=9.16`、`map_psnr=22.29` 与论文 Table I（SNR 19–31 dB）**不可逐数对照**——量级差异主要来自数据与规模不同，而非算法不同。
+- **掩模为 toy 近似**：low-freq-biased variable-density mask 是对论文 Fourier 欠采样的合理近似（采样率已对齐 ≈10%），但不是论文具体使用的掩模结构。
+- **无 SARA / 无 synthesis-vs-analysis 对照**：仅实现 DB8 orthonormal analysis prior，**未**接入 over-complete SARA 字典，因此无法复现论文关于 SARA 下 synthesis/analysis 差异的核心发现（Table I 的 23.66 vs 31.09 等）。
+- **无自动 μ**：μ 固定为 3σ，未实现论文算法 (4) 的联合 MAP 不动点迭代，因此不复现 Table I 的自动 μ 数值。
+- **无 Px-MALA 基线**：用 dirty image 作重建下界对照，**未**实现 Px-MALA，因此无法复现 Fig. 5 相对 Px-MALA 的 <5% 区间相对误差曲线，也**不能**佐证论文 **O(10^5) 加速**——本 runner 不做任何加速比断言。
+- **维度仍偏小**：64×64 < 论文 256×256，而 Eq.(6) 的近似精度依赖大 N 渐近，小图上近似本身偏保守。
+- **结论外推红线**：本实现可诚实声称"已用论文真实方法（ℓ1-wavelet MAP + HPD 局部可信区间）在标准测试图上跑通并优于基线"，但**不得**声称复现了论文具体 SNR/μ 数值、SARA 差异、覆盖率或加速比；paper-level 仍为 **0/15**。
 
 ---
 

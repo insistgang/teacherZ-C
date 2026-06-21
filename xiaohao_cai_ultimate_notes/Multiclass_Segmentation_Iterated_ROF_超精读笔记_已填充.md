@@ -208,16 +208,18 @@ Initialization: τ^(0) = (τ_i^(0))_{i=1}^{K-1}, 0 < τ_1^(0) < ... < τ_{K-1}^(
 | 真实性等级 | partial-completed |
 | 难度 | 中 |
 | 效果 | 明显 |
-| 最小实验 | close-gray-value (差 0.04) 4-phase synthetic image + K=2 synthetic case；先解一次 Chambolle-Pock ROF，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)，其中 m_i := mean_f(Omega_i) on raw f。 |
-| 预期产出 | partial 复现显示 ROF T-ROF 可从 raw K-means 0.5650 提升到 0.9463；Gaussian proxy baseline 为 0.9438，Split-Bregman 对照为 0.9510。 |
-| 依赖 | numpy / scipy / matplotlib |
+| 最小实验 | close-gray-value (差 0.04) 4-phase synthetic image + K=2 synthetic case；先解一次 Chambolle-Pock ROF，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)，其中 m_i := mean_f(Omega_i) on raw f；并对照真实非迭代基线 raw K-means / raw Multi-Otsu / ROF+Multi-Otsu。 |
+| 预期产出 | partial 复现显示真实算法显著优于 raw 基线：raw K-means 0.5650、raw Multi-Otsu 0.5642（近强度四相直接分难）；先解真实 ROF 后 ROF+Multi-Otsu 跳到 0.9460、迭代 ROF T-ROF 到 0.9463；Gaussian-smoothing T-ROF 对照 0.9438，Split-Bregman 对照 0.9510。 |
+| 依赖 | numpy / scipy / matplotlib / scikit-image（Multi-Otsu 基线） |
 | 数据需求 | synthetic close-gray-value 4-phase image + K=2 synthetic two-phase image；不需要下载真实数据。 |
 | 算力需求 | CPU，约 1 秒内。 |
-| 实现风险 | partial 升级已用 ROF solver 替代 Gaussian proxy 主路径，并按 Eq. (15) 用 raw f 计算 mean_f(Omega_i)；仍不等同于 Theorem 1 完整证明或论文真实数据实验。 |
+| 实现风险 | partial 升级已用 ROF solver 替代 Gaussian proxy 主路径、新增 Multi-Otsu 真实基线，并按 Eq. (15) 用 raw f 计算 mean_f(Omega_i)；仍不等同于 Theorem 1 完整证明或论文真实数据（用 Chambolle-Pock/Split-Bregman 而非论文 ADMM，无 FCM 初始化，无 Li/Pock/Yuan/He/Cai baseline）。 |
 
 ### 复现指标
 
 - raw_kmeans_accuracy
+- raw_multiotsu_accuracy
+- rof_multiotsu_accuracy
 - gaussian_proxy_trof_accuracy
 - rof_trof_accuracy
 - split_bregman_trof_accuracy
@@ -237,11 +239,13 @@ Initialization: τ^(0) = (τ_i^(0))_{i=1}^{K-1}, 0 < τ_1^(0) < ... < τ_{K-1}^(
 
 ### 验证计划
 
-对比 raw K-means / Gaussian proxy T-ROF / Chambolle-Pock ROF T-ROF / Split-Bregman T-ROF；检查 Lemma 2 单调性、Lemma 3 sign changes、K=2 lambda 关系，并保存 threshold history、convergence 与 Chan-Vese proxy 图。
+对比 raw K-means / raw Multi-Otsu / ROF+Multi-Otsu（真实非迭代基线）/ Gaussian-smoothing T-ROF / Chambolle-Pock ROF T-ROF / Split-Bregman T-ROF，按论文 SA = 正确像素/全部像素 报告；检查 Lemma 2 单调性、Lemma 3 sign changes、K=2 lambda 关系，并保存 threshold history、convergence 与 Chan-Vese proxy 图。
 
 ### 当前运行结果
 
 - raw_kmeans_accuracy: 0.565
+- raw_multiotsu_accuracy: 0.5642
+- rof_multiotsu_accuracy: 0.946
 - gaussian_proxy_trof_accuracy: 0.9438
 - rof_trof_accuracy: 0.9463
 - split_bregman_trof_accuracy: 0.951
@@ -254,7 +258,7 @@ Initialization: τ^(0) = (τ_i^(0))_{i=1}^{K-1}, 0 < τ_1^(0) < ... < τ_{K-1}^(
 
 ### 结果说明
 
-Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. A Gaussian proxy T-ROF baseline is preserved for comparison; still toy/partial, not paper-level.
+Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. Real non-iterative baselines (raw K-means, raw Multi-Otsu, ROF+Multi-Otsu) are reported with SA = correct/all pixels; the iterated ROF T-ROF beats them. A Gaussian-smoothing T-ROF baseline is kept for comparison; still partial, not paper-level.
 
 ## 完整复现流程
 

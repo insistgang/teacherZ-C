@@ -906,7 +906,7 @@ MAP估计 + 概率集中 (论文II, 2017) ← 本文
 
 ## 🔗 与其它 14 篇的关系（更具体）
 
-- **论文 I（ri-uq-i, priority 12, arXiv:1711.04818）**：同一 companion series。论文 I 用 **Px-MALA / MYULA** 采样完整后验做 UQ（精确但慢，本篇 §5 即以 Px-MALA 为 benchmark）；本篇用 **MAP + concentration** 做同样三类 UQ（近似但快 ≈10⁵×）。**互补**：小数据/需要完整后验用 I，big-data/SKA 用 II。本仓库两篇**共用同一 toy runner** `map_uq_toy.py`，但都只是代理（见复现判断）。
+- **论文 I（ri-uq-i, priority 12, arXiv:1711.04818）**：同一 companion series。论文 I 用 **Px-MALA / MYULA** 采样完整后验做 UQ（精确但慢，本篇 §5 即以 Px-MALA 为 benchmark）；本篇用 **MAP + concentration** 做同样三类 UQ（近似但快 ≈10⁵×）。**互补**：小数据/需要完整后验用 I，big-data/SKA 用 II。本仓库两篇**共用同一 runner** `map_uq_toy.py`，现已升级为真实的 forward-backward ℓ1-wavelet MAP + HPD 局部可信区间实现（与本篇 MAP-UQ 路线一致），但仍走优化路线、未实现论文 I 的 MYULA/Px-MALA 采样器（见复现判断）。
 - **High-dimensional UQ 短文（high-dimensional-uq, priority 11）**：同属 MAP-UQ 思想的一般版/方法论；本篇是其在 RI imaging 上的专门化落地。三篇（11/12/13）共享 `map_uq_toy.py`。
 - **Online RI imaging（priority 14）**：与本篇同面向 **SKA big-data setting**；本篇强调 MAP 的 distributed/parallel 结构，Online 进一步处理流式/在线场景。relation links = [12, 11, 14]。
 - 与 SaT/ROF 主线（1-10 篇）的联系较弱：那条线是 segmentation/restoration 的变分优化；本篇是 Bayesian inverse problem 的 UQ。但**方法工具相通**：forward-backward / proximal splitting / soft-thresholding 在两条线都是核心数值工具。
@@ -927,14 +927,15 @@ MAP估计 + 概率集中 (论文II, 2017) ← 本文
 
 | 维度 | 评估 |
 |------|------|
-| **当前复现等级** | `toy`（真实性 `toy-completed`） |
-| **runner 文件** | `reproduce/experiments/map_uq_toy.py`（与 ri-uq-i、high-dimensional-uq 共用） |
-| **toy 做了什么** | 32×32 Fourier 欠采样反问题；gradient+Gaussian-filter 代理 MAP；Gaussian-perturbation 链代理 MCMC；手工合成 uncertainty/interval 图 |
-| **当前 runMetrics** | `map_psnr=18.7123`、`map_snr=9.6004`、`map_runtime_seconds=0.0017`、`mcmc_runtime_seconds=0.0041`、`gamma_alpha_toy=939.9229`、`mean_interval_length=0.1739`（均为 toy 代理值） |
-| **resultFiles** | `assets/repro/map_uq_reconstruction_uncertainty.png` |
-| **与论文差距** | 缺真实 forward-backward MAP（Algorithm 1/2）、缺真正 Eq.19 HPD 阈值、缺 RI measurement operator Φ、缺 M31/Cygnus A/W28/3C288 真实图、缺 Px-MALA 基准、缺 local intervals（Eq.26-27）与 hypothesis testing（Eq.29-31） |
-| **诚实声明** | toy 时间比 ≈2.4×，**不可**外推为论文 ≈10⁵×；toy PSNR/interval 均非论文报告值；paper-level 在 15 篇中仍为 **0/15**，本篇亦然 |
-| **可行性** | 偏难。full reproduction 需 RI 测量算子 + 大图 MAP solver + 与 MCMC 的系统对比；toy 可展示 MAP-UQ 快速路线的方向 |
+| **当前复现等级** | `toy`（真实性 `toy-completed`）；本篇 MAP-UQ 方法的核心机制已升级为真实实现 |
+| **runner 文件** | `reproduce/experiments/map_uq_toy.py`（与 ri-uq-i、high-dimensional-uq 共用；三篇里本篇方法与 runner 路线最一致） |
+| **runner 做了什么** | 64×64 Shepp-Logan + low-freq-biased Fourier 欠采样（≈9.8%，SNR=30 dB）：**真实 forward-backward/FISTA ℓ1-wavelet（db8）MAP**（软阈值 prox Eq.7 + 梯度 Eq.8）；**真实 Eq.19 HPD 阈值**；**真实 Eq.26-28 superpixel 二分搜索 local credible interval** |
+| **当前 runMetrics** | `map_psnr=22.2878`、`map_snr=9.1586`、`dirty_snr=7.4821`、`snr_gain_over_dirty_db=1.6766`、`sampling_rate=0.0979`、`gamma_alpha_hpd=6180.6593`、`mean_interval_length=0.3709`（真实算法，标准测试图） |
+| **resultFiles** | `assets/repro/map_uq_reconstruction_uncertainty.png`（truth / dirty Φ†y / ℓ1-wavelet MAP / LCI width） |
+| **已实现（真实）** | forward-backward MAP（Algorithm 1 风格）、Daubechies-8 字典、Eq.19 HPD 阈值、Eq.26-28 local credible interval；MAP 比 dirty 基线 SNR 高 **+1.68 dB** |
+| **与论文差距** | 仍缺：真实 RI measurement operator Φ（NUFFT）、M31/Cygnus A/W28/3C288 真实图、Px-MALA 基准（⇒ 无加速比、无 Eq.20 保守性验证）、hypothesis testing（Eq.29-31）、synthesis 对照、论文参数（μ=10⁴ 等） |
+| **诚实声明** | **未实现 Px-MALA ⇒ 没有 MAP-vs-MCMC 时间比**，论文 ≈10⁵× 加速**不可**外推；指标用标准测试图，非论文报告值；paper-level 在 15 篇中仍为 **0/15**，本篇亦然 |
+| **可行性** | 核心 MAP-UQ 机制已可运行；到 paper-like 仍需真实 RI 算子 + 论文真值图 + Px-MALA 系统对比 |
 
 ---
 

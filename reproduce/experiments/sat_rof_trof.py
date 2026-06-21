@@ -302,8 +302,23 @@ def _threshold_accuracy(truth, labels):
     return clustering_accuracy(truth, labels)
 
 
+def multi_otsu_labels(score_image, n_classes):
+    """Multi-Otsu thresholding baseline (skimage.filters.threshold_multiotsu).
+
+    Returns integer class labels in [0, n_classes) by digitizing ``score_image``
+    at the Multi-Otsu thresholds. Used as a real (non-iterative, histogram-based)
+    baseline against the paper's iterated T-ROF threshold update.
+    """
+    import numpy as np
+    from skimage.filters import threshold_multiotsu
+
+    score_image = np.asarray(score_image, dtype=float)
+    thresholds = threshold_multiotsu(score_image, classes=n_classes)
+    return np.digitize(score_image, thresholds)
+
+
 def run():
-    missing = require_modules("numpy", "matplotlib", "scipy")
+    missing = require_modules("numpy", "matplotlib", "scipy", "skimage")
     if missing:
         return [
             {
@@ -330,12 +345,21 @@ def run():
     n = 96
     yy, xx = np.mgrid[:n, :n]
 
+    # --- #2 pcms-rof-linkage: two-phase SaT (smoothing-and-thresholding) ---
+    # Main path now solves the real convex ROF model (Chambolle-Pock primal-dual)
+    # instead of an isotropic Gaussian proxy; a Gaussian smoothing is kept only as
+    # a comparison baseline.
     truth2 = ((xx - 48) ** 2 + (yy - 48) ** 2 < 26 ** 2).astype(int)
     image2 = (truth2 * 0.75 + (1 - truth2) * 0.22 + rng.normal(0.0, 0.16, (n, n))).clip(0.0, 1.0)
-    smooth2 = gaussian_filter(image2, sigma=1.1)
     baseline2 = image2 > 0.48
-    sat2 = smooth2 > 0.48
+    smooth2 = gaussian_filter(image2, sigma=1.1)
+    sat2_gaussian = smooth2 > 0.48
+    rof2 = rof_chambolle_pock(image2, mu=8.0, n_iter=240, tol=2e-5)
+    sat2 = rof2 > 0.48  # headline path = real ROF + threshold
 
+    # --- #1 sat-overview: four-phase SaT with K-means thresholding ---
+    # Main path smooths via real ROF before K-means; Gaussian smoothing kept as
+    # a comparison baseline only.
     truth4_old = np.zeros((n, n), dtype=int)
     truth4_old[(yy < 48) & (xx >= 48)] = 1
     truth4_old[(yy >= 48) & (xx < 48)] = 2
@@ -343,12 +367,15 @@ def run():
     levels_old = np.array([0.26, 0.36, 0.47, 0.58])
     image4_old = (levels_old[truth4_old] + rng.normal(0.0, 0.07, (n, n))).clip(0.0, 1.0)
     smooth4_old = gaussian_filter(image4_old, sigma=1.0)
+    rof4_old = rof_chambolle_pock(image4_old, mu=8.0, n_iter=240, tol=2e-5)
     km_raw_old = simple_kmeans(image4_old.reshape(-1, 1), 4, seed=SEED).reshape(image4_old.shape)
-    km_sat_old = simple_kmeans(smooth4_old.reshape(-1, 1), 4, seed=SEED).reshape(image4_old.shape)
+    km_gaussian_old = simple_kmeans(smooth4_old.reshape(-1, 1), 4, seed=SEED).reshape(image4_old.shape)
+    km_sat_old = simple_kmeans(rof4_old.reshape(-1, 1), 4, seed=SEED).reshape(image4_old.shape)
 
     truth4, image4, _ = generate_close_gray_multiphase()
     smooth4 = gaussian_filter(image4, sigma=1.0)
     raw_kmeans = simple_kmeans(image4.reshape(-1, 1), 4, seed=SEED).reshape(image4.shape)
+    raw_multiotsu = multi_otsu_labels(image4, 4)
     gaussian_trof = run_trof_thresholds(
         smooth4,
         image4,
@@ -363,6 +390,9 @@ def run():
     rof, rof_info = rof_chambolle_pock(image4, mu=8.0, n_iter=240, tol=2e-5, return_info=True)
     runtime_rof = rof_elapsed()
     sb_rof, sb_info = rof_split_bregman(image4, mu=8.0, lam=64.0, n_iter=70, return_info=True)
+    # Real non-iterative baseline: Multi-Otsu on the same ROF solution (histogram
+    # thresholding instead of the paper's mean-midpoint iterated threshold update).
+    rof_multiotsu = multi_otsu_labels(rof, 4)
 
     threshold_elapsed = timer()
     rof_trof = run_trof_thresholds(
@@ -391,15 +421,15 @@ def run():
         (axes[0, 0], truth2, "truth 2-phase"),
         (axes[0, 1], image2, "degraded"),
         (axes[0, 2], baseline2, "direct threshold"),
-        (axes[0, 3], sat2, "Gaussian proxy"),
+        (axes[0, 3], sat2, "ROF threshold (main)"),
         (axes[1, 0], truth4, "truth 4-phase"),
         (axes[1, 1], image4, "close gray noisy"),
-        (axes[1, 2], raw_kmeans, "raw K-means"),
-        (axes[1, 3], gaussian_trof["labels"], "Gaussian T-ROF"),
+        (axes[1, 2], raw_multiotsu, "raw Multi-Otsu"),
+        (axes[1, 3], rof_multiotsu, "ROF + Multi-Otsu"),
         (axes[2, 0], rof, "Chambolle-Pock ROF"),
         (axes[2, 1], rof_trof["labels"], "ROF T-ROF"),
         (axes[2, 2], sb_trof["labels"], "Split-Bregman T-ROF"),
-        (axes[2, 3], rof_trof["labels"] != gaussian_trof["labels"], "ROF vs Gaussian diff"),
+        (axes[2, 3], rof_trof["labels"] != raw_kmeans, "T-ROF vs raw K-means"),
     ]:
         ax.imshow(arr, cmap="viridis")
         ax.set_title(title, fontsize=8)
@@ -460,19 +490,26 @@ def run():
     plt.close(fig)
 
     runtime = elapsed()
+    # #1 sat-overview: SA = correctly classified pixels / all pixels (K-means thresholding).
     acc_raw_old = clustering_accuracy(truth4_old, km_raw_old)
-    acc_sat_old = clustering_accuracy(truth4_old, km_sat_old)
+    acc_gaussian_old = clustering_accuracy(truth4_old, km_gaussian_old)
+    acc_sat_old = clustering_accuracy(truth4_old, km_sat_old)  # main path = real ROF
+    # #3 iterated-rof close-gray four-phase SA for each segmentation pipeline.
     acc_raw = _threshold_accuracy(truth4, raw_kmeans)
+    acc_raw_multiotsu = _threshold_accuracy(truth4, raw_multiotsu)
+    acc_rof_multiotsu = _threshold_accuracy(truth4, rof_multiotsu)
     acc_gaussian = _threshold_accuracy(truth4, gaussian_trof["labels"])
     acc_rof = _threshold_accuracy(truth4, rof_trof["labels"])
     acc_sb = _threshold_accuracy(truth4, sb_trof["labels"])
     dice_direct = float(dice_score(truth2 == 1, baseline2))
-    dice_sat = float(dice_score(truth2 == 1, sat2))
+    dice_gaussian = float(dice_score(truth2 == 1, sat2_gaussian))
+    dice_sat = float(dice_score(truth2 == 1, sat2))  # main path = real ROF
 
     iterated_notes = (
         "Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) "
-        "per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. "
-        "A Gaussian proxy T-ROF baseline is preserved for comparison; still toy/partial, not paper-level."
+        "per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. Real non-iterative baselines "
+        "(raw K-means, raw Multi-Otsu, ROF+Multi-Otsu) are reported with SA = correct/all pixels; the iterated "
+        "ROF T-ROF beats them. A Gaussian-smoothing T-ROF baseline is kept for comparison; still partial, not paper-level."
     )
 
     return [
@@ -480,23 +517,33 @@ def run():
             1,
             "sat-overview",
             "sat_rof_trof",
-            "toy-to-partial",
+            "partial",
             {
                 "direct_accuracy": round(acc_raw_old, 4),
+                "gaussian_baseline_accuracy": round(acc_gaussian_old, 4),
                 "sat_accuracy": round(acc_sat_old, 4),
                 "accuracy_gain": round(acc_sat_old - acc_raw_old, 4),
             },
             [sat_file],
             runtime,
-            "Gaussian proxy smoothing is used as a lightweight proxy for convex ROF/TV smoothing on a synthetic toy image.",
+            "SaT main path now solves the real convex ROF model (Chambolle-Pock primal-dual) before K-means "
+            "thresholding; sat_accuracy is the real-ROF pixel accuracy. A Gaussian-smoothing proxy baseline "
+            "(gaussian_baseline_accuracy) is kept only for comparison. Synthetic four-phase image; not paper-level.",
+            extra={
+                "fidelityWarning": (
+                    "Real ROF (Chambolle-Pock) on a synthetic toy four-phase image; no blur operator A, no H1 term, "
+                    "and no paper dataset/baseline. Covers only the SaT skeleton (one of many SaT branches)."
+                )
+            },
         ),
         completed(
             2,
             "pcms-rof-linkage",
             "sat_rof_trof",
-            "toy-to-partial",
+            "partial",
             {
                 "direct_dice": round(dice_direct, 4),
+                "gaussian_baseline_dice": round(dice_gaussian, 4),
                 "rof_threshold_dice": round(dice_sat, 4),
                 "pcms_like_energy": round(
                     float(
@@ -508,7 +555,16 @@ def run():
             },
             [sat_file],
             runtime,
-            "This synthetic toy demonstrates thresholding after proxy smoothing, but does not solve the exact ROF model or prove Theorem 3.6.",
+            "rof_threshold_dice now comes from the real convex ROF solution (Chambolle-Pock) thresholded at (m0+m1)/2, "
+            "not Gaussian smoothing; a Gaussian proxy baseline (gaussian_baseline_dice) is kept for comparison. Demonstrates "
+            "ROF-thresholding segmentation on a synthetic toy two-phase image; does not prove Theorem 3.6.",
+            extra={
+                "fidelityWarning": (
+                    "Real ROF on a synthetic toy two-phase image; pcms_like_energy is an anisotropic perimeter/TV proxy "
+                    "without the data-fidelity term and is not a paper-reported number. Code cannot substitute for the "
+                    "Theorem 3.4/3.6/3.7 proofs."
+                )
+            },
         ),
         completed(
             3,
@@ -517,6 +573,8 @@ def run():
             "partial",
             {
                 "raw_kmeans_accuracy": round(acc_raw, 4),
+                "raw_multiotsu_accuracy": round(acc_raw_multiotsu, 4),
+                "rof_multiotsu_accuracy": round(acc_rof_multiotsu, 4),
                 "gaussian_proxy_trof_accuracy": round(acc_gaussian, 4),
                 "rof_trof_accuracy": round(acc_rof, 4),
                 "split_bregman_trof_accuracy": round(acc_sb, 4),
@@ -539,5 +597,12 @@ def run():
             [sat_file, trof_file, convergence_file, chanvese_file],
             runtime,
             iterated_notes,
+            extra={
+                "fidelityWarning": (
+                    "Single 96x96 synthetic close-gray four-phase image; Chambolle-Pock/Split-Bregman ROF (not the "
+                    "paper's ADMM), no FCM initialization, no paper datasets (stripe/cartoon/brain MRI) or "
+                    "Li/Pock/Yuan/He/Cai baselines. Lemma 2/3 checks are consistency tests, not Theorem 1 proof."
+                )
+            },
         ),
     ]

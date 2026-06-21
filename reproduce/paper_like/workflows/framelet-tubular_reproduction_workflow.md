@@ -29,11 +29,11 @@
 
 | 维度 | 当前状态 |
 | --- | --- |
-| 仓库复现等级 `reproductionLevel` | **toy** |
-| 真实性等级 `reproductionTruthLevel` | **toy-completed** |
+| 仓库复现等级 `reproductionLevel` | **partial** |
+| 真实性等级 `reproductionTruthLevel` | **partial-completed** |
 | paper-level 全局状态 | **0 / 15**（本项目尚无任何一篇达到 paper-level） |
 
-**纪律声明**：本仓库当前对本篇的实现使用 Gaussian smoothing 代替严格的 framelet（tight frame）变换，数据是合成 2D 管网，因此 toy Dice 0.9981 **只能解读为骨架自检**，**禁止**将其表述为论文级 MRA / CTA 分割性能或与论文 Table 1 / Fig. 2–4 做对等比较。
+**纪律声明**：本仓库当前对本篇的实现已用**真实 tight-frame 去噪**（pywt 无下采样平稳小波变换 SWT，本身即 tight frame）替换原 Gaussian 代理，并按 Eq. 6–13 实现自适应区间与三分阈值-拉伸，候选集合 |Λ| 现可单调收缩到 0（有限步收敛，对应 Theorem 1）。但数据仍是合成 2D 管网、SWT 用的是 Haar 无下采样小波而非论文精确的分段线性 B-spline framelet / anisotropic DℂWT，且 Dice/IoU 是论文从未报告的 toy 内部量。因此 partial Dice 0.9863 **只能解读为合成数据上的内部重叠**，**禁止**将其表述为论文级 MRA / CTA 分割性能或与论文 Table 1 / Fig. 2–4 做对等比较。
 
 ## 3. 算法完整流程
 
@@ -161,40 +161,48 @@ generic framelet 算法形式：
 ## 7. 本仓库当前复现实现
 
 - **runner**：`reproduce/experiments/tubular_tight_frame.py`（同一 runner 同时产出 priority 5 framelet-tubular 与 priority 6 tight-frame-vessel 两条记录）。
-- **实际做了什么**：
+- **实际做了什么（已升级为真实算法）**：
   1. 用 `skimage.draw.line` + `skimage.morphology.dilation(disk(3))` 构造一个 112×112 合成管网 mask；加 Gaussian 噪声（σ=0.13）得到 noisy 图像。
-  2. 设固定区间 alpha=0.38, beta=0.62，循环 12 次：取 uncertain = (alpha < current < beta) 作为候选集合，记录 |Λ| 大小；
-  3. 对整图做 `gaussian_filter(sigma=1.0)`，**仅把候选集合内像素**替换为平滑值（对应 Eq. 8 的"仅在 Λ 上更新"思想）；
-  4. 阈值 0.5 判前景，把确定像素钉到 0/1；每轮 alpha += 0.008、beta -= 0.008（对应区间收缩）；
-  5. 输出二值图，算 Dice / IoU，画 `tubular_lambda_shrinkage.png`（noisy / truth / output / Λ size 曲线）。
-- **使用的 proxy**：Gaussian smoothing **代替**严格 framelet（tight frame）soft-thresholding；固定线性收缩区间 **代替** Eq. 9–12 的梯度初始化 + c(α) 自适应区间；合成管网 **代替** 真实 MRA/CTA。
-- **当前 runMetrics**（来自 `reproStructured`）：
+  2. **梯度初始化 Λ^(0)**（Eq. 6）：用前向差分 ‖∇f‖₁ ≥ ε（ε=0.02）取初始候选边界集合，`|Λ^(0)| = 12416`。
+  3. 主循环（最多 12 轮，实测 5 轮收敛）每轮：
+     - **真实 tight-frame 去噪（Eq. 14）**：把候选集合内像素用 `pywt.swt2` → 软阈值（detail 子带，λ=0.08）→ `pywt.iswt2`（Haar，level 2，`norm=True`）重构后替换；SWT 是无下采样平稳小波变换，**本身即 tight frame，满足 perfect reconstruction**；SWT 要求边长为 2 的幂，故先 `symmetric` pad 到 128×128 再裁回。候选集合外像素（已钉为 0/1）保持不变（对应 Eq. 14 的 (I−P)f + P·AᵀT_λ(Af)）。
+     - **自适应区间（Eq. 7–10）**：在 Λ 上算 μ、μ₋、μ₊，取 mid=(μ₋+μ₊)/2，带半宽 τ=0.25(μ₊−μ₋) 得 [αᵢ,βᵢ]。
+     - **三分阈值 + 线性拉伸（Eq. 11–12）**：≤α→0、≥β→1、区间内做 (f−mᵢ)/(Mᵢ−mᵢ) contrast stretch；仅作用于当前 Λ 内像素。
+     - **更新候选集合（Eq. 13）**：Λ^(i+1) = Λ^(i) ∩ {0 < f < 1}，因此 |Λ| 单调非增。
+  4. 停机：|Λ|=0（全部像素已为 0/1）即停，实测 5 轮收敛。
+  5. 输出二值图，算 toy Dice/IoU、raw 基线 Dice/IoU，画 `tubular_lambda_shrinkage.png`（noisy / truth / tight-frame out / Λ size 曲线）。
+- **真实算法 vs 仍存在的代理**：现在用的是**真实 tight-frame soft-thresholding（无下采样小波框架）**与**真实自适应区间（Eq. 6–13）**，已不再用 Gaussian / 固定区间代理。仍存在的代理是：Haar 无下采样小波 **代替** 论文精确的分段线性 B-spline framelet / anisotropic DℂWT；合成管网 **代替** 真实 MRA/CTA（仍无 3D、无 anisotropic、无基线）。
+- **当前 runMetrics**（来自 runner，确定性可复现）：
 
-  | 指标 | 值 |
-  | --- | --- |
-  | dice | 0.9981 |
-  | iou | 0.9962 |
-  | lambda_initial | 651 |
-  | lambda_final | 2 |
-  | iterations | 12 |
-  | runtimeSeconds | 0.076 |
+  | 指标 | 值 | 含义 |
+  | --- | --- | --- |
+  | dice | 0.9863 | toy 内部重叠（真实算法，优于 raw 基线 0.9823） |
+  | iou | 0.9729 | toy 内部重叠（优于 raw 0.9653） |
+  | raw_dice | 0.9823 | 对噪声图直接 0.5 阈值的基线 |
+  | raw_iou | 0.9653 | 同上 |
+  | lambda_initial | 12416 | Λ^(0)（梯度初始化） |
+  | lambda_final | 0 | **收敛到空集**（论文 Theorem 1 行为） |
+  | iterations | 5 | 实测收敛迭代数（接近论文 Example 1 的 6 轮量级） |
+  | converged_empty_lambda | 1 | 已真正达到 |Λ|=0 收敛准则 |
+  | runtimeSeconds | ≈0.19 | CPU < 8s |
 
+  Λ 收缩序列 `[12416, 206, 42, 8, 0]` 单调非增并收敛到 0，形态与论文 Table 1（急剧下降后数轮内收敛）一致。
 - **结果图**：`docs/assets/repro/tubular_lambda_shrinkage.png`（dashboard `resultFiles`: `assets/repro/tubular_lambda_shrinkage.png`）。
-- **结果说明（保持诚实表述）**：Approximate toy reproduction；Gaussian smoothing stands in for framelet smoothing inside uncertain boundary interval；Dice 仅在合成 2D 玩具上测得，不代表真实 2D/3D MRA paper-level 性能。
+- **结果说明（保持诚实表述）**：Partial reproduction with a real tight-frame (undecimated wavelet) denoiser；自适应区间已按 Eq. 6–13 实现，|Λ| 收敛到 0；Dice/IoU 仍是论文未报告的 toy 内部量，仅在合成 2D 数据上测得，不代表真实 2D/3D MRA paper-level 性能。
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
-| 缺口 | 现状 | paper-like / paper-level 需要 |
+| 缺口 | 现状（已升级后） | paper-like / paper-level 还需要 |
 | --- | --- | --- |
-| **平滑算子** | Gaussian filter | 真实 framelet：piecewise linear B-spline 滤波器（Eq. 1），构造 A（Eq. 2），AᵀT_λ(A·) soft-thresholding（Eq. 4–5），2D 9 个 / 3D 27 个 framelet，AᵀA=I |
-| **区间机制** | 固定线性收缩 alpha±0.008 | Eq. 9–12 完整实现：梯度初始化 Γ/Γ±/μ±，c(α) 对比函数，γ=1/5 自适应 [αᵢ,βᵢ] |
-| **三分阈值-拉伸** | 简单 0.5 二分 + 钉 0/1 | Eq. 6 的 below/inside/above 三分 + linear contrast stretch，Eq. 7 的 Λ^(i) 定义 |
-| **anisotropic 选项** | 无 | 把 h₁ 系数旋转到切向/法向，只切向阈值化（引 [7][26]）；论文核心增益来源之一 |
+| **平滑算子** | **真实 tight-frame**：pywt 无下采样平稳小波变换 SWT（Haar，level 2），AᵀT_λ(A·) soft-thresholding，SWT 本身满足 perfect reconstruction（已不再是 Gaussian 代理） | 换成论文精确的分段线性 B-spline framelet（Eq. 1 滤波器 h₀/h₁/h₂，张量积构造 2D 9 个 / 3D 27 个 framelet，显式验证 AᵀA=I），并对齐论文 λk=2^(-1/2) 量级 |
+| **区间机制** | **已实现 Eq. 7–10 自适应区间**：在 Λ 上算 μ/μ₋/μ₊，mid±τ 得 [αᵢ,βᵢ]（已不再是固定 alpha±0.008） | 改用论文 Eq. 9–12 的完整 c(α) 对比函数 + γ=1/5 选区间（当前用 μ₋/μ₊ 简化版而非 c(α)），并按例子设 ε（1.6e-2 / 5e-3 / 6e-2） |
+| **三分阈值-拉伸** | **已实现 Eq. 11–12**：below/inside/above 三分 + linear contrast stretch，Eq. 13 的 Λ^(i) 更新（已不再是简单 0.5 二分） | 与论文逐字对齐 mᵢ/Mᵢ 在 Λ 上的取值口径即可（当前已基本忠实） |
+| **anisotropic 选项** | 无（仅 isotropic SWT 软阈值） | 把 h₁ / 方向子带系数旋转到切向/法向，只切向阈值化（引 [7][26]）；论文核心增益来源之一 |
 | **数据** | 合成 112×112 管网 | 真实 MRA carotid 182×62、MRA kidney 257×257、3D CTA 201³（私有，需申请）；或 DRIVE/STARE/TubeTK/VascuSynth 公开等价 |
 | **对照基线** | 无 | 复现 [10] Chan-Vese、[16][17] PDE anisotropic diffusion 作对照（Fig. 2–4） |
-| **评估** | toy Dice/IoU | 对齐论文：报告 |Λ^(i)| 收缩表（Table 1 形式）、迭代数；在公开数据上另报 Dice/sensitivity 但与论文区分 |
-| **3D 支持** | 仅 2D | 27-framelet 3D 变换 + isosurface 边界提取（Example 3） |
-| **参数对齐** | sigma=1.0, 固定区间 | γ=1/5；ε 按例子（1.6e-2 / 5e-3 / 6e-2）；λk=2^(-1/2)（iso）/ 0.1×2^(-1/2)（aniso 切向） |
+| **评估** | toy Dice/IoU + raw 基线对照 + |Λ| 收缩序列 | 在论文同源/公开数据上报 |Λ^(i)| 收缩表（Table 1 形式）；公开数据上另报 Dice/sensitivity 但与论文区分（论文未报 Dice） |
+| **3D 支持** | 仅 2D | 27-framelet 3D 变换（或 3D SWT）+ isosurface 边界提取（Example 3） |
+| **参数对齐** | SWT Haar level 2、λ=0.08、ε=0.02、τ=0.25 跨度 | γ=1/5；ε 按例子（1.6e-2 / 5e-3 / 6e-2）；λk=2^(-1/2)（iso）/ 0.1×2^(-1/2)（aniso 切向）；只用分段线性滤波器第一层 |
 
 ## 9. 运行步骤
 
@@ -224,11 +232,11 @@ node docs/scripts/validate.mjs
 
 ## 10. 风险与代理说明
 
-- **Gaussian ≠ framelet**：高斯平滑是各向同性低通，缺少 framelet 的 redundant multi-orientation 表示与 soft-thresholding 的稀疏去噪特性；无法体现论文 anisotropic thresholding 在切向贴边、连接小遮挡上的核心增益。
-- **合成管网 ≠ 真实 MRA/CTA**：合成数据无 speckle 噪声、partial occlusion、intersection、可变直径等真实难点；toy Dice 0.9981 主要反映"任务太简单"，不可外推。
-- **固定区间 ≠ 自适应区间**：固定线性收缩绕过了 Eq. 9–12 的自适应机制，因此无法复现论文"几次迭代内 |Λ| 急剧收缩"的精确动力学（论文 6–9 iters，且 |Λ| 的衰减形态由 c(α)/γ 决定）。
-- **不可外推的结论**：任何关于"优于 Chan-Vese [10] / PDE [16][17]"、"3D CTA 连接性更好"、"anisotropic 优于 isotropic"的结论 **均属论文结论，本仓库 toy 未验证**，不得据此声称复现成功。
-- **Theorem 1 未在代码层验证**：有限步收敛到二值图像是论文证明（基于 |Λ^(i)| < |Λ^(i-1)| 严格递减），toy 中虽观察到 Λ 收缩，但未在忠实算子下验证该定理前提。更具体地：toy 循环到 12 次迭代上限即停，Λ 仅收缩到 2（lambda_final=2，**始终未达到 |Λ|=0**），最终二值掩膜是由 0.5 硬阈值强制得到，而非靠 |Λ|=0 收敛准则触发；因此论文 Theorem 1 的"有限步 |Λ|=0 收敛"在本 toy 中并未被真正演示，Λ 收缩叙述与未收敛事实需如此并置理解。
+- **SWT(Haar) ≠ 论文精确 framelet/DℂWT**：现在的平滑算子是真实 tight frame（无下采样平稳小波，满足 perfect reconstruction、redundant、带 soft-thresholding 稀疏去噪），已**显著优于原 Gaussian 代理**；但用的是 Haar 而非论文的分段线性 B-spline framelet，也未实现 anisotropic DℂWT 的方向选择性，因此仍**无法体现论文 anisotropic thresholding 在切向贴边、连接小遮挡上的核心增益**。
+- **合成管网 ≠ 真实 MRA/CTA**：合成数据无 speckle 噪声、partial occlusion、intersection、可变直径等真实难点；partial Dice 0.9863 主要反映"任务相对简单"，不可外推为论文级性能。仍无 3D。
+- **自适应区间已实现但为简化版**：现在已按 Eq. 7–10 用 μ/μ₋/μ₊ 自适应取 [αᵢ,βᵢ]（不再是固定收缩），|Λ| 收缩序列 `[12416, 206, 42, 8, 0]` 单调非增并收敛到 0；但当前用 μ₋/μ₊ 中点 + 带半宽的简化口径，**尚未实现论文 Eq. 11–12 的 c(α) 对比函数 + γ=1/5** 精确机制，故 |Λ| 衰减形态与论文表数值不必逐项对齐。
+- **不可外推的结论**：任何关于"优于 Chan-Vese [10] / PDE [16][17]"、"3D CTA 连接性更好"、"anisotropic 优于 isotropic"的结论 **均属论文结论，本仓库 partial 未验证**，不得据此声称复现成功。
+- **Theorem 1 现已在代码层定性演示**：有限步收敛到二值图像是论文证明（基于 |Λ^(i)| 严格递减）。升级后 Λ 已**真正收缩到 0**（lambda_final=0、converged_empty_lambda=1，5 轮收敛），最终二值掩膜由 |Λ|=0 收敛准则触发而非硬阈值强制，因此 Theorem 1 的"有限步 |Λ|=0 收敛"现已被真实 tight-frame 算子下的运行演示。仍需注意：这是合成数据上的定性演示，论文 Theorem 1 的完整前提（真实数据、精确 framelet/DℂWT、anisotropic）尚未全部对齐。
 
 ## 11. 参考：精读笔记
 

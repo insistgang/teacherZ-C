@@ -2,3 +2,6 @@ numpy
 scipy
 matplotlib
 scikit-image
+# paper-like 复现升级依赖（真实 tight-frame / wavelet-MAP / SVM 初始化等）
+pywavelets
+scikit-learn

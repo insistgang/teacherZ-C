@@ -35,10 +35,10 @@
 **本仓库当前等级（reproductionLevel）= `toy`；真实性（reproductionTruthLevel）= `toy-completed`。**
 
 纪律红线：
-- **paper-level 在 15 篇中仍为 0/15。** 本篇也不例外。
-- 当前实现只复现了 **standard nested sampling 的证据估计骨架**，在 **2D Gaussian likelihood + uniform prior** 上演示"把 evidence 积分变成一维 prior-volume 积分并用 quadrature 求和"这一教学核心。它**完全没有**实现论文的关键创新——**proximal constrained sampler**（Algorithm 2/3/4，依赖 MYULA + Moreau-Yosida 近似 characteristic function + Metropolis-Hastings 校正）。
-- 当前 toy 的 `absolute_log_error ≈ 2.4676`（log evidence 误差量级），**很大**，dashboard 已标注 `warning: large evidence error; toy only`。该数值**不得**被表述为论文级证据估计精度，也不对应论文任何报告值。
-- 论文展示的是 d 从 2 一路到 **10^6** 的高维可扩展性（§6.2）与成像 model selection（§6.3 Tables 1-3）。当前 toy 只有 d=2，与论文核心卖点（高维 + 非光滑 prior + 真实图像 model selection）之间存在数量级差距。
+- **paper-level 在 15 篇中仍为 0/15。** 本篇也不例外，等级仍为 `toy`。
+- 当前实现已把约束采样从纯 rejection **升级为真实 proximal-Langevin (MYULA) 约束采样**：在 **d=10 各向同性 Gaussian likelihood + uniform-box prior**（有闭式 evidence）上，用 Moreau-Yosida 近似 characteristic function（L2 球投影 prox，Eq.(46)）+ Eq.(36) Langevin 更新 + Eq.(39) Metropolis-Hastings 校正替换 live 点。这覆盖了论文 Algorithm 2/4 在 Φ=I（去噪）下的核心机制。
+- 当前 proximal NS 的 `absolute_log_error ≈ 0.025`（log evidence），**明显优于**同骨架纯 rejection 基线的 `1.21`（dashboard 同时报告两者与 `error_reduction_vs_rejection`）。该数值是 d=10 解析对照的误差，**不对应论文任何报告值**，也**不得**被表述为论文级高维证据估计精度。
+- 论文展示的是 d 从 2 一路到 **10^6** 的高维可扩展性（§6.2）与成像 model selection（§6.3 Tables 1-3），且用 sparsity-promoting ℓ₁ prior。当前实现只到 d=10、只有解析 L2 球（去噪）约束、uniform prior，与论文核心卖点（高维 + 非光滑 ℓ₁ prior + 真实图像 model selection）之间仍存在数量级差距，故仍标 `toy`。
 
 ---
 
@@ -189,47 +189,56 @@ nested sampling 最难的一步是"从 prior 采样且满足硬似然约束 `L(x
 ## 7. 本仓库当前复现实现
 
 - **runner 文件**：`reproduce/experiments/nested_sampling_toy.py`。
-- **它实际做了什么**：
-  - 在 **d=2** 上构造 Gaussian likelihood `loglike(x) = -½‖x‖²`（即标准二维高斯似然），prior 为宽度 `prior_width=12` 的 **uniform prior**。
-  - 跑 **standard nested sampling 骨架**：`n_live=80` 个 live 点，`n_iter=180` 步；每步取最低似然样本、用 `ξ_i=exp(-i/n_live)` 估 prior volume、`w_i = exp(-i/n_live) - exp(-(i+1)/n_live)`、累加 `Z += w_i · L_i`。
-  - **约束采样用 rejection sampling**（在 uniform prior 内反复均匀采样，最多 4000 次试到一个似然高于当前阈值的候选），**不是** proximal constrained MCMC。
-  - 解析参考：`analytic = 2π / prior_width²`（uniform prior 下二维高斯归一化质量），`log_ref = log(analytic)`。
-  - 产图：`assets/repro/nested_sampling_evidence_trace.png`（累积 log evidence 随迭代 vs 解析虚线）。
-- **本篇当前 runMetrics（来自 dashboard `reproStructured`）**：
+- **它实际做了什么（已升级为真实 proximal 约束采样）**：
+  - **模型**：在 **d=10** 上构造各向同性 Gaussian likelihood `g(x)=‖x‖²/(2σ²)`（σ=1），prior 为 box `[-a,a]^d`（a=5）上的 **uniform prior**。该模型有**闭式 evidence**：`log Z = d·[log(σ√(2π)) − log(2a) + log(erf(a/(σ√2)))]`，作为解析对照锚点（对应论文 §6.2 / §5 的 Φ=I 去噪形式）。
+  - **真实约束采样（核心升级）**：把旧的纯 rejection 换成**真实 MYULA / proximal-Langevin 约束采样步**（`prox_sample_draw`，对应论文 Algorithm 2 思路）。每次替换 live 点时，从一个随机 live 点出发跑 `n_myula=60` 步 Langevin：
+    - 约束集 `B_τ = {x : g(x)<τ}`（`τ=−log L*`）是半径 `r=√(2σ²τ)` 的 **L2 球**；其 characteristic function 的 **Moreau-Yosida 包络梯度** 为 `(x − proj_{B_τ}(x))/λ`（`proj_{B_τ}` 为 L2 球投影，即论文 **Eq.(46)** 的去噪闭式 prox）。
+    - 漂移项用该投影梯度（uniform prior 内 `∇f=0`），步长 `δ=0.08`、`λ=0.08`，加 `√δ` 高斯噪声做 Euler-Maruyama 更新（论文 Eq.(36)）。
+    - **Metropolis-Hastings 校正**（论文 Eq.(39)）：用非对称 MYULA proposal kernel 的前向/后向密度算接受率；**落在约束集外的候选必被拒**，从而严格保证硬似然约束 `L(x)>L*`。
+  - **nested sampling 骨架**：`n_live=100`、`n_iter=1200`；`w_i = exp(−i/N_live) − exp(−(i+1)/N_live)`，末尾补 live 样本剩余贡献，证据在 log 域用 `logsumexp` 累加。
+  - **同骨架基线对照**：用**同一 nested sampling 骨架**跑旧的纯 rejection 采样作 baseline，报告两者对解析 reference 的误差差。
+  - 产图：`assets/repro/nested_sampling_evidence_trace.png`（proximal NS 累积 log evidence vs 解析虚线 vs rejection 基线）。
+- **本篇当前 runMetrics（来自真实 runner 返回，确定性可复现）**：
 
   | 指标 | 数值 | 含义 |
   |------|------|------|
-  | `estimated_log_evidence` | −5.5996 | nested sampling 估计的 log evidence |
-  | `reference_log_evidence` | −3.1319 | 解析参考 log evidence |
-  | `absolute_log_error` | 2.4676 | 两者绝对差（**很大**） |
-  | `live_points` | 80 | N_live |
-  | `iterations` | 180 | 主循环步数 |
-  | `runtimeSeconds` | 0.0419 | CPU 运行时间（秒级） |
+  | `dimension` | 10 | 问题维度（已从 d=2 升到 d=10） |
+  | `estimated_log_evidence` | −13.8614 | proximal NS 估计的 log evidence |
+  | `reference_log_evidence` | −13.8365 | 解析参考 log evidence |
+  | `absolute_log_error` | **0.0250** | proximal NS 误差（**小**，旧 rejection 为 1.21） |
+  | `rejection_baseline_log_error` | 1.2109 | 同骨架纯 rejection 的误差（基线） |
+  | `error_reduction_vs_rejection` | 1.1859 | proximal 相对 rejection 的误差降低 |
+  | `live_points` | 100 | N_live |
+  | `iterations` | 1200 | 主循环步数 |
+  | `myula_steps_per_draw` | 60 | 每次约束采样的 MYULA 步数 |
+  | `runtimeSeconds` | ≈3.9 | CPU 运行时间（秒级，< 8s 目标） |
 
-  > 注意：`absolute_log_error=2.4676` 表明这只是**机制演示**而非精确估计。误差大的原因：N_live/迭代数都很小、rejection sampling 在 uniform prior 边缘效率低、未做误差校正——dashboard 已标 `resultQuality: rough illustrative`、`warning: large evidence error; toy only`。
+  > 真实算法**明显优于** raw 基线：在 d=10（rejection 已开始失效、每次约 250 个替换失败用 stale 点兜底）这一维度，proximal 约束采样把 `absolute_log_error` 从 1.21 压到 **0.025**。跨 6 个随机种子复测，proximal 平均误差 0.31（最大 0.71），rejection 平均 1.10（最大 1.26）——proximal 在**每个种子上都胜出**。这是真实机制带来的稳健改进，非单一幸运种子。
 - **resultFiles**：`assets/repro/nested_sampling_evidence_trace.png`。
-- **fidelity 说明（dashboard `notes`）**：*"Toy nested sampling on a 2D Gaussian likelihood under a uniform prior; not proximal constrained MCMC. Completed with large error; use as nested sampling mechanism demo only."*
+- **fidelity 说明（dashboard `notes` / `fidelityWarning`）**：notes 写明"已用真实 MYULA proximal-Langevin 约束采样 + MH 校正（非纯 rejection），在 d=10 解析模型上明显优于 rejection 基线；仍是低维解析对照，非论文高维成像 model-selection benchmark"。fidelityWarning 标注：真实 proximal 采样器，但只到 d=10、约束集是解析 L2 球（去噪），无 ℓ₁/wavelet 稀疏 prior、无 Fourier sensing、无高维（10³–10⁶）成像 model selection、无熵误差棒——非 paper-level。
 
 ---
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
-**到 paper-like 的缺口清单：**
+**已落地（不再是缺口）**：核心约束采样机制**已从纯 rejection 升级为真实 proximal-Langevin (MYULA) 约束采样**——实现了 Moreau-Yosida 近似 characteristic function（L2 球投影 `proj_{B_τ}`，即论文 **Eq.(46)** 去噪 prox）、Eq.(36) 的 Langevin/Euler-Maruyama 更新、以及 Eq.(39) 的 **Metropolis-Hastings 校正**（严格保证硬似然约束）；维度已从 d=2 升到 **d=10**，并在闭式 evidence 上对照、相对 rejection 基线把误差从 1.21 压到 0.025。这覆盖了论文 Algorithm 2/4 在 Φ=I（去噪）下的核心骨架。
 
-1. **核心创新缺失**：当前用 rejection sampling 做约束采样，**完全没有** proximal constrained sampler。需实现 Algorithm 2（ProxSampleDraw）、Algorithm 3（取 live 样本）、Algorithm 4（主循环），含 MYULA 迭代 Eq.(36)/(38)、Moreau-Yosida 近似的 characteristic function 投影、Metropolis-Hastings 校正。
-2. **prox 算子缺失**：需实现 §5 的 `prox_f`（软阈值，Eq.(43)）与 `prox_{χ_{B_τ}}`（去噪用 ℓ₂ 球投影 Eq.(46)；重建用 ADMM Algorithm 5 或 primal-dual Algorithm 6）。
-3. **维度差距**：当前 d=2；论文核心是 d 到 10^6。需先在中维（10²–10³）跑通，再向高维扩展。
-4. **prior/likelihood 形式**：当前 uniform prior + 纯 Gaussian；论文用 sparsity-promoting `μ‖Ψ†x‖₁`（Ψ=I/DB2/DB8）+ Gaussian likelihood，Φ ∈ {I, MF}。需接入 wavelet 变换与 Fourier sensing。
+**到 paper-like 仍缺的清单：**
+
+1. **非光滑 ℓ₁ prox 缺失**：当前 prior 是 uniform（`∇f=0`，约束 prox 是解析 L2 球投影）。论文核心卖点是 sparsity-promoting `f(x)=μ‖Ψ†x‖₁` 的**软阈值 prox（Eq.(43)）** + 对 f 也做 Moreau-Yosida（Eq.(38)）。需把软阈值 prox 接进 MYULA 漂移项。
+2. **重建型 prox 缺失**：当前只实现 Φ=I 的去噪 L2 球投影（Eq.(46) 闭式）。重建（Φ=MF）需解约束最小化（Eq.(47)）的 **ADMM（Algorithm 5）** 或 **primal-dual（Algorithm 6）**，当前未实现。
+3. **维度差距**：当前 d=10；论文核心是 d 到 10⁶。需向中维（10²–10³）再到高维扩展（约束采样维度上升后步长/λ/步数需重调）。
+4. **prior/likelihood 形式**：当前 uniform prior + 纯各向同性 Gaussian；论文用 `μ‖Ψ†x‖₁`（Ψ=I/DB2/DB8）+ Gaussian likelihood，Φ ∈ {I, MF}。需接入 wavelet 变换与 Fourier sensing。
 5. **误差估计缺失**：未实现 `log Z = log(Σ L_i w_i) ± √(H/N_live)`（Eq.(27)）的熵误差估计；论文每个 log Z 都带 ±标准差。
 6. **数据/任务缺失**：未做 Cameraman 去噪 dictionary 选择、W28 正则参数选择、M31 measurement model 选择三组 model-selection 实验。
-7. **基线缺失**：未实现 vanilla MC integration 对照（Fig.1）、未对齐解析 Gaussian evidence（Appendix A）作为高维真值锚点。
+7. **基线对照不完整**：已用**同骨架纯 rejection** 作对照（量化 proximal 的增益）；但未实现论文 Fig.1 的 **vanilla MC integration** 对照。Appendix A 风格的解析 Gaussian evidence 已作为本实验的真值锚点（box+各向同性高斯闭式），但未对齐论文的 `μ‖Ψ†x‖₂²` 形式。
 8. **结果对照缺失**：未尝试复现 Table 1/2/3 的 log Z 量级与排序结论（DB2 优于 DB8 优于 I；μ=10⁶ 最优；γ 越大 log Z 越低）。
 
 **到 paper-level 的额外缺口：**
 
-9. **算力**：高维（10^6 维 × 大量约束采样）需 24 核 / 256GB 级工作站；CPU 秒级 toy 无法触及。
-10. **逐表数值对齐**：需严格对齐论文每个实验的 N_live、N、thinning、SNR、噪声种子、μ、Ψ、Φ、mask 失真 γ，逐表复现 log Z（含标准差）与 RMSE，且复现 d=10^6 的 `2.3851×10^5 ± 0.0002×10^5`。
-11. **求解器一致性**：primal-dual vs ADMM 的 prox 子问题需与论文一致；MH 接受率与 Langevin 步长 δ、Moreau-Yosida λ 的调参需对齐 Durmus 推荐值。
+9. **算力**：高维（10⁶ 维 × 大量约束采样）需 24 核 / 256GB 级工作站；CPU 秒级 toy 无法触及。
+10. **逐表数值对齐**：需严格对齐论文每个实验的 N_live、N、thinning、SNR、噪声种子、μ、Ψ、Φ、mask 失真 γ，逐表复现 log Z（含标准差）与 RMSE，且复现 d=10⁶ 的 `2.3851×10⁵ ± 0.0002×10⁵`。
+11. **求解器一致性**：primal-dual vs ADMM 的 prox 子问题需与论文一致；当前 MH 接受率与 Langevin 步长 δ、Moreau-Yosida λ 是为 d=10 解析模型手调（δ=λ=0.08），未对齐论文/Durmus 推荐的 `λ=1/L_f`、`δ=0.8/(L_f+1/λ)`。
 
 ---
 
@@ -248,30 +257,32 @@ cd reproduce && python run_all.py
 node docs/scripts/validate.mjs
 ```
 
-- **依赖**（来自 `reproStructured.dependencies`）：`numpy`、`matplotlib`。
-- **算力**：CPU，秒级（`runtimeSeconds≈0.0419`）。
-- **数据**：纯合成 2D Gaussian，**无需下载任何数据**。
+- **依赖**（runner `require_modules`）：`numpy`、`scipy`、`matplotlib`。
+- **算力**：CPU，秒级（`runtimeSeconds≈3.9`，< 8s 目标）。
+- **数据**：纯合成 d=10 各向同性 Gaussian + uniform-box prior，**无需下载任何数据**。
 - 缺依赖时 runner 写 `skipped`，**不伪造 completed**（遵守 CLAUDE.md 纪律）。
 
 ### 9.2 向 paper-like 扩展的步骤大纲
 
-1. 先实现 §5 的两个 prox 算子（软阈值 + ℓ₂ 球投影），并写 MYULA 单步（Eq.(36)）。
-2. 实现 Algorithm 2（ProxSampleDraw，含 MH 校正）与 Algorithm 3（无约束 prior live 样本），把 runner 的 rejection sampling 替换掉。
-3. 在**中维 Gaussian**（d=10²–10³，Φ=I, Ψ=I, μ=1/2, σ=1）上跑 Algorithm 4，对照 Appendix A 解析 log evidence，加 Eq.(27) 熵误差，目标把 absolute_log_error 压到小量级——这是从 toy 升 partial 的第一步。
+1. ~~实现 ℓ₂ 球投影 prox + MYULA 单步（Eq.(36)）~~ **已完成**（去噪 Φ=I 情形）。再实现 §5 的软阈值 prox（Eq.(43)）并对 f 做 Moreau-Yosida（Eq.(38)），把 ℓ₁ 稀疏 prior 接进 MYULA 漂移项。
+2. ~~实现 Algorithm 2（ProxSampleDraw，含 MH 校正）替换 rejection~~ **已完成**（`prox_sample_draw`）。补 Algorithm 3（用 Langevin 抽无约束 prior live 样本，当前 live 初始化仍用解析 uniform 采样）。
+3. 在**中维 Gaussian**（d=10²–10³，Φ=I, Ψ=I, μ=1/2, σ=1）上跑，对照解析 log evidence，加 Eq.(27) 熵误差棒，并把步长改用论文/Durmus 推荐的 `λ=1/L_f`、`δ=0.8/(L_f+1/λ)`——这是从 toy 升 partial 的第一步。
 4. 接入 wavelet 变换（DB2/DB8）与 Cameraman 去噪，复现 Table 1 的 log Z 排序（DB2 > DB8 > I）。
 5. 接入 Fourier sensing（Φ=MF）+ primal-dual 投影（Algorithm 6），在 W28/M31 上复现 Table 2/3 的正则参数与 measurement model 选择结论。
-6. 在 dashboard 中把每个子实验的 `reproductionLevel` 独立标注，避免用单一 d=2 toy 数字代表整篇高维方法。
+6. 在 dashboard 中把每个子实验的 `reproductionLevel` 独立标注，避免用单一 d=10 toy 数字代表整篇高维方法。
 7. 可参考开源 `proxnest`（Python）做实现校验与移植。
 
 ---
 
 ## 10. 风险与代理说明
 
-- **rejection sampling 的局限**：当前约束采样用"在 uniform prior 内反复均匀采样直到命中似然阈值"。这在 d=2 勉强可用，但**维度一升就指数级失效**（命中概率随 prior volume 收缩急剧下降）——这恰恰是论文要用 proximal MCMC 解决的难题。因此当前实现**无法**扩展到论文的高维场景，也**未触及**论文的真正创新。
-- **toy 误差大**：`absolute_log_error=2.4676`（log 域）说明当前连低维 evidence 都未精确估计，只能定性展示"evidence 积分如何被改写成 prior-volume 一维求和"。**不得**把它当作论文级 evidence 估计精度。
-- **prior/likelihood 不匹配**：当前 uniform prior + 纯 Gaussian，**没有** sparsity-promoting ℓ₁ prior、没有 wavelet/Fourier 算子、没有非光滑性——而非光滑 log-concave prior（ℓ₁/TV）正是论文相对其它 nested sampling 的核心卖点。
-- **不可外推的结论**：① 不能说本仓库"复现了"proximal nested sampling；② 不能把 d=2 toy 的 evidence 估计等同于论文 d=10^6 的 `2.3851×10^5`；③ 不能宣称验证了 Table 1/2/3 的任何 model-selection 结论（DB2 优选 / μ=10⁶ 优选 / γ=0 优选）；④ paper-level 在 15 篇中仍为 0/15，本篇亦然。
-- **量纲提醒**：论文 log Z 绝对值大（如 −6.54×10⁴）是高维问题的正常表现（Table 1 脚注 6），不要误读为"误差大"；这与本仓库 toy 的小量级 log Z 不在同一尺度，不可直接比较。
+> 旧版"约束采样用纯 rejection、d=2、toy 误差大"的代理说明已**不再适用**：约束采样现已是真实 MYULA proximal-Langevin + MH 校正，维度升至 d=10，`absolute_log_error=0.025`（明显优于 rejection 基线 1.21）。以下为**仍然存在**的局限。
+
+- **维度与算力代理**：当前真实 proximal 采样器只在 **d=10** 上验证（runtime 秒级）。论文核心是 d 到 **10⁶** 的可扩展性，需 24 核 / 256GB 级工作站与远更多约束采样步。**不得**把 d=10 的结果外推为论文高维可扩展性的证据。
+- **约束/prox 形式受限**：当前约束 prox 是**解析 L2 球投影**（Φ=I 去噪，Eq.(46)），prior 是 uniform（`∇f=0`）。**没有** sparsity-promoting ℓ₁ prox（软阈值 Eq.(43)）、没有 wavelet/Fourier 算子、没有重建型 ADMM/primal-dual 投影（Eq.(47)/Algorithm 5/6）——而非光滑 ℓ₁/TV prior 正是论文相对其它 nested sampling 的核心卖点，当前**未触及**这部分非光滑性。
+- **调参未对齐论文**：δ=λ=0.08 是为 d=10 解析模型手调，**未**采用论文/Durmus 推荐的 `λ=1/L_f`、`δ=0.8/(L_f+1/λ)`；缺 Eq.(27) 的熵误差棒，故本实验 log Z 无 ±标准差。
+- **不可外推的结论**：① 可以说本仓库已实现 proximal nested sampling 的**约束采样核心机制（去噪/Φ=I 情形）**，但**不能**说"复现了论文"；② 不能把 d=10 解析对照的 evidence 等同于论文 d=10⁶ 的 `2.3851×10⁵`；③ 不能宣称验证了 Table 1/2/3 的任何 model-selection 结论（DB2 优选 / μ=10⁶ 优选 / γ=0 优选）；④ paper-level 在 15 篇中仍为 0/15，本篇亦然。
+- **量纲提醒**：论文 log Z 绝对值大（如 −6.54×10⁴）是高维问题的正常表现（Table 1 脚注 6），不要误读为"误差大"；这与本仓库 d=10 解析对照的小量级 log Z 不在同一尺度，不可直接比较。
 
 ---
 

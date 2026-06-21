@@ -909,14 +909,15 @@ def segment_earth_topography():
 
 | 维度 | 现状 | 说明 |
 |------|------|------|
-| 复现等级 | **toy**（`reproductionLevel=toy`，`reproductionTruthLevel=toy-completed`） | 仅思路演示，非对 WSSA 的复现 |
-| runner | `reproduce/experiments/sphere_wavelet_toy.py` | equirectangular 合成图 + Gaussian smoothing + 近似球面梯度 + 单步阈值 |
-| 当前指标 | `dice=0.8418`、`gradient_threshold_quantile=0.93`、`runtime≈0.0723 s` | Dice 仅 toy 内部度量，**与论文不可比**（论文不报告 Dice） |
-| 用到的 proxy | Gaussian smoothing 代替球面小波去噪；`max(cos(lat),0.2)` 代替 $1/\sin\theta$；`np.gradient` 代替式 2.5 | 无 S2LET/SSHT/SO3，无 axisymmetric/directional/curvelet/hybrid |
-| 到 paper-like 的主要缺口 | 球面小波栈、WSSA 区间迭代（式 3.3–3.10）、真实数据（EGM2008/Probes/SDO+STEREO/DRIVE）、K-means 对照、收敛/时间表对照 | 数据均公开可得，主要门槛是 S2LET 栈与采样约定 |
-| 产物图 | `assets/repro/sphere_wavelet_toy.png` | 图注已标注 approximation toy |
+| 复现等级 | **toy**（`reproductionLevel=toy`，`reproductionTruthLevel=toy-completed`） | 已从 Gaussian 代理升级为真实小波 tight-frame 算法，但仍是 toy（平面近似），非对 WSSA 方向性/真实数据结论的复现 |
+| runner | `reproduce/experiments/sphere_wavelet_toy.py`（已升级） | lat-lon 网格 + **pywt undecimated SWT tight-frame 软阈值去噪**（真实 $\mathcal{A}^\top\mathcal{T}_\lambda\mathcal{A}$，式 3.1）+ **真实离散球面梯度**（式 2.5）+ **真实 WSSA 区间收缩迭代**（式 3.3–3.10）+ K-means 基线 |
+| 当前指标 | `dice=0.9529`、`kmeans_dice=1.0`、`denoise_gain_db≈3.33`、`lambda_initial=8226`、`lambda_final=0`、`interval_halving_ratio≈0.81`、`wssa_iterations=5`、`snr_db=30`、`runtime≈0.2 s` | $\|\Lambda^{(i)}\|$ 5 步收敛到 0 复现了论文 few-iteration 收敛；Dice 仅 toy 内部度量，**与论文不可比**（论文不报告 Dice）；K-means 满分只因 SNR=30 dB 干净强度 toy 可分，**不可**外推对比结论 |
+| 已落实的真实算法 | SWT tight frame（round-trip $\sim10^{-16}$，满足 $\mathcal{A}^\top\mathcal{A}=\mathcal{I}$，去噪增益 $\sim3.3$ dB）；式 2.5 球面梯度；$[a_i,b_i]$ shrinkage + 三段阈值 + 掩码小波步 | **已移除**旧代理：Gaussian smoothing、`max(cos,0.2)` 截断、单步阈值 |
+| 仍存在的代理/缺口 | 平面 SWT ≠ 球面（球谐）小波；lat-lon ≠ 真正 $\mathbb{S}^2$ 等角采样；无 S2LET/SSHT/SO3，无 axisymmetric/directional/curvelet/hybrid；synthetic 数据；单一 tight frame 无三变体 | 平面 SWT 无方向选择性，genuinely 无法体现 WSSA-D/H 的方向性优势 |
+| 到 paper-like 的主要缺口 | 把骨架的 $\mathcal{A}$ 从平面 SWT 换成 S2LET 球面小波栈、真实数据（EGM2008/Probes/SDO+STEREO/DRIVE）、WSSA-A/D/H 变体与时间表对照 | 数据均公开可得，主要门槛是 S2LET 栈与采样约定；迭代/梯度/软阈值逻辑已就绪可复用 |
+| 产物图 | `assets/repro/sphere_wavelet_toy.png`（五联图：noisy / truth / SWT denoise / spherical grad / WSSA seg） | 图注与 `fidelityWarning` 已标注 planar-SWT 近似 |
 
-**结论**：当前实现只能支撑最弱命题——"球面几何加权梯度 + 平滑能在合成 band 图上给出合理分割"。论文关于 WSSA-D/H 优于 WSSA-A、WSSA 优于 K-means、约 10 次迭代收敛等结论**不可**从本 toy 外推；要复现需接入球面小波栈与真实数据，详见完整复现流程文档。
+**结论**：升级后实现支撑一个**更强但仍有限**的命题——"真实 tight-frame 小波去噪（可测增益 $\sim3.3$ dB）+ 真实球面梯度（式 2.5）+ 真实 WSSA 区间收缩迭代能在合成 band 图上 5 步收敛并给出合理分割"。这比旧 toy（Gaussian + 单步阈值）更接近论文精神，且复现了论文"约 10 次迭代收敛"的可验证现象。但论文关于 WSSA-D/H 优于 WSSA-A、WSSA 优于 K-means 等**方向性**结论**仍不可**从本平面 proxy 外推（平面 SWT 无方向选择性，且干净强度 toy 上 K-means 反而满分）；要复现需把 $\mathcal{A}$ 换成 S2LET 球面小波栈并接入真实数据，详见完整复现流程文档。
 
 ---
 

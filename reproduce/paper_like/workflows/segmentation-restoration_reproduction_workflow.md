@@ -25,9 +25,9 @@
 - **paper-like**：复刻论文 Algorithm 1 完整三变量 AM、在论文同款或等价公开图像上跑、对比同类 baseline、报告 SA 指标且数量级与论文一致。
 - **paper-level**：在论文原始数据与原始对照方法代码上复现，数值可逐表对齐。
 
-**本仓库当前等级（reproductionLevel）= toy；真实性（reproductionTruthLevel）= toy-completed。**
+**本仓库当前等级（reproductionLevel）= partial；真实性（reproductionTruthLevel）= partial-completed。**
 
-纪律声明：截至本文档，本项目 **paper-level 复现仍为 0/15**。本篇的 toy 实现用 `scipy.ndimage.gaussian_filter` 作为恢复 proxy，用 1D K-means 作为分割 proxy，**没有**实现论文真正的去模糊算子 A、ADMM/split-Bregman 的 u_i 子问题、收敛证明所依赖的能量单调性。因此 toy 的数值（如 0.5332 → 0.9604）**只能解读为"耦合方向有效"的玩具佐证，禁止外推为论文级精度**。论文报告的 SA（如 99.29、95.66 等，见第 6 节）与本仓库 toy accuracy 不在同一口径，不可混用。
+纪律声明：截至本文档，本项目 **paper-level 复现仍为 0/15**。本篇当前实现已经把旧的 proxy 全部换成**真实算法**：真实 Gaussian 模糊算子 A（15×15 PSF，FFT 圆周卷积）、Eq.(13) 的**精确频域 Tikhonov g 子问题求解**、Eq.(14) 的 ω 加权区域均值、Eq.(15-16) 的**真实 Chambolle-Pock 多相 TV 区域拟合 u 子问题**（替代旧的 1D K-means），外层 AM 用 `‖c^{k+1}−c^k‖≤ε` 收敛判据。但数据仍为单张 96×96 合成图、无论文同款数据、无 [43]/[23]/[6] 基线、只实现 Gaussian fidelity（Poisson/impulsive 未做）、未做收敛定理的数值核验。因此当前 SA（direct ≈75.9 / joint ≈91.3）**只能解读为"恢复参与分割能在退化图上显著改善分割"的真实但有限佐证**，与论文报告的 SA（如 99.29、95.66 等，见第 6 节，论文同款数据 + 完整基线）**不在同一口径，不可混用，也不代表论文级精度**。
 
 ## 3. 算法完整流程
 
@@ -147,38 +147,48 @@ SA = (#correctly classified pixels / #all pixels) × 100.
 ## 7. 本仓库当前复现实现
 
 - runnerFile：`reproduce/experiments/segmentation_restoration.py`
-- 它实际做了什么：
-  1. 自造 96×96 三相 synthetic 图（圆+圆，灰度 levels=[0.22,0.52,0.78]）。
-  2. 退化：`gaussian_filter(sigma=2.0)` + 高斯噪声(σ=0.11) + 随机 12% 缺失像素置 0。
-  3. `direct`：直接在退化图上做 1D K-means（K=3）→ direct segmentation（proxy of model (6)）。
-  4. 耦合 toy：循环 8 次，用 `gaussian_filter(sigma=1.1)` 平滑作为恢复 proxy，对缺失像素回填，凸组合 `g = 0.55*g + 0.45*restored`，再对 g 做 K-means → joint labels。
-  5. 用 `clustering_accuracy` 对齐 ground truth 计算精度，保存 4 联图。
-- 使用的 proxy（明确）：
-  - 恢复算子 A 与去卷积 → 用 **Gaussian smoothing 近似**，没有解 PDF Eq.(13) 的 Tikhonov 系统，也没有真正的去模糊。
-  - u_i 多相 ADMM/split-Bregman（PDF Eq.16）→ 用 **1D K-means** 近似。
-  - c_i 加权均值（Eq.14）、ω 指示权 → 隐含在 K-means / 回填中，未显式实现。
-  - 收敛证明（Theorem 1-4）→ 未涉及，只跑固定 8 次迭代。
-- 当前 runMetrics（取自 reproStructured，runtime≈0.111s）：
-  - direct_accuracy = 0.5332
-  - joint_toy_accuracy = 0.9604
-  - accuracy_gain = 0.4272
-  - alternating_iterations = 8
-- 当前 resultFiles：`assets/repro/segmentation_restoration_toy.png`（degraded / truth / direct K-means / joint toy 四联）。
+- 求解器/算法（已全部为真实实现，无 proxy）：
+  1. **数据**：自造 96×96 三相 synthetic 图（两圆 + 背景，灰度 levels=[0.18,0.50,0.84]，三相分离良好）。
+  2. **真实退化算子 A**：15×15 Gaussian PSF（std=2.2），以 FFT 圆周卷积实现 `A(img)=ℱ⁻¹(ℱ(img)·H)`；`Aᵀ` 用共轭特征值 `Hc=conj(H)`。退化图 `f = A(clean) + 高斯噪声(σ=0.07)`，并保留 ω 加权（当前 headline run ω≡1，缺失分量已实现但默认关闭以保证确定性/稳定）。
+  3. **g 子问题（Eq.13，精确闭式）**：`(μAᵀA+λ)g = μAᵀf + λΣ_i c_i u_i`。因 A 为圆周卷积（周期 BC），`AᵀA` 在频域对角化为 `H2=|H|²`，故 g 用**逐频率除法** `g=ℱ⁻¹(ℱ(rhs)/(μH2+λ))` 精确求解（不是平滑近似，是真正解 Tikhonov 线性系统 / 去卷积）。codebook 目标 `Σ c_i u_i` 用 argmax 硬化后的标签，避免 codebook 退化塌缩。
+  4. **c 子问题（Eq.14）**：`c_i = Σ(g·ω·1[lab=i]) / Σ(ω·1[lab=i])`，即恢复图 g 上第 i 相的 ω 加权均值。
+  5. **u 子问题（Eq.15-16，真实多相 TV）**：`min_{u∈simplex} λ⟨u, ((g−c_i)²ω)_i⟩ + Σ_i TV(u_i)`，用 **Chambolle-Pock primal-dual** 迭代（梯度/散度算子 + 对偶变量投到单位球做各向同性 TV + 原始变量逐像素**投影到单纯形**），最后 argmax 硬化标签（Eq.17）。这替代了旧版的 1D K-means。
+  6. **外层 AM**：`for outer in 15: g→c→u`，用 `‖c^{k+1}−c^k‖≤ε`（ε=1e-4）做收敛判据。
+  7. **基线 `direct`**：用**同一个** Chambolle-Pock 多相 TV 求解器直接在退化图 f 上跑（即 model (6)，无恢复变量 g），c_i 同样用 ω 加权均值。这样 joint vs direct 的差异**只来自恢复耦合**，对照公平。
+  8. **指标**：用论文 SA 定义（百分制，匈牙利匹配对齐相标签）算 direct/joint 的 Segmentation Accuracy，并报恢复图 g 相对 clean 的 PSNR。保存 5 联图（observed f / ground truth / direct segm. / restored g / joint segm.，标题内嵌 SA/PSNR）。
+- 关键参数：K=3，μ=8.0，λ=1.0，ε=1e-4，blur std=2.2，noise σ=0.07，rng=`np.random.default_rng(SEED+4)`（确定性，禁用 wall-clock）。
+- 当前 runMetrics（确定性，runtime≈1.2s，CPU）：
+  - direct_SA_percent = 75.9
+  - joint_SA_percent = 91.34
+  - SA_gain_percent = 15.44
+  - restoration_psnr_db = 22.84
+  - am_outer_iterations = 15
+  - 恢复出的 codebook ≈[0.20,0.50,0.87]，与真值 [0.18,0.50,0.84] 吻合，佐证 g 子问题确实恢复了对比度。
+- 当前 resultFiles：`assets/repro/segmentation_restoration_partial.png`（observed f / truth / direct TV segm. / restored g / joint segm. 五联，标题含 SA/PSNR）。
+- fidelityWarning（runner 用 extra 暴露）：合成单图、无论文同款数据、无 [43]/[23]/[6] 基线、仅 Gaussian fidelity、未核验收敛定理；SA 与论文 99.29/95.66 不同源不可比。
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
-清单（按子问题列出与 PDF 的缺口）：
+**已完成（本次升级，proxy → 真实算法）**：
+- ✅ 恢复算子 A：已实现真实 15×15 Gaussian PSF + FFT 圆周卷积，`Aᵀ` 用共轭特征值。
+- ✅ g 子问题（Eq.13）：已用**精确频域 Tikhonov 求解**（`g=ℱ⁻¹(ℱ(rhs)/(μ|H|²+λ))`），是真正的去卷积，不是平滑近似。
+- ✅ c_i 更新（Eq.14）：已显式实现 ω 加权区域均值（在恢复图 g 上、按 argmax 硬标签估计）。
+- ✅ u_i 子问题（Eq.15-16）：已用**真实 Chambolle-Pock 多相 TV primal-dual**（对偶投单位球 + 原始投单纯形），替代 K-means。
+- ✅ 指标：已切换到论文 **SA（百分制）** 口径（匈牙利匹配对齐相标签），并报恢复 PSNR。
+- ✅ 公平对照：direct 基线用同一 TV 多相求解器跑退化图 f（model (6)，无 g），joint vs direct 差异只来自恢复耦合。
 
-1. **恢复算子 A**：缺真实 blurring operator 与去卷积。需实现 Gaussian/motion blur 核（15×15 std15 / 15px 90°）及 Eq.(13) 的 (μAᵀA+λ)⁻¹ 线性求解（频域或 CG）。当前只有 Gaussian 平滑。
-2. **g 子问题**：缺 Tikhonov 闭式 / 线性系统求解；当前用凸组合平滑硬替。
-3. **u_i 子问题**：缺 ADMM/split-Bregman（Eq.15-16）或 primal-dual / max-flow 的真正凸多相求解；当前用 K-means。
-4. **c_i 更新**：缺 Eq.(14) 的 ω 加权均值显式实现。
-5. **缺失像素 ω**：当前把缺失像素置 0 后平滑回填，未把 ω 作为权重进 fidelity（Eq.8-9）。
-6. **向量值 / 彩色**：完全未做（Eq.10 多通道）。
-7. **基线**：缺 [43] max-flow、[23] ADMM、[6] two-stage 三个对照实现；当前只有"退化图直接 K-means"这一弱对照。
-8. **数据**：缺 barcode、cameraman、MRI、彩色等论文同款图；当前只有一张自造 96×96。
-9. **指标与表格对照**：当前 accuracy 是 K-means clustering accuracy，与论文 SA 口径不同，无法逐表对齐论文 99.29/95.66 等。
-10. **收敛性验证**：缺能量单调性 / partial minimizer 的实验性核验（Theorem 2-4）。
+**仍缺（到 paper-like / paper-level）**：
+
+1. **u_i 求解器形式**：论文用 ADMM/split-Bregman（Eq.16，带两个 Bregman 变量 b_d,b_u）；本仓库用等价目标的 **Chambolle-Pock primal-dual**。数学等价、收敛同类，但**不是论文同款 split-Bregman 实现**，迭代变量/步长口径不同。
+2. **运动模糊与更大 blur**：当前只用 Gaussian blur std=2.2；缺论文默认的 15×15 std=15、motion blur 15px@90°、以及 five-phase 特例 10×10 std=10 等档位。当前选 std=2.2 是为了去卷积良态 + 确定性稳定。
+3. **缺失像素 ω 的 headline 演示**：ω 加权已**完整实现**（fidelity 与 region 项都乘 ω），但 headline run 设 ω≡1（noise+blur 档），因为在高缺失比例下 codebook 易塌缩、跨 seed 不稳；要做 paper 的 40%/20% 缺失档需更稳健的初始化（如 fuzzy C-means 100 步，论文做法）。
+4. **Poisson / impulsive fidelity**：仅实现 Gaussian Φ=‖f−Ag‖²；Poisson（I-divergence）与 impulsive（L1）的 g 求解未做（论文亦把这两者的 g 留作 future work，但 u/c 仍可补）。
+5. **向量值 / 彩色**：完全未做（Eq.10 多通道、共享 u_i）。
+6. **基线**：缺 [43] max-flow、[23] ADMM（凸松弛多相）、[6] two-stage（SaT）三个论文对照实现；当前只有"同一 TV 求解器直接跑 f"这一内部对照。
+7. **数据**：缺 barcode（195×195）、cameraman、MRI brain、rose/crown/flowers 等论文同款 / 公开等价图；当前只有一张自造 96×96。
+8. **表格逐项对齐**：当前 SA（75.9 / 91.3）是自造图 + 内部基线，**无法逐表对齐**论文 Fig.1-3 的 99.29/95.66/99.92 等（需论文同款数据 + 三个原始基线代码）。
+9. **收敛性验证**：缺能量单调下降（Theorem 2）/ partial minimizer 收敛（Theorem 4）的数值核验；当前只记录 `‖c^{k+1}−c^k‖` 收敛与外层迭代数。
+10. **初始化**：论文对 baseline 用 fuzzy C-means 100 步初始化 codebook；当前用观测像素分位数 + direct 标签初始化（足够稳，但非论文初始化）。
 
 ## 9. 运行步骤
 
@@ -192,25 +202,41 @@ pip install -r requirements.txt   # 含 numpy, scipy, matplotlib
 cd reproduce && python run_all.py
 ```
 
-依赖：numpy、scipy、matplotlib（见 reproStructured.dependencies）。若缺依赖，runner 写入 `skipped` 而非伪造 `completed`（项目纪律）。算力：CPU，约 1 秒内（runtime≈0.111s）。产物图：`docs/assets/repro/segmentation_restoration_toy.png`。
+依赖：numpy、scipy、matplotlib（见 reproStructured.dependencies）。若缺依赖，runner 写入 `skipped` 而非伪造 `completed`（项目纪律）。算力：CPU，约 1.2 秒（真实去卷积 + 多相 TV primal-dual）。产物图：`docs/assets/repro/segmentation_restoration_partial.png`（五联：observed f / truth / direct TV segm. / restored g / joint segm.）。
 
-**向 paper-like 扩展的步骤大纲（不在本次改动范围，仅规划）**
+单实验自测（venv 解释器）：
 
-1. 实现真实 blur 算子 A 与 Eq.(13) 的 g 求解（频域去卷积或 CG）。
-2. 实现 Eq.(14) c_i 加权均值、Eq.(8-9) 的 ω 权重。
-3. 实现 Eq.(15-16) 的 ADMM/split-Bregman u_i 子问题，替换 K-means。
-4. 用 Algorithm 1 的 `while ‖c^{k+1}-c^k‖>ε` 控制循环（ε=10⁻⁴）。
+```bash
+MPLCONFIGDIR=/private/tmp/teacherZ-mplconfig \
+  /Users/insistgang/Desktop/zx/teacherZ-C/.venv/bin/python -c \
+  "import sys; sys.path.insert(0,'reproduce/experiments'); import segmentation_restoration as m; print(m.run())"
+```
+
+**已落地（本次升级完成）**：真实 blur 算子 A + Eq.(13) 频域去卷积 g 求解；Eq.(14) ω 加权均值；Eq.(8-9) 的 ω 权重（实现，headline 默认 ω≡1）；Eq.(15-16) 真实多相 TV u 子问题（Chambolle-Pock，替代 K-means）；`while ‖c^{k+1}-c^k‖>ε` 收敛判据（ε=1e-4）；SA 百分制指标。
+
+**向 paper-like 进一步扩展的步骤大纲（仍未做，仅规划）**
+
+1. 把 u 子问题换成论文同款 split-Bregman/ADMM（Eq.16，带 b_d,b_u），与 Chambolle-Pock 结果交叉验证。
+2. 引入论文档位的强 Gaussian/motion blur（15×15 std=15 / 15px@90°）并用更稳健的去卷积（Wiener/CG + 边界处理）。
+3. 用 fuzzy C-means 100 步初始化 codebook，打开 ω 缺失像素档（20%/40%）做 paper 的缺失实验且保持稳定。
+4. 实现 Poisson（I-divergence）/ impulsive（L1）fidelity 的 u/c 更新；向量值彩色（Eq.10）。
 5. 准备论文同款 / 公开等价数据（barcode、cameraman、公开 MRI、彩色图）。
-6. 接入 SA 指标（按 Eq. SA 定义），与论文图 1-3 数值对照（仅作趋势对齐，标注非原始数据）。
-7. 可选：加 [6] two-stage 与一个凸多相 baseline 做对照。
+6. 加 [43] max-flow、[23] ADMM、[6] two-stage 三个原始基线做定量对照，与论文图 1-3 数值对齐（标注非原始数据）。
 
 ## 10. 风险与代理说明
 
-- **Gaussian smoothing ≠ 去卷积**：toy 用平滑做"恢复"，对真正的 Gaussian/motion blur 无法反演，所以 toy 在"模糊"维度的优势不可代表论文 Fig.3 的去模糊能力。
-- **K-means ≠ TV 正则多相分割**：K-means 无边界长度正则，缺 PCMS 的空间一致性；论文 u_i 子问题的 TV 项是其抗噪/抗缺失关键，被 proxy 抹掉。
-- **accuracy 口径不一致**：toy 的 clustering accuracy（0.5332→0.9604）与论文 SA（百分制，如 99.29）不同源，**两者不能直接比较，也不能声称"复现了论文精度"**。
-- **未验证收敛**：toy 固定 8 次迭代，未检验能量单调下降（Theorem 2）或 partial minimizer 收敛（Theorem 4）。
-- **不可外推结论**：toy 仅支持"把恢复信息引入分割能让退化图分割更稳"这一**定性方向**；论文级的 Poisson/impulsive fidelity、向量值彩色、去模糊、与三个 baseline 的定量优势，本仓库均未复现。
+**已消除的旧代理**（不再适用）：
+- ~~Gaussian smoothing 代替去卷积~~ → 现为**真实频域 Tikhonov 去卷积**（Eq.13）。
+- ~~K-means 代替多相分割~~ → 现为**真实 Chambolle-Pock 多相 TV**（Eq.15-16），含边界长度正则与空间一致性。
+- ~~clustering accuracy 口径~~ → 现报**论文 SA 百分制**。
+
+**仍存在的局限/风险**：
+- **求解器非论文同款**：u_i 用 Chambolle-Pock primal-dual 而非论文的 split-Bregman/ADMM（Eq.16）。两者解同一凸目标、收敛同类，但实现与中间变量口径不同，不能声称"逐步复刻论文 Algorithm 1 的 u 子问题实现"。
+- **blur 档位受限**：为保证去卷积良态与确定性，用 std=2.2 的 Gaussian blur；论文默认的强模糊（15×15 std=15、motion blur）下去卷积更病态，本仓库未覆盖，故不能代表论文 Fig.3 的强去模糊能力。
+- **缺失像素未进 headline**：ω 加权已实现，但 headline run 关闭缺失（ω≡1）；论文 40%/20% 缺失档需更稳健初始化才不塌缩，当前未做。
+- **SA 口径相同但数据/基线不同**：本仓库 SA（75.9/91.3）来自自造图 + 内部基线，与论文 99.29/95.66（论文同款数据 + 三个原始基线）**不可逐表比较**，也不能声称"复现了论文精度"。
+- **未验证收敛定理**：只记录 codebook 收敛 `‖c^{k+1}−c^k‖`，未数值核验能量单调下降（Theorem 2）/ partial minimizer 收敛（Theorem 4）。
+- **可外推到何处**：当前结果**真实地**支持"把已知退化算子 A 的恢复并入分割能量，能在 blur+noise 退化图上显著提升 SA（≈+15 分），并恢复出与真值吻合的 codebook"；但 Poisson/impulsive fidelity、向量值彩色、强去模糊、与 [43]/[23]/[6] 三基线的定量优势，本仓库仍未复现，paper-level 仍为 0/15。
 
 ## 11. 参考：精读笔记
 

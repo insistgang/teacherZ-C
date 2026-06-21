@@ -337,7 +337,7 @@ $$\inf_{g_k} \left\{\frac{\mu}{2} \int_{\Omega} (f_k - Ag_k)^2 dx + \frac{\lambd
 ### 阅读陷阱 (Reading Pitfalls)
 
 1. **别在综述里找完整证明**：Theorem 1/2/3/4 的 *Proof* 都写"See Cai/Chan et al. ... for the detailed proof"。本章只给结论与直觉。
-2. **Gaussian proxy ≠ ROF**：本仓库 toy 复现用高斯滤波代理 Eq.(8)，是教学近似，不能等同于凸 ROF/TV 最优解，也不验证 Theorem 1/2 的数值结论。
+2. **真实 ROF 已上主路径，但仍非完整 Eq.(8)**：本仓库 partial 复现 headline 已用真实 Chambolle-Pock ROF（Gaussian 滤波仅保留为对照 baseline），但当前 ROF=TV+L² 数据项，仍缺 Eq.(8) 的模糊算子 A 与 H¹ 半范项，故仍不验证 Theorem 1/2 的数值结论。
 3. **唯一明确数字是 98.83%**：除 Indian Pines overall accuracy 与 Fig.3 阈值外，本章其余分支无可引用的逐表数值；切勿把定性结论写成具体百分比。
 4. **K 的位置**：K 只进入阈值化，不进入平滑——这是 SaT 全篇的中心，读到任何"改 K"的描述都要回到这条主线。
 5. **partial vs global minimizer**：Theorem 2 给的是 partial minimizer（坐标方向最优），PCMS 非凸、全局最优一般不可达，别误读成全局最优保证。
@@ -501,18 +501,18 @@ def slat_segmentation(f_rgb, lambda_=1.0, mu=1.0, K=3):
 
 ## 复现判断
 
-> 诚实分级：toy / partial / paper-like / paper-level。本仓库当前 = **toy-to-partial**，真实性 = **partial-completed**。**paper-level 在 15 篇中仍为 0/15，本篇亦然。**
+> 诚实分级：toy / partial / paper-like / paper-level。本仓库当前 = **partial**，真实性 = **partial-completed**。**paper-level 在 15 篇中仍为 0/15，本篇亦然。**
 
 | 维度 | 判断 | 说明 |
 |------|------|------|
-| **当前复现等级** | toy-to-partial | 合成多相图 + Gaussian proxy smoothing，演示"先平滑后阈值更稳"的趋势 |
-| **真实性** | partial-completed | runner `sat_rof_trof.py` 已含真实 Chambolle-Pock / Split-Bregman ROF 与 T-ROF 阈值迭代（记在第 3 篇 metrics），但本篇 metrics 仍是 Gaussian proxy 口径 |
-| **toy 指标** | direct_accuracy=0.6590 → sat_accuracy=0.9799（gain 0.3210） | **合成 toy 图**结果，非论文报告值，约 0.71s CPU |
-| **代理 (proxy)** | Gaussian filter 代理 Eq.(8) 凸 ROF/TV | 各向同性线性平滑，不保边、无唯一最优性，**不等价**凸最优解 |
+| **当前复现等级** | partial | SaT 主路径已用**真实 Chambolle-Pock ROF**（先解 ROF 得 g，再 K-means 阈值），Gaussian 仅作对照 baseline；仍仅在合成多相图上跑 |
+| **真实性** | partial-completed | runner `sat_rof_trof.py` headline 指标来自真实凸 ROF；另含 Split-Bregman 交叉校验、T-ROF 阈值迭代、K=2 λ 关系检查 |
+| **partial 指标** | direct_accuracy=0.6590 → gaussian_baseline_accuracy=0.9799 → **sat_accuracy=0.9961（真实 ROF，gain 0.3371）** | **合成 toy 图**结果，非论文报告值，约 0.77s CPU；真实 ROF > Gaussian 对照 > direct |
+| **代理 / 缺口** | 真实 ROF 已上主路径，但仍缺 Eq.(8) 的模糊算子 A 与 H¹ 半范项 | Gaussian baseline 仅对照；当前纯 ROF=TV+L² 数据项，未含 A/H¹ |
 | **数据** | 合成 4 相退化图，无需下载真实数据 | 未接入 DRIVE / BSDS / Indian Pines / Alpert 等论文数据 |
 | **分支覆盖** | 仅 SaT 骨架 + T-ROF 两/四相 | SLaT、Poisson/Gamma、高光谱、vascular、spherical、intensity inhomogeneity 均未实现 |
 | **可对照的论文数值** | Indian Pines overall accuracy 98.83%（Fig.7） | 当前未尝试复现；是 paper-like 的明确对照锚点 |
-| **到 paper-like 缺口** | 求解器对齐 / 真实数据 / 分支覆盖 / 基线 / 表格对照 | 详见复现流程文档 §8 |
+| **到 paper-like 缺口** | 补 A/H¹ + 真实数据 / 分支覆盖 / 基线 / 表格对照 | 详见复现流程文档 §8 |
 | **结论** | 不可外推 | 不能说"复现了"任一分支论文结果；toy 精度 ≠ 论文精度 |
 
 ## 完整复现流程
@@ -521,7 +521,7 @@ def slat_segmentation(f_rgb, lambda_=1.0, mu=1.0, K=3):
 
 [`../reproduce/paper_like/workflows/sat-overview_reproduction_workflow.md`](../reproduce/paper_like/workflows/sat-overview_reproduction_workflow.md)
 
-该文档诚实标注当前为 toy-to-partial，唯一可对照的论文数值为 Indian Pines 98.83% overall accuracy，并列出向 paper-like 扩展（接入 DRIVE/BSDS/Indian Pines/Alpert、切换真实 ROF 求解器、补齐各分支与基线）的步骤大纲。
+该文档诚实标注当前为 partial（headline 指标已由真实 Chambolle-Pock ROF 产出，Gaussian 仅作对照），唯一可对照的论文数值为 Indian Pines 98.83% overall accuracy，并列出向 paper-like 扩展（补 Eq.(8) 的模糊算子 A 与 H¹ 项、接入 DRIVE/BSDS/Indian Pines/Alpert、补齐各分支与基线）的步骤大纲。
 
 ---
 

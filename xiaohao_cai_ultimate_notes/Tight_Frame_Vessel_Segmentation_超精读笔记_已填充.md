@@ -194,42 +194,50 @@
 
 | 字段 | 内容 |
 | --- | --- |
-| 复现等级 | toy |
-| 真实性等级 | toy-completed |
+| 复现等级 | partial |
+| 真实性等级 | partial-completed |
 | 难度 | 高 |
 | 效果 | 很明显 |
-| 最小实验 | synthetic 2D vessel network，构造 Lambda boundary set shrinkage，记录 iterations、Dice 和 IoU。 |
-| 预期产出 | finite shrinkage of Lambda, convergence to binary mask；toy Dice 0.9981，12 次迭代后 Lambda 只剩 2 个像素。 |
-| 依赖 | numpy / scipy / scikit-image / matplotlib |
-| 数据需求 | toy 用 synthetic vessel network；full reproduction 需要真实 2D/3D MRA 图像。 |
-| 算力需求 | toy 为 CPU 秒级；3D MRA 与 tight-frame transform 会显著增加内存和时间。 |
-| 实现风险 | 缺少论文级 tight-frame/DCWT，当前只复现 Lambda 收缩逻辑和有限收敛现象。 |
+| 最小实验 | synthetic 2D vessel network；梯度初始化 Λ^(0) (eq.6)，每轮在 Λ 上用真实 tight-frame（pywt 无下采样 SWT）软阈值去噪 (eq.14)，自适应区间 μ/μ± (eq.7–10) + 三段阈值-拉伸 (eq.11–13) 收缩 Λ，记录 iterations、Dice、IoU。 |
+| 预期产出 | finite shrinkage of Lambda, convergence to binary mask；partial Dice 0.9863（优于 raw 0.5 阈值基线 0.9823），Lambda 从 12416 单调收缩到 **0**（5 轮收敛，真正达到 |Λ|=∅）。 |
+| 依赖 | numpy / scipy / scikit-image / matplotlib / pywavelets |
+| 数据需求 | partial 用 synthetic vessel network；full reproduction 需要真实 2D/3D MRA 图像。 |
+| 算力需求 | partial 为 CPU 约 0.2 秒；3D MRA 与论文 DℂWT transform 会显著增加内存和时间。 |
+| 实现风险 | tight-frame 用 Haar 无下采样小波（真实 tight frame）而非论文实测的 DℂWT（缺方向选择性）；仍为合成 2D 数据（无 3D、无论文基线）；Dice/IoU 是论文未报告的 toy 内部量。 |
 
 ### 复现指标
 
 - dice
 - iou
+- raw_dice
+- raw_iou
 - lambda_initial
 - lambda_final
 - iterations
+- converged_empty_lambda
 
 ### 验证计划
 
-检查 Lambda size 单调收缩、最终二值图与 ground truth 的 Dice/IoU。
+检查 Lambda size 单调收缩并收敛到 0、最终二值图与 ground truth 的 Dice/IoU（应优于 raw 裸阈值基线）。
 
 ### 当前运行结果
 
-- dice: 0.9981
-- iou: 0.9962
-- lambda_initial: 651
-- lambda_final: 2
-- iterations: 12
+- dice: 0.9863
+- iou: 0.9729
+- raw_dice: 0.9823
+- raw_iou: 0.9653
+- lambda_initial: 12416
+- lambda_final: 0
+- iterations: 5
+- converged_empty_lambda: 1
+
+（Λ 收缩序列 `[12416, 206, 42, 8, 0]`，单调非增并收敛到 0。）
 
 ### 结果说明
 
-Approximate toy reproduction: Lambda boundary set shrinkage and finite convergence pattern on synthetic 2D vessel network. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance.
+Partial reproduction with a REAL tight-frame (undecimated wavelet) denoiser standing in for the paper's tight-frame/DℂWT soft-thresholding: pywt.swt2 forward → soft-threshold detail bands → pywt.iswt2 inverse (Haar, level 2, lambda=0.08), applied only on the candidate boundary set Lambda (eq.14). Adaptive interval from mu/mu_-/mu_+ (eq.7–10), three-segment threshold + contrast stretch (eq.11–13), gradient init (eq.6); the loop converges to |Lambda|=0. Dice/IoU are TOY overlap on a synthetic 2D vessel network and label nothing the paper reports.
 
-> 诚实提醒：上表 Dice 0.9981 / IoU 0.9962 仅来自一张简单合成 2D 血管图，且当前用 **Gaussian smoothing 代理了论文真正的 tight-frame / DℂWT 去噪**，区间也用固定 [0.38,0.62] 近似而非 (7)–(10) 的自适应区间。论文本身**未报告 Dice**，故这些数字不可解释为论文级性能。本项目 paper-level 复现仍为 0/15。可信的只是“Λ 单调收缩、有限步二值化”这一定性现象（与 Theorem 1 一致）。
+> 诚实提醒：上表 Dice 0.9863 / IoU 0.9729 仅来自一张简单合成 2D 血管图。当前已用**真实 tight-frame（pywt 无下采样平稳小波 SWT，满足 perfect reconstruction）软阈值去噪替换原 Gaussian 代理**，区间也已按 (7)–(10) 自适应计算而非固定 [0.38,0.62]，Λ 真正收缩到 0（与 Theorem 1 一致）。仍存在的代理：SWT 用 Haar 而非论文 DℂWT（缺方向选择性），数据为合成 2D（无 3D、无基线）。论文本身**未报告 Dice**，故这些数字（虽优于 raw 基线）不可解释为论文级性能。本项目 paper-level 复现仍为 0/15。
 
 ## 完整复现流程
 

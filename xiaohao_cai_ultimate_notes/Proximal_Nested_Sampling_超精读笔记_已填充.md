@@ -950,7 +950,7 @@ Chopin & Robert (2010) 证明误差渐近高斯、以 $\mathcal{O}(N^{-1/2})$ �
 3. **RMSE 是"作弊"对照**：论文给 RMSE 只为验证 log Z 排序正确，RMSE 本身需 ground truth、实际不可用——这恰恰反衬 evidence 的价值。
 4. **log-concave + 可能非光滑是适用边界**：方法**不**处理多峰/非 log-concave 后验（§4.4 末、Conclusion 明确点出多峰是 future work）。
 5. **Bayes factor 别套 Jeffrey's scale**：高维下传统量表失效，直接比 log Z（§6.5 要点 3）。
-6. **toy 复现 ≠ 论文复现**：本仓库当前只在 d=2 上跑了 nested sampling 骨架（rejection sampling），**没有** proximal 约束采样，详见下节复现判断与完整复现流程。
+6. **toy 复现 ≠ 论文复现**：本仓库当前在 **d=10** 上跑 nested sampling，约束采样**已用真实 proximal-Langevin (MYULA) + MH 校正**（Φ=I 去噪情形，明显优于 rejection 基线），但仍**没有** ℓ₁ 稀疏 prox、重建型投影与高维成像 model selection，仍是低维解析对照，详见下节复现判断与完整复现流程。
 
 ---
 
@@ -961,16 +961,16 @@ Chopin & Robert (2010) 证明误差渐近高斯、以 $\mathcal{O}(N^{-1/2})$ �
 | **本仓库复现等级** | `toy`（reproductionLevel） |
 | **复现真实性** | `toy-completed`（reproductionTruthLevel） |
 | **runner 文件** | `reproduce/experiments/nested_sampling_toy.py` |
-| **实际复现了什么** | 在 d=2 Gaussian likelihood + uniform prior 上跑 standard nested sampling 骨架，演示 evidence 积分 → prior-volume 一维 quadrature 求和的教学核心 |
-| **关键缺失** | **完全未实现论文创新**：proximal constrained sampler（Algorithm 2/3/4）、Moreau-Yosida characteristic function、MYULA + MH、ℓ₁ prox（Eq.(43)）、ℓ₂ 球投影 / primal-dual（Eq.(46)/Algorithm 6） |
-| **当前 toy 数值** | `estimated_log_evidence=-5.5996`，`reference_log_evidence=-3.1319`，`absolute_log_error=2.4676`（误差**大**），`live_points=80`，`iterations=180`，`runtimeSeconds≈0.0419` |
-| **约束采样实现** | rejection sampling（uniform prior 内重采样），**非** proximal MCMC；维度一升即失效 |
+| **实际复现了什么** | 在 **d=10** 各向同性 Gaussian likelihood + uniform-box prior（有闭式 evidence）上跑 nested sampling，**约束采样已用真实 proximal-Langevin (MYULA) 机制**：Moreau-Yosida 近似 characteristic function（L2 球投影 prox，Eq.(46)）+ Eq.(36) Langevin 更新 + Eq.(39) Metropolis-Hastings 校正——覆盖论文 Algorithm 2/4 在 Φ=I（去噪）下的核心机制 |
+| **关键缺失** | 仍缺 ℓ₁ 软阈值 prox（Eq.(43)）、重建型 primal-dual/ADMM 投影（Eq.(47)/Alg 5/6）、wavelet/Fourier 算子、d→10³–10⁶ 高维、Eq.(27) 熵误差棒、Cameraman/W28/M31 三组成像 model-selection 实验 |
+| **当前 toy 数值** | `dimension=10`，`estimated_log_evidence=-13.8614`，`reference_log_evidence=-13.8365`，`absolute_log_error=0.0250`（**小**），`rejection_baseline_log_error=1.2109`，`error_reduction_vs_rejection=1.1859`，`live_points=100`，`iterations=1200`，`myula_steps_per_draw=60`，`runtimeSeconds≈3.9` |
+| **约束采样实现** | **真实 MYULA proximal-Langevin + MH 校正**（`prox_sample_draw`），非纯 rejection；在 d=10（rejection 已开始失效、约 250 个替换 stale）这一维度明显优于 rejection 基线（误差 0.025 vs 1.21）。跨 6 个种子 proximal 在每个种子上都胜出 |
 | **结果文件** | `assets/repro/nested_sampling_evidence_trace.png` |
-| **可外推性** | 仅 nested sampling 机制演示。**不得**外推为论文级证据估计精度、不得等同于论文 d=10⁶ 的 $2.3851\times10^5$、不得宣称验证了 Table 1/2/3 任何 model-selection 结论 |
+| **可外推性** | 已实现 proximal NS 约束采样**核心机制（去噪情形）**，但**不得**外推为论文级高维证据估计精度、不得等同于论文 d=10⁶ 的 $2.3851\times10^5$、不得宣称验证了 Table 1/2/3 任何 model-selection 结论 |
 | **paper-level 状态** | 0/15，本篇亦未达成 |
-| **数据壁垒** | 低（Gaussian 可合成，Cameraman/W28/M31 公开）；真正壁垒在算法实现与高维算力（24 核/256GB） |
+| **数据壁垒** | 低（Gaussian 可合成，Cameraman/W28/M31 公开）；真正壁垒在 ℓ₁/重建型 prox、高维扩展与算力（24 核/256GB） |
 
-> 诚实说明：当前实现 `absolute_log_error=2.4676` 很大，dashboard 已标 `resultQuality: rough illustrative`、`warning: large evidence error; toy only`。它只用于演示"nested sampling 如何把高维证据积分变成一维求和"这一机制，**不是**论文报告值，也未触及论文的近端约束采样创新。
+> 诚实说明：约束采样已从纯 rejection **升级为真实 proximal-Langevin (MYULA) + MH 校正**，在 d=10 解析模型上把 `absolute_log_error` 从 1.21（rejection 基线）压到 **0.025**，dashboard 标 `resultQuality: real-algorithm low-dim analytic check` 并用 `fidelityWarning` 说明仍缺 ℓ₁ prior/Fourier/高维/误差棒。它演示了论文约束采样核心机制（Φ=I 去噪），但**仍是低维解析对照**，**不是**论文报告值，也未触及 ℓ₁ 稀疏 prior、重建型投影与高维成像 model selection。
 
 ---
 

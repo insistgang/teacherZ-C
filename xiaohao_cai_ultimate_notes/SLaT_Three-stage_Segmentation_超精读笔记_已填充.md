@@ -599,19 +599,28 @@ SLaT 三阶段彩色 (2015, 本文) → T-ROF / iterated thresholding (后续)
 
 ## 复现判断
 
-本项目对 SLaT 的复现按"真实性分级"诚实标注。当前为 **partial（部分复现）**：搭出了 Smoothing→Lifting→Thresholding 三阶段骨架，但 Stage 1 用 Gaussian filter 代替严格凸 Mumford-Shah/TV 求解，Stage 2 用 Lab-like toy 变换代替严格 CIE Lab，**不是论文级 (paper-level) 复现**。全仓库 paper-level 仍为 0/15。
+本项目对 SLaT 的复现按"真实性分级"诚实标注。当前为 **partial（部分复现）**：搭出了 Smoothing→Lifting→Thresholding 三阶段骨架，**Stage 2 已升级为真实 CIELab（`skimage.color.rgb2lab`）**、退化基准已加强为高斯模糊 + 高斯噪声 + 60% 信息丢失；但 Stage 1 仍用 Gaussian filter 代替严格凸 Mumford-Shah/TV 求解，**仍不是论文级 (paper-level) 复现**。全仓库 paper-level 仍为 0/15。
+
+**当前实现（runner `reproduce/experiments/slat_color.py`）**：
+- 合成 100×100 4-quadrant 图，四区 RGB **高度相关**（沿微小色相微扰，模拟论文 Fig.1/Fig.2 motivating case），带逐像素 GT；
+- 退化：高斯模糊 + 高斯噪声(σ=0.08) + 60% 随机信息丢失（known-pixel 掩膜对应 $\omega_i$ 支撑，丢失像素用 normalized-convolution 填补）；
+- Stage 1：`gaussian_filter` 逐通道平滑（**仍为代理**）；
+- Stage 2：**真实 sRGB→CIELab**（`rgb2lab`），按名义范围 rescale 到 [0,1]，拼成 RGB+Lab 六维 $\bar g^*$；
+- Stage 3：RGB-only 与 RGB+Lab 各跑 K-means(K=4)，匈牙利匹配像素准确率。
+
+**当前指标（确定性可复现）**：`rgb_only_accuracy = 0.5418`、`rgb_lab_accuracy = 0.6951`、`accuracy_gain = 0.1533`、runtime ≈ 0.3s。因 RGB 高相关 + 强退化，RGB-only 接近崩溃(0.54)，真实 CIELab lifting 升到 0.70，清晰复现了论文"Lifting 在单一颜色空间失败时提供互补信息"的核心结论（旧 toy 仅 0.0053）。
 
 | 维度 | 论文 (paper-level 目标) | 本仓库当前 (partial) | 差距 |
 |------|------------------------|----------------------|------|
-| Stage 1 求解器 | primal-dual + split-Bregman 解式 (4) | `scipy` Gaussian filter (proxy) | 无 TV 保边、无 A 反卷积、无 ω_i 掩膜 |
-| 退化类型 | 噪声 / 60% 信息丢失 / 10px motion-blur / 泊松 | 高斯噪声 + 局部亮度衰减 | 缺信息丢失与模糊（SLaT 最强项） |
-| Stage 2 颜色空间 | 严格 sRGB→CIE Lab (`srgb2lab`) | luminance/rg/yb toy 变换 | 非感知均匀，Lifting 增益被低估 |
-| 数据集 | 6-phase + 4-quadrant 合成 + 7 真实图 | 单张 96×96 合成图 | 规模/多样性差距大 |
+| Stage 1 求解器 | primal-dual + split-Bregman 解式 (4) | `scipy` Gaussian filter (**仍为 proxy**) | 无 TV 保边、无 A 反卷积、无泊松分支 |
+| 退化类型 | 噪声 / 60% 信息丢失 / 10px motion-blur / 泊松 | **高斯模糊 + 高斯噪声 + 60% 信息丢失**（含 ω_i 掩膜） | 仍缺泊松噪声与严格 10px motion-blur |
+| Stage 2 颜色空间 | 严格 sRGB→CIE Lab (`srgb2lab`) | **真实 CIELab（`skimage.color.rgb2lab`）** | 已对齐；仅 rescale 策略差异（名义范围 vs 逐图 min-max），影响极小 |
+| 数据集 | 6-phase + 4-quadrant 合成 + 7 真实图 | 单张 100×100 合成图 | 规模/多样性差距大 |
 | 基线对照 | [31] Li / [39] Pock / [44] Storath | 仅 RGB-only vs RGB+Lab 内部消融 | 无外部 SOTA 对照 |
 | 指标 | Table I 准确率 + Table II CPU time | 单一 pixel accuracy | 无表格量级对齐 |
-| 当前结果 | Average 99.21%（Table I） | rgb_only 0.7092 / rgb_lab 0.7145 / gain 0.0053 | **不可外推为论文级** |
+| 当前结果 | Average 99.21%（Table I） | rgb_only 0.5418 / rgb_lab 0.6951 / **gain 0.1533** | **不可外推为论文级** |
 
-> 结论：当前 toy 仅能定性说明"RGB+Lab lifting 在退化彩色图上比 RGB-only 略稳"，**不得**表述为复现了论文 Table I/II 或达到论文级性能。向 paper-like 推进的具体缺口与步骤见下方完整复现流程文档。
+> 结论：升级后 partial 已用**真实 CIELab + 强退化基准**清晰、可复现地展示"真实 Lab lifting 在退化彩色图上显著优于 RGB-only"（gain 0.1533），但 Stage 1 仍是 Gaussian 代理、无外部基线/真实数据/Table 对齐，**不得**表述为复现了论文 Table I/II 或达到论文级性能。向 paper-level 推进的具体剩余步骤见下方完整复现流程文档第 8 节。
 
 ---
 

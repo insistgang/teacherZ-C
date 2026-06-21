@@ -31,7 +31,7 @@
 | 本仓库复现等级 reproductionLevel | **partial** |
 | 真实性等级 reproductionTruthLevel | **partial-completed** |
 
-**纪律声明**：截至本文档，15 篇论文 paper-level 复现仍为 **0/15**。本篇当前为 partial，已用真实 ROF 求解器替换 Gaussian proxy 主路径，但**不得**把 partial 结果（合成 4-phase 图上的 0.9463 accuracy、K=2 Dice 0.9976 等）解读为论文级复现，也不得与论文 Table 1 / Fig. 中的 SA 数值直接等同比较。
+**纪律声明**：截至本文档，15 篇论文 paper-level 复现仍为 **0/15**。本篇当前为 partial，已用真实 ROF 求解器替换 Gaussian proxy 主路径，并新增真实非迭代基线（raw K-means、raw Multi-Otsu、ROF+Multi-Otsu）按论文 SA 定义对照，但**不得**把 partial 结果（合成 4-phase 图上的 0.9463 SA、K=2 Dice 0.9976 等）解读为论文级复现，也不得与论文 Table 1 / Fig. 中的 SA 数值直接等同比较。
 
 ## 3. 算法完整流程
 
@@ -118,7 +118,7 @@ Initialization: τ^(0) = (τ_i^(0))_{i=1}^{K-1}, 0 < τ_1^(0) < ... < τ_{K-1}^(
 - **Yuan [29]**：Yuan, Bae, Tai, Boykov (2010) continuous max-flow Potts。
 - **He [20]**：He, Hussaini, Ma, Shafei, Steidl (2012) fuzzy c-means + TV。
 
-合理的额外对照（非论文必需，可在 partial→paper-like 中加入）：raw K-means / fuzzy C-means（无 TV）、直接阈值化（不平滑）、Chan-Vese level set 原版。本仓库当前用 raw K-means 与 Gaussian proxy T-ROF 作为轻量对照。
+合理的额外对照（非论文必需，可在 partial→paper-like 中加入）：raw K-means / fuzzy C-means（无 TV）、直接阈值化（不平滑）、Chan-Vese level set 原版。本仓库当前用 **raw K-means、raw Multi-Otsu（`skimage.filters.threshold_multiotsu`）、ROF+Multi-Otsu、Gaussian-smoothing T-ROF** 作为真实非迭代/轻量对照，凸显迭代 T-ROF 阈值更新相对它们的增益。
 
 ## 6. 评价指标与论文报告结果
 
@@ -166,30 +166,35 @@ Initialization: τ^(0) = (τ_i^(0))_{i=1}^{K-1}, 0 < τ_1^(0) < ... < τ_{K-1}^(
   3. `rof_split_bregman()`：**Split-Bregman** ROF 求解器作为 solver 交叉校验（非论文 baseline）。
   4. `run_trof_thresholds()`：实现 Eq. (15) 阈值迭代 τ_i=½(m_{i-1}+m_i)，**均值在 raw image f 上计算 mean_f(Ω_i)**（忠于 Eq. 14-15 的 wanted segment 均值定义），并记录 Lemma 2 单调性、Lemma 3 sign changes、drift。
   5. `run_k2_proposition_demo()`：K=2 合成圆盘图，验证 Proposition 2 的 λ = μ/(2(m₁-m₀)) 关系，并与"在 raw f 上同阈值"得到的 Chan-Vese proxy 对比 Dice。
+  6. **真实非迭代基线**（新增）：`multi_otsu_labels()` 用 `skimage.filters.threshold_multiotsu` 对原图与 ROF 解分别做 Multi-Otsu 阈值（`raw_multiotsu_accuracy`、`rof_multiotsu_accuracy`），与迭代 T-ROF 对照——凸显"迭代均值-中点阈值更新"相对"直方图阈值"的增益。所有 4-phase 精度按论文 **SA = 正确像素 / 全部像素**（`clustering_accuracy`，含标签对齐）报告。
 - **代理 (proxy) 用法**：Gaussian smoothing 保留为 *轻量对照 baseline*（`gaussian_trof`），不再是主路径；Chan-Vese 用"raw f 上同阈值"做 proxy，**不是**真实 Chan-Vese level-set 求解。
-- **当前 runMetrics（取自 reproStructured，合成图，非论文数据）**：
+- **当前 runMetrics（来自 runner 实测，合成图，非论文数据，确定性可复现）**：
 
-| 指标 | 数值 |
-| --- | --- |
-| raw_kmeans_accuracy | 0.5650 |
-| gaussian_proxy_trof_accuracy | 0.9438 |
-| rof_trof_accuracy | 0.9463 |
-| split_bregman_trof_accuracy | 0.9510 |
-| threshold_iterations | 3 |
-| max_threshold_drift | 0 |
-| monotonicity_violated | false |
-| sign_changes_final | 0 |
-| sign_changes_nonincreasing | true |
-| assumption_a_violations | 0 |
-| rof_iterations_chambolle_pock | 240 |
-| rof_iterations_split_bregman | 70 |
-| k2_lambda_derived | 7.7416 |
-| k2_rof_threshold_dice | 0.9976 |
-| k2_chanvese_proxy_dice | 0.8994 |
-| k2_segmentation_disagreement | 0.0476 |
-| runtime_seconds_total | 0.7057 |
+| 指标 | 数值 | 含义 |
+| --- | --- | --- |
+| raw_kmeans_accuracy | 0.5650 | raw K-means（基线） |
+| raw_multiotsu_accuracy | 0.5642 | raw Multi-Otsu（真实非迭代基线） |
+| rof_multiotsu_accuracy | 0.9460 | ROF + Multi-Otsu（真实非迭代基线） |
+| gaussian_proxy_trof_accuracy | 0.9438 | Gaussian-smoothing T-ROF（对照） |
+| rof_trof_accuracy | 0.9463 | **ROF T-ROF（迭代阈值更新，主路径）** |
+| split_bregman_trof_accuracy | 0.9510 | Split-Bregman T-ROF（求解器交叉校验） |
+| threshold_iterations | 3 | T-ROF 阈值外迭代次数 |
+| max_threshold_drift | 0 | 收敛时阈值漂移 |
+| monotonicity_violated | false | Lemma 2 单调性 |
+| sign_changes_final | 0 | Lemma 3 末态 sign change 数 |
+| sign_changes_nonincreasing | true | Lemma 3 sign change 单调不增 |
+| assumption_a_violations | 0 | Assumption (A) 违反计数 |
+| rof_iterations_chambolle_pock | 240 | Chambolle-Pock 内迭代步数 |
+| rof_iterations_split_bregman | 70 | Split-Bregman 内迭代步数 |
+| k2_lambda_derived | 7.7416 | K=2 λ=μ/(2(m₁-m₀)) |
+| k2_rof_threshold_dice | 0.9976 | K=2 ROF 阈值 Dice |
+| k2_chanvese_proxy_dice | 0.8994 | K=2 Chan-Vese proxy Dice |
+| k2_segmentation_disagreement | 0.0476 | K=2 两路分割差异比例 |
+| runtime_seconds_total | ≈0.77 | 总 CPU 时间 |
 
-- **resultFiles（图）**：assets/repro/sat_demo.png、assets/repro/trof_thresholds.png、assets/repro/iterated_rof_convergence.png、assets/repro/iterated_rof_chanvese.png。
+  > 真实非迭代基线对照：raw 直方图 Multi-Otsu 仅 0.5642（与 raw K-means 0.5650 同档，近强度四相难以直接分），先解真实 ROF 后即便用非迭代 Multi-Otsu 也跳到 0.9460，迭代 T-ROF 进一步到 0.9463；Split-Bregman 求解器达 0.9510。真实算法显著优于 raw 基线。
+- **resultFiles（图）**：assets/repro/sat_demo.png（现含 raw Multi-Otsu / ROF+Multi-Otsu 面板）、assets/repro/trof_thresholds.png、assets/repro/iterated_rof_convergence.png、assets/repro/iterated_rof_chanvese.png。
+- **fidelity 警示（runner `extra` 内置）**：`"Single 96x96 synthetic close-gray four-phase image; Chambolle-Pock/Split-Bregman ROF (not the paper's ADMM), no FCM initialization, no paper datasets (stripe/cartoon/brain MRI) or Li/Pock/Yuan/He/Cai baselines. Lemma 2/3 checks are consistency tests, not Theorem 1 proof."`
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
@@ -199,7 +204,7 @@ Initialization: τ^(0) = (τ_i^(0))_{i=1}^{K-1}, 0 < τ_1^(0) < ... < τ_{K-1}^(
 - **初始化**：论文用 fuzzy C-means(100 步) 初始化 τ^(0)；当前用 quantile / 手设阈值，应替换为 FCM 初始化以贴近论文。
 - **ROF 求解器**：论文用 ADMM(inner param 2)；当前用 Chambolle-Pock / Split-Bregman。求解器不同会影响 ROF 解与最终阈值，需对齐或至少标注差异。
 - **停止准则**：论文 ε_u=1e-4、ε_τ=1e-5；当前 drift tol=1e-4，需对齐 u 与 τ 的双停止准则。
-- **指标**：当前 4-phase 用 clustering_accuracy（含标签对齐），应统一为论文 SA 定义并报告每类相位的 SA。
+- **指标**：当前 4-phase 用 clustering_accuracy（含标签对齐）作为论文 SA = 正确像素/全部像素 的实现，并已新增 raw Multi-Otsu / ROF+Multi-Otsu 真实非迭代基线对照；**仍缺**按每类相位单独报告 SA、以及在论文 stripe 图上对齐 Table 1 的 SA。
 
 到 **paper-level** 还缺（在 paper-like 之上）：
 
@@ -220,7 +225,7 @@ pip install -r requirements.txt   # numpy, scipy, matplotlib（本实验最小�
 cd reproduce && python run_all.py
 ```
 
-依赖：numpy / scipy / matplotlib。算力：CPU，约 1 秒内（Chambolle-Pock 240 步 + Split-Bregman 70 步 + T-ROF ≤20 步）。缺依赖时 runner 写入 skipped，不伪造 completed。
+依赖：numpy / scipy / matplotlib / scikit-image（Multi-Otsu 基线用 `skimage.filters.threshold_multiotsu`）。算力：CPU，约 1 秒内（Chambolle-Pock 240 步 + Split-Bregman 70 步 + T-ROF ≤20 步）。缺依赖时 runner 写入 skipped，不伪造 completed。
 
 **向 paper-like 扩展的步骤大纲（规范，不在本任务内执行）**：
 
@@ -232,8 +237,8 @@ cd reproduce && python run_all.py
 
 ## 10. 风险与代理说明
 
-- **proxy 局限**：Gaussian smoothing 只是 TV/ROF 的极粗代理，不满足 TV 的边缘保持性质；它在本仓库已降级为对照 baseline，不可当作 ROF。Chan-Vese proxy（raw f 上同阈值）不解 level-set 能量，只用于 Proposition 2 的 λ 直觉演示。
-- **数据局限**：96×96 单张 close-gray 合成图无法代表论文 6 个 Example 的难度分布；其 accuracy(0.9463) / Dice(0.9976) **不可外推**为论文 SA。
+- **proxy 局限**：Gaussian smoothing 只是 TV/ROF 的极粗代理，不满足 TV 的边缘保持性质；它在本仓库已降级为对照 baseline，不可当作 ROF。Chan-Vese proxy（raw f 上同阈值）不解 level-set 能量，只用于 Proposition 2 的 λ 直觉演示。Multi-Otsu 是真实的直方图阈值基线，但**不是**论文 baseline（Li/Pock/Yuan/He/Cai），只为说明"真实 ROF + 迭代阈值"相对直方图阈值的增益。
+- **数据局限**：96×96 单张 close-gray 合成图无法代表论文 6 个 Example 的难度分布；其 SA(0.9463) / Dice(0.9976) 及真实非迭代基线（raw Multi-Otsu 0.5642、ROF+Multi-Otsu 0.9460）**不可外推**为论文 SA。
 - **理论局限**：Lemma 2/3 的数值检查（monotonicity_violated=false、sign_changes 不增）只是性质自洽性验证，**不等于** Theorem 1 的完整证明复现，也未验证 Assumption (A) 在真实图上的成立性。
 - **不可外推的结论清单**：① 不得宣称复现 Table 1 / Fig. 1-6 任一 SA；② 不得宣称在论文真实 brain MRI / cartoon 上验证；③ 不得宣称 baseline 对照成立（当前无 Li/Pock/Yuan/He/Cai 原版实现）；④ paper-level 仍为 0/15。
 

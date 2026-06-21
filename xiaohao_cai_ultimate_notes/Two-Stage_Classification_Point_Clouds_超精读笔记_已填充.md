@@ -159,40 +159,48 @@ Stage two 投影（论文 Eq.(3.4)）：`(u_1(x),…,u_K(x)) ↦ e_i, i=argmax_j
 
 ## 复现判断
 
+> **2026-06 升级**：runner 已从"centroid 初始化 + Laplacian 标签传播代理"升级为**真实算法**——论文式 Three-Moon（3 类）上的 graph total variation（ℓ₁）凸模型 + Chambolle-Pock primal-dual + SVM warm init + Algorithm 1 β 翻倍外层精炼，并实测 **graph-TV > graph-Laplacian > raw**。
+
 | 字段 | 内容 |
 | --- | --- |
 | 复现等级 | partial |
 | 真实性等级 | partial-completed |
 | 难度 | 高 |
 | 效果 | 很明显 |
-| 最小实验 | synthetic moons/blobs，warm initialization，kNN graph，graph Laplacian smoothing，argmax projection。 |
-| 预期产出 | smoothing + projection improves warm initialization；toy accuracy 从 0.8000 提升到 0.8139。 |
-| 依赖 | numpy / scipy / matplotlib |
-| 数据需求 | synthetic 2D classification data；不下载 benchmark。 |
-| 算力需求 | CPU，约 1 秒内。 |
-| 实现风险 | toy 使用 Laplacian smoothing，不是完整 graph TV convex model。 |
+| 最小实验 | 论文式 Three-Moon（3 半月簇，R²，N=750，noise std=0.14）；SVM warm init；RBF 加权 kNN 图（k=10）；三方法对照 raw K-means / graph-Laplacian(ℓ₂) / graph-TV(ℓ₁) + Chambolle-Pock primal-dual；argmax 投影 + β 翻倍外层。 |
+| 预期产出 | 真实 graph-TV（ℓ₁）优于 graph-Laplacian（ℓ₂）与 raw 基线；tv_accuracy=0.9957 > laplacian=0.922 > init(SVM)=0.895 > kmeans=0.817。 |
+| 依赖 | numpy / scipy / matplotlib / scikit-learn |
+| 数据需求 | 合成 Three-Moon（R²）；不下载 benchmark。 |
+| 算力需求 | CPU，约 0.5 秒（<8s 预算）。 |
+| 实现风险 | 真实 graph-TV primal-dual 已落地；剩余局限为：Three-Moon 保留在 R²（非 R¹⁰⁰）、N=750 规模缩小、单一数据集、无 CVM/GL/MBO/TVRF 论文对照基线、无 10 次平均。 |
 
 ### 复现指标
 
+- kmeans_accuracy
 - initial_accuracy
-- smoothed_accuracy
-- accuracy_gain
-- iterations
+- laplacian_accuracy
+- tv_accuracy
+- tv_gain_over_laplacian
+- tv_gain_over_init
+- outer_iterations
 
 ### 验证计划
 
-比较 warm init 与 smoothing 后 accuracy，并保存 before/after decision colors。
+在论文式 Three-Moon 上比较 raw K-means / SVM warm init / graph-Laplacian(ℓ₂) / graph-TV(ℓ₁) 四种 test accuracy，确认 graph-TV 最优；保存三幅决策着色图 + accuracy 柱状图。
 
 ### 当前运行结果
 
-- initial_accuracy: 0.8
-- smoothed_accuracy: 0.8139
-- accuracy_gain: 0.0139
-- iterations: 18
+- kmeans_accuracy: 0.817
+- initial_accuracy: 0.895
+- laplacian_accuracy: 0.922
+- tv_accuracy: 0.9957
+- tv_gain_over_laplacian: 0.0738
+- tv_gain_over_init: 0.1007
+- outer_iterations: 2
 
 ### 结果说明
 
-Toy graph classification: centroid warm initialization, kNN graph smoothing, argmax projection.
+Real graph total-variation (l1) convex model solved by Chambolle-Pock primal-dual with SVM warm init and Algorithm-1 beta-doubling outer loop, on a paper-like Three-Moon (R^2) dataset; compared against raw K-means and the graph-Laplacian (l2) model. graph-TV outperforms both.
 
 ## 完整复现流程
 
@@ -200,4 +208,4 @@ Toy graph classification: centroid warm initialization, kNN graph smoothing, arg
 
 [`../reproduce/paper_like/workflows/two-stage-classification_reproduction_workflow.md`](../reproduce/paper_like/workflows/two-stage-classification_reproduction_workflow.md)
 
-诚实提醒：当前等级为 **partial**，runner（`graph_classification.py`）用的是 two-moon 二类合成数据 + Laplacian-style 标签传播（缺 graph TV ℓ₁ 项与 primal-dual 求解器），`smoothed_accuracy=0.8139` 是 toy 结果，**不是**论文报告值（论文 Three Moon 99.4% / COIL 94.0% / MNIST 97.5% / Opt-Digits 最高 98.6%）。paper-level 在 15 篇中仍为 0/15。
+诚实提醒：当前等级为 **partial**，但 runner（`graph_classification.py`）已是**真实算法**——论文式 Three-Moon（R²,3 类）上的 graph TV（ℓ₁）凸模型 + Chambolle-Pock primal-dual + SVM warm init + β 翻倍外层，`tv_accuracy=0.9957` 体现真实的"ℓ₁ graph-TV > ℓ₂ graph-Laplacian(0.922) > raw"趋势；但仍是单一合成数据集、保留在 R²（非 R¹⁰⁰）、规模缩小（N=750）、无 CVM/GL/MBO/TVRF 论文对照基线，**不是**论文报告值（论文 Three Moon 99.4% / COIL 94.0% / MNIST 97.5% / Opt-Digits 最高 98.6%）。paper-level 在 15 篇中仍为 0/15。

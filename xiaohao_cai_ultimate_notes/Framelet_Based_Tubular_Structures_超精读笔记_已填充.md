@@ -204,40 +204,48 @@ candidate boundary Λ_i = {x : α_i < f_i(x) < β_i}; framelet denoising on Λ_i
 
 | 字段 | 内容 |
 | --- | --- |
-| 复现等级 | toy |
-| 真实性等级 | toy-completed |
+| 复现等级 | partial |
+| 真实性等级 | partial-completed |
 | 难度 | 高 |
 | 效果 | 很明显 |
-| 最小实验 | synthetic tube/vessel mask with noise，构造 boundary interval [alpha,beta]，只在 uncertain region 做 wavelet/TV-like smoothing。 |
-| 预期产出 | uncertainty region shrinks and binary tube mask emerges；toy Dice 0.9981，Lambda 从 651 收缩到 2。注意：toy 循环到 12 次迭代上限即停，Λ 仅收缩到 2（并未达到 |Λ|=0），最终二值掩膜由 0.5 硬阈值得到；因此论文 Theorem 1 的有限步 |Λ|=0 收敛在本 toy 中并未被真正演示。 |
-| 依赖 | numpy / scipy / scikit-image / matplotlib |
-| 数据需求 | synthetic 2D tube network；full reproduction 需要论文使用的 2D/3D tubular structures。 |
-| 算力需求 | CPU，约 1 秒内。 |
-| 实现风险 | 这里用 Gaussian smoothing 近似 framelet smoothing，不是严格 framelet implementation。 |
+| 最小实验 | synthetic tube/vessel mask with noise；梯度初始化 Λ^(0) (Eq.6)，每轮在 Λ 上用真实 tight-frame（pywt 无下采样 SWT，本身即 tight frame）软阈值去噪 (Eq.14)，自适应区间 μ/μ± (Eq.7–10) + 三段阈值-拉伸 (Eq.11–13) 收缩 Λ。 |
+| 预期产出 | uncertainty region shrinks and binary tube mask emerges；partial Dice 0.9863（优于 raw 0.5 阈值基线 0.9823），Lambda 从 12416 单调收缩到 **0**（5 轮收敛）。升级后 Λ 真正达到 |Λ|=0，最终二值掩膜由收敛准则触发而非硬阈值强制，论文 Theorem 1 的"有限步 |Λ|=0 收敛"现已在真实 tight-frame 算子下被演示。 |
+| 依赖 | numpy / scipy / scikit-image / matplotlib / pywavelets |
+| 数据需求 | synthetic 2D tube network；full reproduction 需要论文使用的 2D/3D tubular structures（私有 MRA/CTA 或 DRIVE/STARE/TubeTK/VascuSynth 公开等价）。 |
+| 算力需求 | CPU，约 0.2 秒。 |
+| 实现风险 | tight-frame 用 Haar 无下采样小波（真实 tight frame）而非论文精确的分段线性 B-spline framelet / anisotropic DℂWT；仍为合成 2D 数据（无 3D、无 anisotropic、无论文基线）；Dice/IoU 是论文未报告的 toy 内部量。 |
 
 ### 复现指标
 
 - dice
 - iou
+- raw_dice
+- raw_iou
 - lambda_initial
 - lambda_final
 - iterations
+- converged_empty_lambda
 
 ### 验证计划
 
-记录 Lambda size per iteration、Dice/IoU，并检查候选区域是否随迭代收缩。
+记录 Lambda size per iteration（应单调非增并收敛到 0）、toy Dice/IoU 与 raw 基线对照（真实算法应优于裸阈值），并检查候选区域是否随迭代收缩。
 
 ### 当前运行结果
 
-- dice: 0.9981
-- iou: 0.9962
-- lambda_initial: 651
-- lambda_final: 2
-- iterations: 12
+- dice: 0.9863
+- iou: 0.9729
+- raw_dice: 0.9823
+- raw_iou: 0.9653
+- lambda_initial: 12416
+- lambda_final: 0
+- iterations: 5
+- converged_empty_lambda: 1
+
+（Λ 收缩序列 `[12416, 206, 42, 8, 0]`，单调非增并收敛到 0。）
 
 ### 结果说明
 
-Approximate toy reproduction: Gaussian smoothing stands in for framelet smoothing inside uncertain boundary interval. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance.
+Partial reproduction with a REAL tight-frame denoiser: the paper's A^T T_lambda(A f) framelet step is implemented via an undecimated stationary wavelet transform (pywt.swt2/iswt2, Haar, level 2, lambda=0.08) — itself a tight frame with perfect reconstruction — applied as soft thresholding only on the candidate boundary set Lambda. Adaptive interval [alpha_i,beta_i] from mu/mu_-/mu_+ (Eq.7–10), three-segment threshold + linear contrast stretch (Eq.11–12), gradient init (Eq.6); |Lambda| now converges to 0. dice/iou are TOY internal overlap on synthetic 2D vessels (it beats the raw-threshold baseline but) the paper reports neither Dice nor real 2D/3D MRA/CTA performance.
 
 ## 完整复现流程
 

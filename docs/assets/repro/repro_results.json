@@ -3,35 +3,39 @@
     "priority": 1,
     "id": "sat-overview",
     "experiment_id": "sat_rof_trof",
-    "reproductionLevel": "toy-to-partial",
+    "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.6846,
+    "runtime_seconds": 0.7709,
     "metrics": {
       "direct_accuracy": 0.659,
-      "sat_accuracy": 0.9799,
-      "accuracy_gain": 0.321
+      "gaussian_baseline_accuracy": 0.9799,
+      "sat_accuracy": 0.9961,
+      "accuracy_gain": 0.3371
     },
     "resultFiles": [
       "assets/repro/sat_demo.png"
     ],
-    "notes": "Gaussian proxy smoothing is used as a lightweight proxy for convex ROF/TV smoothing on a synthetic toy image."
+    "notes": "SaT main path now solves the real convex ROF model (Chambolle-Pock primal-dual) before K-means thresholding; sat_accuracy is the real-ROF pixel accuracy. A Gaussian-smoothing proxy baseline (gaussian_baseline_accuracy) is kept only for comparison. Synthetic four-phase image; not paper-level.",
+    "fidelityWarning": "Real ROF (Chambolle-Pock) on a synthetic toy four-phase image; no blur operator A, no H1 term, and no paper dataset/baseline. Covers only the SaT skeleton (one of many SaT branches)."
   },
   {
     "priority": 2,
     "id": "pcms-rof-linkage",
     "experiment_id": "sat_rof_trof",
-    "reproductionLevel": "toy-to-partial",
+    "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.6846,
+    "runtime_seconds": 0.7709,
     "metrics": {
       "direct_dice": 0.8989,
-      "rof_threshold_dice": 0.9962,
-      "pcms_like_energy": 204.0
+      "gaussian_baseline_dice": 0.9962,
+      "rof_threshold_dice": 0.9983,
+      "pcms_like_energy": 205.0
     },
     "resultFiles": [
       "assets/repro/sat_demo.png"
     ],
-    "notes": "This synthetic toy demonstrates thresholding after proxy smoothing, but does not solve the exact ROF model or prove Theorem 3.6."
+    "notes": "rof_threshold_dice now comes from the real convex ROF solution (Chambolle-Pock) thresholded at (m0+m1)/2, not Gaussian smoothing; a Gaussian proxy baseline (gaussian_baseline_dice) is kept for comparison. Demonstrates ROF-thresholding segmentation on a synthetic toy two-phase image; does not prove Theorem 3.6.",
+    "fidelityWarning": "Real ROF on a synthetic toy two-phase image; pcms_like_energy is an anisotropic perimeter/TV proxy without the data-fidelity term and is not a paper-reported number. Code cannot substitute for the Theorem 3.4/3.6/3.7 proofs."
   },
   {
     "priority": 3,
@@ -39,9 +43,11 @@
     "experiment_id": "sat_rof_trof",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.6846,
+    "runtime_seconds": 0.7709,
     "metrics": {
       "raw_kmeans_accuracy": 0.565,
+      "raw_multiotsu_accuracy": 0.5642,
+      "rof_multiotsu_accuracy": 0.946,
       "gaussian_proxy_trof_accuracy": 0.9438,
       "rof_trof_accuracy": 0.9463,
       "split_bregman_trof_accuracy": 0.951,
@@ -57,8 +63,8 @@
       "k2_rof_threshold_dice": 0.9976,
       "k2_chanvese_proxy_dice": 0.8994,
       "k2_segmentation_disagreement": 0.0476,
-      "runtime_seconds_total": 0.6846,
-      "runtime_seconds_rof": 0.0179,
+      "runtime_seconds_total": 0.7709,
+      "runtime_seconds_rof": 0.0176,
       "runtime_seconds_threshold": 0.0004
     },
     "resultFiles": [
@@ -67,63 +73,74 @@
       "assets/repro/iterated_rof_convergence.png",
       "assets/repro/iterated_rof_chanvese.png"
     ],
-    "notes": "Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. A Gaussian proxy T-ROF baseline is preserved for comparison; still toy/partial, not paper-level."
+    "notes": "Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. Real non-iterative baselines (raw K-means, raw Multi-Otsu, ROF+Multi-Otsu) are reported with SA = correct/all pixels; the iterated ROF T-ROF beats them. A Gaussian-smoothing T-ROF baseline is kept for comparison; still partial, not paper-level.",
+    "fidelityWarning": "Single 96x96 synthetic close-gray four-phase image; Chambolle-Pock/Split-Bregman ROF (not the paper's ADMM), no FCM initialization, no paper datasets (stripe/cartoon/brain MRI) or Li/Pock/Yuan/He/Cai baselines. Lemma 2/3 checks are consistency tests, not Theorem 1 proof."
   },
   {
     "priority": 4,
     "id": "segmentation-restoration",
     "experiment_id": "segmentation_restoration",
-    "reproductionLevel": "toy",
+    "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.1066,
+    "runtime_seconds": 1.055,
     "metrics": {
-      "direct_accuracy": 0.5332,
-      "joint_toy_accuracy": 0.9604,
-      "accuracy_gain": 0.4272,
-      "alternating_iterations": 8
+      "direct_SA_percent": 75.9,
+      "joint_SA_percent": 91.34,
+      "SA_gain_percent": 15.44,
+      "restoration_psnr_db": 22.84,
+      "am_outer_iterations": 15
     },
     "resultFiles": [
-      "assets/repro/segmentation_restoration_toy.png"
+      "assets/repro/segmentation_restoration_partial.png"
     ],
-    "notes": "Toy alternating restoration-segmentation over g, class means and labels; not full variational AM proof reproduction."
+    "notes": "Real coupled restoration+segmentation alternating minimization: true Gaussian blur operator A with the exact Fourier-domain Tikhonov g-update (Eq.13), omega-weighted region means (Eq.14), and a Chambolle-Pock multiphase TV region-fitting u-update (Eq.15-16, hardened by argmax). The direct baseline runs the same TV multiphase solver on the degraded f (model (6), no restoration). Paper-style Segmentation Accuracy: joint segmentation on the restored g (~91%) clearly beats direct TV segmentation on the blurred+noisy image (~77%); recovered codebook ~[0.20,0.50,0.87] matches the true levels [0.18,0.50,0.84]. Synthetic single image, no paper baselines -> partial, not paper-level.",
+    "fidelityWarning": "Synthetic 96x96 image only; no barcode/cameraman/MRI/colour data, no [43]/[23]/[6] baselines, Gaussian fidelity only (Poisson/impulsive not implemented), convergence theorems not verified. omega missing-pixel weighting is implemented but the headline run uses the blur+noise regime for reproducibility. SA here is NOT comparable to the paper's reported 99.29/95.66 numbers -- partial, paper-level remains 0/15."
   },
   {
     "priority": 5,
     "id": "framelet-tubular",
     "experiment_id": "tubular_tight_frame",
-    "reproductionLevel": "toy",
+    "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.0713,
+    "runtime_seconds": 0.0848,
     "metrics": {
-      "dice": 0.9981,
-      "iou": 0.9962,
-      "lambda_initial": 651,
-      "lambda_final": 2,
-      "iterations": 12
+      "dice": 0.9863,
+      "iou": 0.9729,
+      "raw_dice": 0.9823,
+      "raw_iou": 0.9653,
+      "lambda_initial": 12416,
+      "lambda_final": 0,
+      "iterations": 5,
+      "converged_empty_lambda": 1
     },
     "resultFiles": [
       "assets/repro/tubular_lambda_shrinkage.png"
     ],
-    "notes": "Approximate toy reproduction: Gaussian smoothing stands in for framelet smoothing inside uncertain boundary interval. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance."
+    "notes": "Partial reproduction with a REAL tight-frame denoiser: the paper's A^T T_lambda(A f) framelet step is implemented via an undecimated stationary wavelet transform (pywt.swt2/iswt2, Haar, level 2, lambda=0.08) -- itself a tight frame with perfect reconstruction -- applied as soft thresholding only on the candidate boundary set Lambda. The adaptive interval [alpha_i,beta_i] is computed from mu/mu_-/mu_+ (eq.7-10), with three-segment threshold + linear contrast stretch (eq.11-12) and gradient initialisation ||grad f||_1>=eps (eq.6). The paper-relevant quantity is the |Lambda^(i)| shrinkage sequence and iteration count (now driven to |Lambda|=0). dice/iou are TOY internal overlap on synthetic 2D vessels; the paper reports neither Dice nor real 2D/3D MRA/CTA performance.",
+    "fidelityWarning": "Tight-frame realised as an undecimated stationary wavelet transform (Haar), not the paper's exact piecewise-linear B-spline framelet / anisotropic DCWT; data is synthetic 2D (no real MRA/CTA, no 3D), and dice/iou are toy quantities the paper never reports."
   },
   {
     "priority": 6,
     "id": "tight-frame-vessel",
     "experiment_id": "tubular_tight_frame",
-    "reproductionLevel": "toy",
+    "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.0713,
+    "runtime_seconds": 0.0848,
     "metrics": {
-      "dice": 0.9981,
-      "iou": 0.9962,
-      "lambda_initial": 651,
-      "lambda_final": 2,
-      "iterations": 12
+      "dice": 0.9863,
+      "iou": 0.9729,
+      "raw_dice": 0.9823,
+      "raw_iou": 0.9653,
+      "lambda_initial": 12416,
+      "lambda_final": 0,
+      "iterations": 5,
+      "converged_empty_lambda": 1
     },
     "resultFiles": [
       "assets/repro/tubular_lambda_shrinkage.png"
     ],
-    "notes": "Approximate toy reproduction: Lambda boundary set shrinkage and finite convergence pattern on synthetic 2D vessel network. Dice is measured on a simple synthetic 2D vessel toy; it does not represent real 2D/3D MRA paper-level performance."
+    "notes": "Partial reproduction with a REAL tight-frame (undecimated wavelet) denoiser standing in for the paper's tight-frame/DCWT soft-thresholding: pywt.swt2 forward -> soft-threshold detail bands -> pywt.iswt2 inverse (Haar, level 2, lambda=0.08), applied only on the candidate boundary set Lambda (eq.14). Adaptive interval [alpha_i,beta_i] from mu/mu_-/mu_+ (eq.7-10), three-segment threshold + contrast stretch (eq.11-13), gradient init (eq.6). The loop now converges to |Lambda|=0 (finite shrinkage, Theorem 1 behaviour). dice/iou are TOY overlap on a synthetic 2D vessel network and label nothing the paper reports; the paper gives only |Lambda^(i)| shrinkage and iteration counts on real (private) 2D/3D MRA/CTA.",
+    "fidelityWarning": "Tight-frame denoise uses pywt SWT (Haar) as the undecimated frame, not the paper's DCWT with directional selectivity; synthetic 2D data only (no 3D MRA/CTA, no baselines), and dice/iou are toy overlap absent from the paper."
   },
   {
     "priority": 7,
@@ -131,16 +148,17 @@
     "experiment_id": "slat_color",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.1065,
+    "runtime_seconds": 0.1405,
     "metrics": {
-      "rgb_only_accuracy": 0.7092,
-      "rgb_lab_accuracy": 0.7145,
-      "accuracy_gain": 0.0053
+      "rgb_only_accuracy": 0.5418,
+      "rgb_lab_accuracy": 0.6951,
+      "accuracy_gain": 0.1533
     },
     "resultFiles": [
       "assets/repro/slat_rgb_vs_rgblab.png"
     ],
-    "notes": "Toy SLaT: channel smoothing, RGB plus Lab-like luminance/chroma lifting, K-means on synthetic degraded color image. Current toy shows only a small metric gain; a better synthetic color case is needed to highlight Lab lifting."
+    "notes": "Partial SLaT on a degraded synthetic 4-quadrant color image with highly correlated RGB channels (blur + Gaussian noise + 60% information loss). Stage 2 uses real sRGB->CIELab (skimage.color.rgb2lab), giving the RGB+Lab 6-D lifting a clear, deterministic accuracy gain over RGB-only K-means (the paper's Fig. 1 / Fig. 2 motivating case). Stage 1 still uses a Gaussian smoothing proxy instead of the convex Mumford-Shah/TV primal-dual solver, so this is partial, not paper-level.",
+    "fidelityWarning": "Stage 1 is a Gaussian-filter proxy (no edge-preserving TV, no deblur operator A, no Poisson branch); information loss is filled by normalized-convolution inpainting rather than the paper's TV/H^1 Stage-1 extrapolation. Lab channels are rescaled to [0,1] by fixed nominal CIELab ranges (not per-image min-max). Single synthetic image, no real-image dataset, no external [31]/[39]/[44] baselines, no Table I/II magnitude alignment. Not paper-level."
   },
   {
     "priority": 8,
@@ -148,15 +166,24 @@
     "experiment_id": "sphere_wavelet_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0705,
+    "runtime_seconds": 0.0953,
     "metrics": {
-      "dice": 0.8418,
-      "gradient_threshold_quantile": 0.93
+      "dice": 0.9529,
+      "kmeans_dice": 1.0,
+      "denoise_gain_db": 3.3291,
+      "lambda_initial": 8226,
+      "lambda_final": 0,
+      "lambda_shrink_ratio": 0.0,
+      "interval_halving_ratio": 0.8132,
+      "wssa_iterations": 5,
+      "snr_db": 30.0,
+      "epsilon": 0.02
     },
     "resultFiles": [
       "assets/repro/sphere_wavelet_toy.png"
     ],
-    "notes": "Approximate sphere toy: equirectangular smoothing plus spherical-gradient correction; no S2LET/SSHT/SO3 stack."
+    "notes": "Real wavelet tight-frame WSSA-style pipeline on a lat-lon grid: pywt undecimated SWT soft-threshold (A^T T_lambda A, eq 3.1/3.10) replaces the Gaussian denoise proxy (RMS-to-clean gain 3.3291 dB); discrete spherical gradient (eq 2.5) replaces the max(cos,0.2) clip; real boundary-interval shrinkage iteration (eq 3.3-3.8) converges in 5 steps with |Lambda| 8226->0, the paper's verifiable few-iteration convergence. K-means dice reported only for transparency (1.0); at SNR=30 dB this intensity toy is separable so K-means stays competitive and the paper's directional advantage cannot be shown here. Planar SWT approximates the sphere sampling; true spherical-harmonic wavelets (S2LET/SSHT/SO3) still absent.",
+    "fidelityWarning": "Planar pywt SWT (undecimated tight frame) stands in for spherical-harmonic wavelets; equiangular lat-lon grid is not true S^2 equiangular sampling and no S2LET/SSHT/SO3 axisymmetric/directional/curvelet/hybrid stack is used. Dice is a toy-internal metric the paper does not report; K-means here is a simplified intensity clustering, not MATLAB kmeans on real spherical data."
   },
   {
     "priority": 9,
@@ -164,17 +191,21 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.078,
+    "runtime_seconds": 0.3239,
     "metrics": {
-      "initial_accuracy": 0.8,
-      "smoothed_accuracy": 0.8139,
-      "accuracy_gain": 0.0139,
-      "iterations": 18
+      "kmeans_accuracy": 0.817,
+      "initial_accuracy": 0.895,
+      "laplacian_accuracy": 0.922,
+      "tv_accuracy": 0.9957,
+      "tv_gain_over_laplacian": 0.0738,
+      "tv_gain_over_init": 0.1007,
+      "outer_iterations": 2
     },
     "resultFiles": [
       "assets/repro/graph_classification_before_after.png"
     ],
-    "notes": "Toy graph classification: centroid warm initialization, kNN graph smoothing, argmax projection."
+    "notes": "Real graph total-variation (l1) convex model solved by Chambolle-Pock primal-dual with SVM warm init and Algorithm-1 beta-doubling outer loop, on a paper-like Three-Moon (R^2) dataset; compared against raw K-means and the graph-Laplacian (l2) model. graph-TV outperforms both.",
+    "fidelityWarning": "Real graph-TV (l1) Chambolle-Pock primal-dual on a paper-like Three-Moon (R^2, RBF k-NN graph, SVM warm init) -- NOT paper-level: Three Moon kept in R^2 not R^100, only this one dataset (no COIL/Opt-Digits/MNIST), reduced N=750, no CVM/GL/MBO/TVRF comparison baselines, no 10-run averaging. paper-level remains 0/15."
   },
   {
     "priority": 10,
@@ -182,17 +213,21 @@
     "experiment_id": "graph_classification",
     "reproductionLevel": "partial",
     "status": "completed",
-    "runtime_seconds": 0.078,
+    "runtime_seconds": 0.3239,
     "metrics": {
-      "initial_accuracy": 0.8,
-      "smoothed_accuracy": 0.8139,
-      "accuracy_gain": 0.0139,
-      "iterations": 18
+      "kmeans_accuracy": 0.817,
+      "initial_accuracy": 0.895,
+      "laplacian_accuracy": 0.922,
+      "tv_accuracy": 0.9957,
+      "tv_gain_over_laplacian": 0.0738,
+      "tv_gain_over_init": 0.1007,
+      "outer_iterations": 2
     },
     "resultFiles": [
       "assets/repro/graph_classification_before_after.png"
     ],
-    "notes": "Toy repeated graph smoothing: demonstrates independent label-function update idea without full graph TV primal-dual solver."
+    "notes": "Real graph-TV (l1) primal-dual smoothing + argmax projection with the decoupled per-class subproblems and beta-doubling refinement from the journal model (Eq.15/Algorithm 1-2), on a paper-like Three-Moon (R^2); graph-TV beats the l2-Laplacian and raw baselines. Still partial: single synthetic dataset, no benchmark-scale data or paper baselines.",
+    "fidelityWarning": "Real graph-TV (l1) Chambolle-Pock primal-dual on a paper-like Three-Moon (R^2, RBF k-NN graph, SVM warm init) -- NOT paper-level: Three Moon kept in R^2 not R^100, only this one dataset (no COIL/Opt-Digits/MNIST), reduced N=750, no CVM/GL/MBO/TVRF comparison baselines, no 10-run averaging. paper-level remains 0/15."
   },
   {
     "priority": 11,
@@ -200,19 +235,24 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0628,
+    "runtime_seconds": 0.4757,
     "metrics": {
-      "map_psnr": 18.7123,
-      "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0016,
-      "mcmc_runtime_seconds": 0.0037,
-      "gamma_alpha_toy": 939.9229,
-      "mean_interval_length": 0.1739
+      "map_psnr": 22.2878,
+      "map_snr": 9.1586,
+      "dirty_snr": 7.4821,
+      "snr_gain_over_dirty_db": 1.6766,
+      "sampling_rate": 0.0979,
+      "noise_sigma": 0.019635,
+      "map_runtime_seconds": 0.0606,
+      "lci_runtime_seconds": 0.3229,
+      "gamma_alpha_hpd": 6180.6593,
+      "mean_interval_length": 0.3709
     },
     "resultFiles": [
       "assets/repro/map_uq_reconstruction_uncertainty.png"
     ],
-    "notes": "Toy MAP-UQ: small Fourier undersampling inverse problem with approximate HPD and local interval map. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."
+    "notes": "Real l1-wavelet MAP (FISTA forward-backward, db8 analysis prior) on an undersampled Fourier inverse problem, with the paper's HPD threshold gamma'_alpha=f+g+sqrt(16 log(3/alpha))sqrt(N)+N and local credible intervals by superpixel bisection. MAP beats the dirty-image baseline by the reported SNR gain. Uses a synthetic toy test image (Shepp-Logan phantom), not the paper's M31/BrainWeb data; no auto-mu, no SARA dictionary, no Px-MALA.",
+    "fidelityWarning": "Real l1-wavelet (Daubechies-8) MAP via FISTA + real local credible intervals via HPD-threshold bisection, on a standard Shepp-Logan phantom under ~10% low-frequency-biased Fourier undersampling (SNR=30dB). NOT the paper's M31/BrainWeb/RI data; no true radio-interferometric (NUFFT) operator, no auto-mu estimation, and no Px-MALA/MYULA sampler. Metrics and the O(10^5) speedup claim are not comparable to the paper."
   },
   {
     "priority": 12,
@@ -220,19 +260,24 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0628,
+    "runtime_seconds": 0.4757,
     "metrics": {
-      "map_psnr": 18.7123,
-      "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0016,
-      "mcmc_runtime_seconds": 0.0037,
-      "gamma_alpha_toy": 939.9229,
-      "mean_interval_length": 0.1739
+      "map_psnr": 22.2878,
+      "map_snr": 9.1586,
+      "dirty_snr": 7.4821,
+      "snr_gain_over_dirty_db": 1.6766,
+      "sampling_rate": 0.0979,
+      "noise_sigma": 0.019635,
+      "map_runtime_seconds": 0.0606,
+      "lci_runtime_seconds": 0.3229,
+      "gamma_alpha_hpd": 6180.6593,
+      "mean_interval_length": 0.3709
     },
     "resultFiles": [
       "assets/repro/map_uq_reconstruction_uncertainty.png"
     ],
-    "notes": "Toy proximal-MCMC-style sampling on a 32x32 Fourier inverse problem; no RI operator or MCMC diagnostics. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."
+    "notes": "Real l1-wavelet (db8) MAP via forward-backward splitting on a synthetic toy ~10% undersampled Fourier problem, plus real HPD credible region threshold and local credible intervals. This implements the optimisation/UQ machinery but NOT the paper's proximal-MCMC samplers (MYULA/Px-MALA), nor a true RI measurement operator, nor M31/Cygnus A/W28/3C288 data. Runtime is not comparable to the paper's large-scale results.",
+    "fidelityWarning": "Real l1-wavelet (Daubechies-8) MAP via FISTA + real local credible intervals via HPD-threshold bisection, on a standard Shepp-Logan phantom under ~10% low-frequency-biased Fourier undersampling (SNR=30dB). NOT the paper's M31/BrainWeb/RI data; no true radio-interferometric (NUFFT) operator, no auto-mu estimation, and no Px-MALA/MYULA sampler. Metrics and the O(10^5) speedup claim are not comparable to the paper."
   },
   {
     "priority": 13,
@@ -240,19 +285,24 @@
     "experiment_id": "map_uq_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0628,
+    "runtime_seconds": 0.4757,
     "metrics": {
-      "map_psnr": 18.7123,
-      "map_snr": 9.6004,
-      "map_runtime_seconds": 0.0016,
-      "mcmc_runtime_seconds": 0.0037,
-      "gamma_alpha_toy": 939.9229,
-      "mean_interval_length": 0.1739
+      "map_psnr": 22.2878,
+      "map_snr": 9.1586,
+      "dirty_snr": 7.4821,
+      "snr_gain_over_dirty_db": 1.6766,
+      "sampling_rate": 0.0979,
+      "noise_sigma": 0.019635,
+      "map_runtime_seconds": 0.0606,
+      "lci_runtime_seconds": 0.3229,
+      "gamma_alpha_hpd": 6180.6593,
+      "mean_interval_length": 0.3709
     },
     "resultFiles": [
       "assets/repro/map_uq_reconstruction_uncertainty.png"
     ],
-    "notes": "Toy MAP-UQ is faster than the toy sampler and gives a similar uncertainty pattern; not a paper-level SKA experiment. Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim."
+    "notes": "Real MAP-based UQ: db8 l1-wavelet MAP (forward-backward, Algorithm 1 style), real concentration-inequality HPD threshold (Eq.19) and local credible intervals by bisection (Eq.26-28), on a synthetic toy test image. No true RI operator/NUFFT, no Px-MALA baseline, no hypothesis testing, and not the paper's data; the O(10^5) MAP-vs-MCMC speedup is not reproduced here.",
+    "fidelityWarning": "Real l1-wavelet (Daubechies-8) MAP via FISTA + real local credible intervals via HPD-threshold bisection, on a standard Shepp-Logan phantom under ~10% low-frequency-biased Fourier undersampling (SNR=30dB). NOT the paper's M31/BrainWeb/RI data; no true radio-interferometric (NUFFT) operator, no auto-mu estimation, and no Px-MALA/MYULA sampler. Metrics and the O(10^5) speedup claim are not comparable to the paper."
   },
   {
     "priority": 14,
@@ -260,19 +310,22 @@
     "experiment_id": "online_ri_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0594,
+    "runtime_seconds": 0.1104,
     "metrics": {
-      "offline_psnr": 12.3359,
-      "online_psnr": 12.3359,
-      "offline_snr": 2.6069,
-      "online_snr": 2.6069,
-      "peak_stored_measurements_offline": 585,
-      "peak_stored_measurements_online": 98
+      "offline_snr_db": 24.6404,
+      "online_snr_db": 24.558,
+      "dirty_snr_db": 15.1086,
+      "online_offline_rel_diff": 0.003347,
+      "num_blocks_B": 8,
+      "total_measurements_M": 1229,
+      "peak_stored_measurements_online": 154,
+      "storage_ratio_eta_s": 0.1253
     },
     "resultFiles": [
       "assets/repro/online_ri_storage_quality.png"
     ],
-    "notes": "Toy online RI: split Fourier measurements into blocks, assimilate each block, then discard it conceptually."
+    "notes": "Real online forward-backward RI reconstruction (paper Algorithm 2, analysis form). Measurement operator Phi_k = M_k F is an undersampled orthonormal 2-D Fourier transform (variable-density mask near the uv-origin a la Puy et al., ~30% coverage, 30 dB input noise); sparsity basis Psi is an orthonormal Daubechies-8 wavelet frame (pywt) so the prox of mu*||Psi^H x||_1 is wavelet soft-thresholding (eqs. 38/40). Visibilities are split into B=8 blocks; block b arrives at FB step b and contributes the accumulated partial gradient sum_{k<=b} Phi_k^H(Phi_k x - y_k) (precomputed per-block dirty maps Phi_k^H y_k, Remark 4.2), then is discarded -- only the running (mask,dirty) summary and current estimate are kept. After all blocks arrive the online run keeps iterating to i_max=50 (optional extra iterations, Algorithm 1/2). A standard offline FB baseline uses all M visibilities every step. Result: online and offline reach near-identical SNR (rel.diff ~3e-3) and both clearly beat the un-regularised dirty image, while online's peak visibility storage is eta_s = max_k M_k / M ~ 1/B -- the paper's central storage/quality trade-off. reproductionLevel stays 'toy': a synthetic sky and on-grid masked-FFT approximate the real RI operator; true non-coplanar/w-projection NUFFT visibility operators and real telescope observations remain the gap.",
+    "fidelityWarning": "toy: the solver is now the real online forward-backward algorithm (L1 Daubechies-8 wavelet prox + per-block accumulated partial gradient + discard), but the RI measurement operator is approximated by an on-grid undersampled orthonormal FFT on a synthetic sky, and the data-term 1/(2 sigma^2) is folded into mu. Missing for paper-level: real M31/Cygnus A/W28/3C288 sky + Puy variable-density half-Fourier-plane 10% sampling, NUFFT/w-projection (PURIFY) operator, paper scales (B in {50..500}, i_max=50, mu=1e4 in MATLAB units), and the Table 1 / M31 SNR~14.2946 dB numerics."
   },
   {
     "priority": 15,
@@ -280,19 +333,23 @@
     "experiment_id": "nested_sampling_toy",
     "reproductionLevel": "toy",
     "status": "completed",
-    "runtime_seconds": 0.0483,
+    "runtime_seconds": 3.8424,
     "metrics": {
-      "estimated_log_evidence": -5.5996,
-      "reference_log_evidence": -3.1319,
-      "absolute_log_error": 2.4676,
-      "live_points": 80,
-      "iterations": 180
+      "dimension": 10,
+      "estimated_log_evidence": -13.8614,
+      "reference_log_evidence": -13.8365,
+      "absolute_log_error": 0.025,
+      "rejection_baseline_log_error": 1.2109,
+      "error_reduction_vs_rejection": 1.1859,
+      "live_points": 100,
+      "iterations": 1200,
+      "myula_steps_per_draw": 60
     },
     "resultFiles": [
       "assets/repro/nested_sampling_evidence_trace.png"
     ],
-    "notes": "Toy nested sampling on a 2D Gaussian likelihood under a uniform prior; not proximal constrained MCMC. Completed with large error; use as nested sampling mechanism demo only.",
-    "resultQuality": "rough illustrative",
-    "warning": "large evidence error; toy only"
+    "notes": "Proximal nested sampling on a d=10 isotropic-Gaussian likelihood under a uniform-box prior with closed-form evidence. Constrained sampling uses a real MYULA / proximal-Langevin step: the Moreau-Yosida envelope of the constraint set's characteristic function (gradient = (x - proj_Btau(x))/lambda, an L2-ball projection, the paper's Eq.46 denoising prox) plus a Metropolis-Hastings correction that enforces L(x)>L* exactly -- not pure rejection. Beats the old rejection baseline (err 0.025 vs 1.211) at a dimension where rejection sampling fails (~250 stale replacements). Still a low-dimensional toy analytic check (synthetic Gaussian model), not the paper's high-dimensional imaging model-selection benchmark.",
+    "resultQuality": "real-algorithm low-dim analytic check",
+    "fidelityWarning": "Real MYULA proximal-Langevin constrained sampler with MH correction, but only d=10 with an analytic L2-ball (denoising) constraint; no sparsity-promoting l1/wavelet prior, no Fourier sensing, no high-dimensional (10^3-10^6) imaging model selection, no entropy error bars. Not paper-level."
   }
 ]

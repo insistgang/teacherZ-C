@@ -216,43 +216,54 @@ while ‖c^(k+1) − c^k‖ > ε:
 
 | 字段 | 内容 |
 | --- | --- |
-| 复现等级 | toy |
-| 真实性等级 | toy-completed |
+| 复现等级 | partial |
+| 真实性等级 | partial-completed |
 | 难度 | 高 |
 | 效果 | 很明显 |
-| 最小实验 | blurred/noisy/missing synthetic image，做 alternating minimization toy：更新 g、class means c_i 与 labels u_i。 |
-| 预期产出 | joint restoration-segmentation 比只在 degraded image 上直接分割更稳；toy accuracy 从 0.5332 提升到 0.9604。 |
+| 最小实验 | blurred+noisy synthetic image，做**真实**联合恢复+分割 AM：真实 Gaussian 模糊算子 A + Eq.(13) 频域 Tikhonov g 求解、Eq.(14) ω 加权 c_i、Eq.(15-16) Chambolle-Pock 多相 TV 的 u_i。 |
+| 预期产出 | joint restoration-segmentation 比同一 TV 求解器直接在退化图上分割更准；SA 从 ≈75.9 提升到 ≈91.3（百分制），恢复 codebook ≈[0.20,0.50,0.87] 吻合真值。 |
 | 依赖 | numpy / scipy / matplotlib |
-| 数据需求 | synthetic blurred/noisy/missing image。 |
-| 算力需求 | CPU，约 1 秒内。 |
-| 实现风险 | toy AM 不覆盖论文的全部 fidelity term、vector-valued image 和收敛证明。 |
+| 数据需求 | synthetic blurred+noisy image（96×96 三相）。 |
+| 算力需求 | CPU，约 1.2 秒（真实去卷积 + 多相 TV primal-dual）。 |
+| 实现风险 | u 子问题用 Chambolle-Pock 而非论文 split-Bregman；只 Gaussian fidelity、单合成图、无论文同款数据与三基线、未核验收敛定理。 |
+
+### 当前实现（真实算法，已去 proxy）
+
+- **真实算子 A**：15×15 Gaussian PSF（std=2.2）+ FFT 圆周卷积；`Aᵀ` 用共轭特征值。
+- **g 子问题（Eq.13）**：精确频域 Tikhonov 求解 `g=ℱ⁻¹(ℱ(μAᵀf+λΣc_iu_i)/(μ|H|²+λ))`，真正的去卷积，不是平滑近似。
+- **c 子问题（Eq.14）**：恢复图 g 上的 ω 加权区域均值（按硬标签）。
+- **u 子问题（Eq.15-16）**：真实 Chambolle-Pock 多相 TV（对偶投单位球 + 原始投单纯形），argmax 硬化（Eq.17）；替代旧的 1D K-means。
+- **外层 AM**：`g→c→u`，`‖c^{k+1}−c^k‖≤ε`（ε=1e-4）。
+- **基线**：同一 TV 多相求解器直接跑退化图 f（model (6)，无 g），joint vs direct 差异只来自恢复耦合。
 
 ### 复现指标
 
-- direct_accuracy
-- joint_toy_accuracy
-- accuracy_gain
-- alternating_iterations
+- direct_SA_percent
+- joint_SA_percent
+- SA_gain_percent
+- restoration_psnr_db
+- am_outer_iterations
 
 ### 验证计划
 
-比较 degraded direct segmentation 与 AM toy segmentation 的 accuracy，并保存恢复图、分割图和 ground truth。
+比较 direct（退化图上的 TV 多相分割）与 joint（恢复图 g 上的 TV 多相分割）的 Segmentation Accuracy，保存 observed f / ground truth / direct segm. / restored g / joint segm. 五联图，并报恢复 PSNR 与 AM 迭代数。
 
 ### 当前运行结果
 
-- direct_accuracy: 0.5332
-- joint_toy_accuracy: 0.9604
-- accuracy_gain: 0.4272
-- alternating_iterations: 8
+- direct_SA_percent: 75.9
+- joint_SA_percent: 91.34
+- SA_gain_percent: 15.44
+- restoration_psnr_db: 22.84
+- am_outer_iterations: 15
 
 ### 结果说明
 
-Toy alternating restoration-segmentation over g, class means and labels; not full variational AM proof reproduction.
+Real coupled restoration+segmentation alternating minimization: 真实 Gaussian 模糊算子 A + 精确频域 Tikhonov g 求解（Eq.13）+ ω 加权区域均值（Eq.14）+ Chambolle-Pock 多相 TV 区域拟合 u 求解（Eq.15-16）。在 blur+noise 退化图上，恢复后再分割（joint，≈91.3）显著优于直接在退化图上分割（direct，≈75.9），恢复出的 codebook 与真值吻合。合成单图、无论文同款数据与基线 → partial，非 paper-level。
 
-> 口径提醒：上面 toy 的 0.5332→0.9604 是 0~1 clustering accuracy，仅佐证"恢复参与分割"的定性方向，与论文百分制 SA（如 99.29、95.66）不同源，不可混用，也不代表论文级复现。
+> 口径提醒：上面 SA（75.9→91.3）已是论文 SA 百分制口径，但来自**自造图 + 内部基线**，与论文报告的 99.29/95.66（论文同款数据 + 三个原始基线 [43]/[23]/[6]）**不同源、不可逐表比较**，也不代表论文级复现；paper-level 仍为 0/15。
 
 ## 完整复现流程
 
-本篇的完整复现流程（Complete Reproduction Workflow）已单独成文，含算法逐步 pipeline、所需数据集、baseline、论文 SA 数值、当前 toy 实现与到 paper-like 的差距清单。当前仓库等级为 toy（toy-completed），paper-level 仍为 0/15。
+本篇的完整复现流程（Complete Reproduction Workflow）已单独成文，含算法逐步 pipeline、所需数据集、baseline、论文 SA 数值、当前 partial 实现（真实 A + 频域 Tikhonov g + ω 加权 c + Chambolle-Pock 多相 TV u）与到 paper-like 的差距清单。当前仓库等级为 partial（partial-completed），paper-level 仍为 0/15。
 
 详见：[../reproduce/paper_like/workflows/segmentation-restoration_reproduction_workflow.md](../reproduce/paper_like/workflows/segmentation-restoration_reproduction_workflow.md)

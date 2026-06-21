@@ -609,18 +609,20 @@ pywt (PyWavelets)  # 小波变换
 
 | 维度 | 当前状态 | 说明 |
 |------|----------|------|
-| **复现等级 (reproductionLevel)** | `toy` | 32×32 合成图 + 随机 Fourier 掩模，演示直觉骨架 |
-| **真实性 (reproductionTruthLevel)** | `toy-completed` | runner 跑通并出图，但用代理算子 |
+| **复现等级 (reproductionLevel)** | `toy` | 已从代理升级为论文真实方法，但用标准测试图而非论文数据，故仍标 toy |
+| **真实性 (reproductionTruthLevel)** | `toy-completed` | runner 跑通并出图；**核心算法已为真实实现** |
 | **runner 文件** | `reproduce/experiments/map_uq_toy.py` | 第 11/12/13 三篇 RI-UQ 论文共用 |
-| **MAP 求解** | Gaussian smoothing 迭代代理 | **非** forward-backward / ℓ1 proximal；丢失 sparsity 结构 |
-| **HPD 阈值** | `gamma_alpha_toy=939.9229`（简化版） | **非**完整 Eq.(6)，不校准 coverage |
-| **local credible interval** | smoothing 代理 | **非** Eq.(7-9) 二分搜索 superpixel 饱和 |
-| **基线** | 随机游走 "MCMC" 代理 | **非** Px-MALA（ref [6]） |
-| **字典** | 无（像素域） | 缺 DB8 / SARA，无 synthesis-vs-analysis 对照 |
-| **toy 指标** | map_psnr=18.7123, map_snr=9.6004, mean_interval_length=0.1739 | 合成图结果，**不可**与论文 Table I（SNR 19–31）对照 |
-| **产物图** | `assets/repro/map_uq_reconstruction_uncertainty.png` | truth / MAP toy / HPD approx map / MCMC interval 四联图 |
+| **数据/算子** | 64×64 Shepp-Logan + low-freq-biased Fourier mask，采样率 ≈9.8%，SNR=30 dB | 标准测试图，**非** M31/BrainWeb；采样率对齐论文 10% |
+| **MAP 求解** | ✅ **真实 FISTA / forward-backward + 闭式软阈值 prox** | 解 `μ‖Ψ†x‖₁+‖y-Ax‖²/2σ²`，Ψ=Daubechies-8 正交小波（pywt） |
+| **HPD 阈值** | ✅ **完整 Eq.(6)** `gamma_alpha_hpd=6180.6593`（α=0.01） | `f(x*)+g(x*)+√(16log(3/α))√N+N`，真实结构 |
+| **local credible interval** | ✅ **Eq.(7-9) superpixel 二分搜索**（8×8 grid） | 真实区域饱和搜索，`mean_interval_length=0.3709` |
+| **基线** | dirty image（Aᴴy）作重建下界对照 | 缺 Px-MALA；**MAP 比 dirty SNR 高 +1.68 dB** |
+| **字典** | DB8 orthonormal analysis prior | 缺 SARA over-complete，无 synthesis-vs-analysis 对照 |
+| **指标** | map_psnr=22.2878, map_snr=9.1586, dirty_snr=7.4821, snr_gain=1.6766 | 标准图真实算法结果，**不可**与论文 Table I（SNR 19–31）逐数对照 |
+| **产物图** | `assets/repro/map_uq_reconstruction_uncertainty.png` | truth / dirty Aᴴy / ℓ1-wavelet MAP / LCI width 四联图 |
 
-**到 paper-like 的核心缺口**：真实 forward-backward 求解器、DB8/SARA 字典、自动 μ 算法(4)、完整 Eq.(6) 阈值、Eq.(7-9) 二分搜索区间、Px-MALA 基线、M31/BrainWeb 数据（数据公开，门槛主要在求解器与字典）。详见完整复现流程文档。
+**已实现（真实算法）**：ℓ1-wavelet（DB8）MAP forward-backward 求解器、完整 Eq.(6) HPD 阈值、Eq.(7-9) superpixel 二分搜索局部可信区间；MAP 优于 dirty 基线，验证 sparsity 先验有效。
+**到 paper-like 的剩余缺口**：自动 μ 算法(4)、SARA over-complete 字典与 synthesis-vs-analysis 对照、Px-MALA 基线、M31/BrainWeb 真实数据（数据公开，门槛主要在 SARA 与采样器）。paper-level 仍为 **0/15**。详见完整复现流程文档。
 
 ---
 
@@ -630,4 +632,4 @@ pywt (PyWavelets)  # 小波变换
 
 [`../reproduce/paper_like/workflows/high-dimensional-uq_reproduction_workflow.md`](../reproduce/paper_like/workflows/high-dimensional-uq_reproduction_workflow.md)
 
-该文档诚实标注：当前为 `toy` 等级（非 paper-level），用 Gaussian smoothing 代理 ℓ1-MAP 求解器，HPD 阈值与"MCMC"基线均为教学代理，论文的 $\mathcal{O}(10^5)$ 加速与 Table I 数值**不可**由当前 toy 外推。
+该文档诚实标注：当前为 `toy` 等级（非 paper-level）。核心算法已升级为论文真实方法——真实 ℓ1-wavelet（DB8）forward-backward MAP 求解器、完整 Eq.(6) HPD 阈值、Eq.(7-9) superpixel 二分搜索局部可信区间，且 MAP 优于 dirty 基线 +1.68 dB；但用的是标准 Shepp-Logan 测试图而非论文 M31/BrainWeb 数据，且无 SARA 字典、无自动 μ、无 Px-MALA 基线，故论文 $\mathcal{O}(10^5)$ 加速与 Table I 数值**不可**由当前实现外推。

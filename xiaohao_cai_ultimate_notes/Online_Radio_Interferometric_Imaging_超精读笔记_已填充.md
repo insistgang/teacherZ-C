@@ -513,12 +513,13 @@ class OnlineRIReconstructor:
 | 复现等级 (`reproductionLevel`) | **toy** |
 | 真实性 (`reproductionTruthLevel`) | **toy-completed** |
 | paper-level 进度 | **0/15**，本篇亦为 0 |
-| runner | `reproduce/experiments/online_ri_toy.py`（experiment_id=`online_ri_toy`，CPU ~0.07 s） |
-| 当前指标 | offline_psnr=12.3359，online_psnr=12.3359，offline_snr=2.6069，online_snr=2.6069，peak storage 585(offline) vs 98(online) |
-| 用的 proxy | 40×40 synthetic 双圆盘 + 随机 Fourier 掩码（masked-FFT）；inverse-FFT **dirty image** 代替 ℓ1-正则化 MAP；逐块注入 Fourier 系数代替 online proximal 同化 |
-| 缺什么（到 paper-like） | (1) M31/Cygnus A/W28/3C288 公开图 + variable-density 10% 半 Fourier 采样 + 30 dB 噪声；(2) Daubechies-8 的 online FB（Algorithm 2，$\mu=10^4$, $i_{\max}=50$）；(3) standard offline FB 基线；(4) SNR(式53)/存储比/算力比曲线，复现 Table 1 与 M31≈14.2946 dB |
+| runner | `reproduce/experiments/online_ri_toy.py`（experiment_id=`online_ri_toy`，CPU ~0.2 s，确定性） |
+| 当前实现 | **真实 online forward-backward（Algorithm 2, analysis form）**：$\Phi_k=M_k F$ 正交 masked-FFT + Daubechies-8 正交小波 Ψ（pywt）软阈值 prox + 按 B=8 块累加部分梯度 + 丢弃机制；并行 standard offline FB 基线 |
+| 当前指标 | offline_snr_db=24.6404，online_snr_db=24.5580，dirty_snr_db=15.1086，online_offline_rel_diff=0.003347，B=8，M=1229，peak_stored=154，$\eta_s$=0.1253(≈1/B) |
+| 用的 proxy（仍存在） | 64×64 synthetic 多结构图代替 M31/Cygnus A/W28/3C288；on-grid masked-FFT 代替真实 NUFFT/w-projection 算子；全平面 ~30% 覆盖代替半 Fourier 平面 10% 采样；数据项 $1/2\sigma^2$ 折进 $\mu$（$\mu=0.005$ 而非论文 $10^4$ 尺度）|
+| 缺什么（到 paper-like） | (1) M31/Cygnus A/W28/3C288 公开图 + Puy variable-density 半 Fourier 平面 10% 采样；(2) NUFFT/degridding/w-projection（PURIFY 风格）真实 RI 算子；(3) 论文规模 $B\in\{50..500\}$、256×256+、$\mu=10^4$ 同尺度；(4) 算力比 $\eta_c$ 与扫 $B$ 曲线、Table 1 与 M31≈14.2946 dB 逐数值对照 |
 
-**诚实结论**：当前 toy 仅演示了"分块同化—丢弃—峰值存储下降"的**工程直觉**与"online 末态与 offline 等价"的**信息无损**直觉。它**不复现**论文的正则化重建质量（toy SNR≈2.6 dB 是 dirty-image 量级，远低于论文 14.29 dB），也不复现 Table 1 数值。任何"论文级 online RI 已复现"的陈述都是错误的。
+**诚实结论**：本轮已把"假动作"换成**真算法**——求解器现在是真实的 ℓ1-Daubechies-8-正则化 online forward-backward（不再是 dirty image）。它**定性复现**了论文核心机制：online（24.56 dB）≈ offline（24.64 dB）（rel.diff≈3e-3，与论文 Cygnus A/W28 的 10⁻²~10⁻³ 同档），两者都显著优于 dirty image（15.11 dB），且峰值存储 $\eta_s=0.1253\approx1/B$ 精确印证论文式 50。但它仍是 **toy** 等级：用 synthetic 圆盘 + on-grid masked-FFT 近似真实 RI 算子，**不复现**论文 M31 的具体 14.2946 dB 与 Table 1 量级数值。真实 NUFFT/w-projection visibility 算子与真实观测数据仍是缺口。任何"论文级 online RI 已复现"的陈述仍是错误的。
 
 ---
 

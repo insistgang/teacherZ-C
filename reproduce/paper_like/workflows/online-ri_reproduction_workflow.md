@@ -33,8 +33,8 @@
 | paper-level | 严格复现论文表格/图的数值，方法与数据均一致 | **0/15，本篇亦为 0** |
 
 - 本仓库 `reproductionLevel = toy`，`reproductionTruthLevel = toy-completed`。
-- 当前实现（`reproduce/experiments/online_ri_toy.py`）用 40×40 synthetic 双圆盘图像 + 随机 Fourier 掩码（masked FFT 作为 sensing operator），online 部分把已采样的 Fourier 系数按块逐步注入，再用**纯 inverse-FFT 的 dirty-image 反投影**作为"重建"，**完全没有** ℓ1 稀疏正则化、没有 Daubechies-8 小波 Ψ、没有 forward-backward proximal 迭代（Algorithm 2/3）、没有 PURIFY 的 NUFFT/degridding 算子。因此它只是把"分块同化 + 丢弃 + peak storage 下降"这一**工程直觉**做成可视化，**不能**当作对论文 online forward-backward MAP 算法的复现。
-- 纪律强调：本文档第 6 节引用的论文数值（如 M31 SNR ≈ 14.2946 dB、Table 1 相对差 ~10⁻⁶）仅供对照；当前 toy 实现**不复现这些数值**。把 toy 的 `online_psnr=12.3359`、`peak storage 585→98` 解读为"论文级 online RI 已复现"是错误陈述。
+- 当前实现（`reproduce/experiments/online_ri_toy.py`）用 64×64 synthetic 多结构图像（扩展圆盘 + 点源）+ variable-density Fourier 掩码（masked FFT 作为 sensing operator Φ_k=M_k F），并实现了**真实的 online forward-backward（Algorithm 2, analysis form）**：含 Daubechies-8 正交小波 Ψ（pywt）的软阈值 prox、按 B=8 块累加的部分梯度 Σ_{k≤b} Φ_k^H(Φ_k x − y_k)、丢弃机制（只保留累计 mask/dirty 摘要与当前估计），并与 standard offline FB 基线（每步全量 visibilities）对照。因此它**真正复现**了论文"online ≈ offline 重建质量、峰值存储 η_s≈1/B"这一核心机制——但仍是 toy 等级，缺口见下方算子/数据说明。
+- 纪律强调：本文档第 6 节引用的论文数值（如 M31 SNR ≈ 14.2946 dB、Table 1 相对差 ~10⁻⁶）仍仅供对照；当前 toy 用 synthetic 圆盘 + masked-FFT，**不复现这些具体数值**（toy 的 SNR≈24.6 dB、rel.diff≈3e-3 是本 synthetic 设定下的量级，与论文 M31 的 14.29 dB / 10⁻⁶ 不可直接比较）。把本 toy 解读为"论文级 online RI 已复现"仍是错误陈述。
 
 ---
 
@@ -131,41 +131,52 @@ $x$ 为 ground-truth，$x^*$ 为重建。Table 1 用相对差（式 54）$\mathr
 ## 7. 本仓库当前复现实现
 
 - **runnerFile**：`reproduce/experiments/online_ri_toy.py`（experiment_id = `online_ri_toy`）。
+- **现在用的是真实算法/求解器**：online forward-backward（论文 Algorithm 2，analysis form）+ Daubechies-8 正交小波软阈值 prox + standard offline FB 基线。不再是 inverse-FFT dirty image。
 - **实际做了什么**：
-  1. 造 40×40 synthetic 双圆盘 ground-truth；
-  2. 取其 FFT，用随机布尔掩码（约 38% 系数，强制保留 DC）+ 小高斯噪声构成"已采样 visibilities" $y$；
-  3. offline = 对全 $y$ 做 `ifft2` 取实部并 clip 到 [0,1]（dirty image，**无正则化**）；
-  4. online = 把已采样坐标打乱后 `array_split` 成 6 块，逐块把对应 Fourier 系数写入 `online_y`，每写完一块就重算一次 `ifft2` dirty image，记录 PSNR trace 与 peak block size；
-  5. 输出四联图 `assets/repro/online_ri_storage_quality.png`（truth / offline / online final / online PSNR-vs-block）。
-- **用的 proxy**：masked-FFT 代替真实 NUFFT/degridding 算子；inverse-FFT dirty image 代替 ℓ1-regularised forward-backward MAP；"逐块注入 Fourier 系数"代替真正的 online proximal 同化；synthetic 圆盘代替 M31/Cygnus A/W28/3C288。
-- **当前 runMetrics（来自 `reproStructured.runMetrics`）**：
+  1. 造 64×64 synthetic ground-truth（3 个扩展圆盘 + 2 个点源），归一化到 [0,1]；
+  2. 测量算子 $\Phi_k=M_k F$：$F$ 用 `np.fft.fft2(norm="ortho")`（正交 FFT，$\|\Phi^H\Phi\|=1$，梯度 1-Lipschitz），$M$ 为 **variable-density** 掩码（密度 $1/(1+(r/0.06)^2)$，uv-原点附近更密，约 30% 覆盖，强制保留 DC），呼应论文 Puy et al. 采样 profile；按 30 dB 输入 SNR 加复高斯噪声得 visibilities $y$；
+  3. 稀疏基 $\Psi=$ Daubechies-8 小波（`pywt`，`periodization` 模式，level=2，$\Psi^H\Psi=\mathrm I$，Parseval 能量守恒，round-trip 误差 ~1e-15）；prox of $\mu\|\Psi^H x\|_1$ = 小波域软阈值 $\Psi\,\mathrm{soft}_{\lambda\mu}(\Psi^H z)$（论文式 38/40）；
+  4. 把采样坐标打乱后 `array_split` 成 **B=8** 块；每块预计算 dirty map $\Phi_k^H y_k$（论文 Remark 4.2）后即可丢弃原始 visibilities；
+  5. **online FB**：第 $i$ 步当 $i<B$ 时同化到达的第 $i$ 块（累加进 running mask/dirty 摘要后丢弃该块），梯度步 $v=x-\lambda\,(\Phi^H_{\le b}\Phi_{\le b}x-\sum_{k\le b}\Phi_k^H y_k)$，再 prox 步 + 非负投影；全部块到达后继续迭代到 $i_{\max}=50$（论文 Algorithm 1/2 的可选 extra iterations）；
+  6. **offline FB 基线**：每步用全量 $M$ 个 visibilities 做同样的 FB，跑 $i_{\max}=50$ 步；
+  7. 另算无正则的 dirty image 作参照，证明 FB 带来的增益；
+  8. 输出五联图 `assets/repro/online_ri_storage_quality.png`（truth / dirty / offline FB / online FB / SNR-vs-FB-step 曲线）。
+- **参数**：$\mu=0.005$（小波 L1 权重，相对 dirty-image 尺度调得；$\mu=0$ 也收敛，$\mu>0$ 给小幅 SNR 增益），$\lambda=1.0$（步长，正交 FFT 下 $L=1$），$i_{\max}=50$，$B=8$，input SNR=30 dB。
+- **指标用论文口径 SNR（式 53）**：$\mathrm{SNR}=20\log_{10}(\|x\|_2/\|x-x^*\|_2)$ dB；并报存储比 $\eta_s=\max_k M_k/M$（式 50）。
+- **当前 runMetrics（确定性，跨次运行完全一致，CPU ~0.2 s）**：
 
-| 指标 | 值 |
-|------|----|
-| offline_psnr | 12.3359 |
-| online_psnr | 12.3359 |
-| offline_snr | 2.6069 |
-| online_snr | 2.6069 |
-| peak_stored_measurements_offline | 585 |
-| peak_stored_measurements_online | 98 |
-| runtimeSeconds | 0.07 |
+| 指标 | 值 | 含义 |
+|------|----|------|
+| offline_snr_db | 24.6404 | offline FB 重建 SNR |
+| online_snr_db | 24.5580 | online FB 重建 SNR |
+| dirty_snr_db | 15.1086 | 无正则 dirty image SNR（基线下界）|
+| online_offline_rel_diff | 0.003347 | $(\mathrm{SNR}_{\mathrm{off}}-\mathrm{SNR}_{\mathrm{on}})/\mathrm{SNR}_{\mathrm{off}}$（式 54）|
+| num_blocks_B | 8 | 数据块数 |
+| total_measurements_M | 1229 | 总采样系数数 |
+| peak_stored_measurements_online | 154 | 单块最大系数数 $\max_k M_k$ |
+| storage_ratio_eta_s | 0.1253 | $\eta_s=\max_k M_k/M\approx 1/B=0.125$ |
 
-- 解读：offline==online 的 PSNR/SNR 完全相等是因为 online 末块把**全部**已采样系数都注入，最终 dirty image 与 offline 逐字节相同——这恰好把论文"online 与 offline 等价"的直觉演示出来，但 quality 本身是 dirty-image 量级（SNR 仅 2.6 dB），**不是**论文那种正则化重建质量。peak storage 585→98 演示了"峰值只需存单块"的工程要点（注：585=全掩码系数数，98=单块最大系数数）。
+- 解读：online (24.56 dB) ≈ offline (24.64 dB)，rel.diff≈3.3e-3——**真正复现**了论文"online 与 offline 重建质量等价"的结论（量级与论文 Cygnus A/W28 的 10⁻²~10⁻³ 同档）；两者都**显著优于** dirty image（15.11 dB），证明 ℓ1 正则化 FB 求解器在起作用。$\eta_s=0.1253\approx1/B$ 精确印证论文式 50 的核心存储量。SNR-vs-step 曲线显示 online 早期因块少而落后、随同化更多块逐步追平 offline——正是论文 Figure 5 的定性行为。
 - **resultFiles**：`assets/repro/online_ri_storage_quality.png`。
 
 ---
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
-清单（按缺口类型）：
+**已经做到（本轮升级闭合的缺口）**：
+- ✅ **求解器**：已实现论文 Algorithm 2（analysis online FB）——Daubechies-8 正交小波 prox（软阈值，式 38/40）、按块累加的部分梯度、$\Phi_k^H y_k$ 预计算缓存（Remark 4.2）、丢弃机制；offline FB 基线并行运行。
+- ✅ **指标**：已换成论文 SNR（式 53）+ rel.diff（式 54）+ 存储比 $\eta_s=\max_k M_k/M$（式 50），并复现了 online≈offline（rel.diff≈3e-3）与 $\eta_s\approx1/B$。
+- ✅ **算子（部分）**：on-grid 正确的 $\Phi_k=M_k F$（正交 FFT），variable-density 采样 profile。
 
-1. **数据缺口**：当前 synthetic 圆盘 → 需换成 M31 / Cygnus A / W28 / 3C288 公开射电图作 ground-truth，并用 variable-density 半 Fourier 平面 10% 采样 + 30 dB 高斯噪声生成 visibility blocks。
-2. **求解器缺口（最关键）**：当前是 inverse-FFT dirty image，**完全没有正则化重建**。需实现论文 Algorithm 2（analysis online FB）：含 $\Psi=$ Daubechies-8 的 `prox`（软阈值，式 38/40）、部分梯度 $\sum_{k=1}^b\Phi_k^\dagger(\Phi_k x-y_k)/\sigma^2$、步长 $\lambda$ 与 $\mu=10^4$、$i_{\max}=50$。
-3. **算子缺口**：masked-FFT → 至少 on-grid 正确的 $\Phi_k=M_k F$ 实现，并补上 $\Phi_k^\dagger y_k$ / $\Phi_k^\dagger\Phi_k$ 预计算缓存（论文强调的算力优化点）；paper-level 还需 NUFFT/degridding（PURIFY 风格）。
-4. **基线缺口**：需并行实现 standard offline FB（同模型、全数据、$i_{\max}=50$）作为定量对照，才能复现"online≈offline"的结论。
-5. **指标缺口**：把内部 PSNR 换成论文 SNR（式 53）；补存储比 $\eta_s=\max_k\{M_k\}/M$ 与算力比 $\eta_c\approx(B+1)/(2 i_{\max})$ 曲线（对应论文 Figure 2/5、Table 1）。
-6. **表格对照缺口**：paper-level 需复现 Table 1（$B\in\{50,100,200,300,500\}$ 的相对差量级）与 M31 SNR≈14.2946 dB；当前实现不具备产生这些数值的能力。
-7. **块到达时序缺口**：当前一次性持有全采样后再分块，并未模拟"块在不同时刻到达、用完即释放"的真实 streaming 时序与内存监控；paper-like 应显式建模 block-arrival 时间线与 peak-memory 追踪。
+**仍缺（到 paper-like / paper-level）**：
+
+1. **真实数据缺口**：当前 64×64 synthetic 多结构图 → 需换成 M31 / Cygnus A / W28 / 3C288 公开射电图作 ground-truth（256×256 / 256×512），并用 Puy et al. variable-density 在**半个 Fourier 平面**取 **10%** 系数 + 30 dB 噪声生成 visibility blocks。当前是全平面 ~30% 覆盖的 synthetic 圆盘。
+2. **算子保真缺口**：masked-FFT 是 on-grid 理想化；paper-level 真实 off-grid RI 需 NUFFT/degridding（PURIFY 风格）、baseline 坐标与权重、w-projection / non-coplanar 修正、interpolation kernel 存储（论文指出 kernel 可达 measurement 存储 16+ 倍）。当前 $\eta_s$ 只刻画 visibility 部分。
+3. **数据项尺度缺口**：当前把论文数据项的 $1/(2\sigma^2)$ 折进 $\mu$（masked-FFT 逆问题的标准重参数化），$\mu=0.005$ 而非论文 MATLAB 尺度的 $\mu=10^4$；paper-level 对齐需用论文同源数据 + 同尺度算子重定 $\mu$。
+4. **规模缺口**：当前 $B=8$、$i_{\max}=50$、64×64；论文 $B\in\{50,100,200,300,500\}$（每块约 2% 系数）、256×256+，需放大规模并扫 $B$ 复现 Figure 2/5 的 $\eta_s$、$\eta_c\approx(B+1)/(2i_{\max})$ 曲线。
+5. **表格对照缺口**：paper-level 需复现 Table 1（四图 × $B$ 的相对差量级 10⁻⁶~10⁻³）与 M31 SNR≈14.2946 dB；当前 synthetic 设定下的 24.6 dB / 3e-3 与论文具体数值不可直接比较。
+6. **算力比缺口**：当前只报存储比 $\eta_s$；可加报算力比 $\eta_c\approx(B+1)/(2i_{\max})$（论文式 51/52）作为另一核心量。
+7. **块到达时序缺口**：当前一次性采样后再分块（按 FB step 顺序逐块同化已模拟"用完即丢"），但未建模真实 streaming 的 wall-clock block-arrival 时间线与 peak-memory 实时监控；paper-like 应显式建模到达时序。
 
 ---
 
@@ -181,27 +192,29 @@ pip install -r requirements.txt
 cd reproduce && python run_all.py
 ```
 
-- 依赖：本 runner `online_ri_toy.py` 的 `require_modules` 实际只检查 `numpy`、`scikit-image`、`matplotlib`（未导入 `scipy`）；项目统一 `requirements.txt` 仍含 `scipy`，供其他实验使用。缺任一所需模块时 runner 返回 `status=skipped`（不伪造 completed），与项目纪律一致。
-- 产物：`docs/assets/repro/online_ri_storage_quality.png`，以及写回 dashboard 的 `runMetrics`。
-- 单篇调试：可在 `reproduce/experiments/online_ri_toy.py` 中调 `run()`（CPU 秒级，~0.07 s）。
+- 依赖：本 runner `online_ri_toy.py` 的 `require_modules` 现检查 `numpy`、`matplotlib`、`scikit-image`、`pywt`（PyWavelets，提供 Daubechies-8 小波 Ψ）；缺任一所需模块时 runner 返回 `status=skipped`（不伪造 completed），与项目纪律一致。
+- 产物：`docs/assets/repro/online_ri_storage_quality.png`（五联图：truth / dirty / offline FB / online FB / SNR-vs-FB-step），以及写回 dashboard 的 `runMetrics`。
+- 单篇调试：可在 `reproduce/experiments/online_ri_toy.py` 中调 `run()`（CPU 秒级，~0.2 s）。
 
-**向 paper-like 扩展的步骤大纲**（仅设计，不在本 toy 内实现）
+**向 paper-like 扩展的步骤大纲**（已实现的标 ✅，仅设计未实现的不标）
 
-1. 载入四张公开射电 ground-truth（256×256 / 256×512）。
-2. 实现 variable-density 半 Fourier 平面 10% 采样 + 30 dB 高斯噪声 → visibility blocks。
-3. 实现 analysis online FB（Algorithm 2）：Daubechies-8 `prox` + 部分梯度 + $\mu=10^4$、$i_{\max}=50$、$B\in\{50,\dots,500\}$。
-4. 实现 standard offline FB 作基线，并行运行。
-5. 计算 SNR（式 53）、存储比 $\eta_s=1/B$、算力比 $\eta_c$，复现 Figure 2/5、Table 1。
-6. 输出 SNR-vs-iteration、storage/compute 曲线，与论文对照。
+1. 载入四张公开射电 ground-truth（256×256 / 256×512）。*（仍缺，当前用 synthetic）*
+2. 实现 variable-density **半** Fourier 平面 10% 采样 + 30 dB 高斯噪声 → visibility blocks。*（当前为全平面 ~30%；噪声口径 30 dB 已对齐 ✅）*
+3. ✅ 实现 analysis online FB（Algorithm 2）：Daubechies-8 `prox` + 部分梯度 + 丢弃机制。*（参数当前 $\mu=0.005$、$i_{\max}=50$、$B=8$；paper-level 需 $\mu=10^4$ 同尺度、$B\in\{50,\dots,500\}$）*
+4. ✅ 实现 standard offline FB 作基线，并行运行。
+5. ✅ 计算 SNR（式 53）、存储比 $\eta_s=\max_k M_k/M$（式 50）。*（算力比 $\eta_c$ 与扫 $B$ 曲线、Figure 2/5、Table 1 仍缺）*
+6. 输出 SNR-vs-step 曲线 ✅；storage/compute 扫 $B$ 曲线与论文表格对照仍缺。
 
 ---
 
 ## 10. 风险与代理说明
 
-- **proxy 局限（核心）**：inverse-FFT dirty image ≠ ℓ1-regularised MAP 重建。当前 online_psnr/online_snr 只是 dirty-image 量级（SNR≈2.6 dB），**不能**外推到论文的正则化重建质量（M31 SNR≈14.29 dB）。
-- **"online==offline" 的来源**：toy 中两者数值逐字节相等，是因为末块注入全量系数后 dirty image 相同——这只能演示"信息无损同化"的直觉，**不能**当作论文 Theorem 3.2（目标函数单调收敛到等价极小值）的数值验证。
-- **算子失真**：masked-FFT 是 on-grid 理想化，未含 degridding/NUFFT、baseline 坐标与权重、interpolation kernel 存储（论文指出这部分可达 measurement 存储的 16+ 倍）。因此 toy 的 peak storage 数字不代表真实 RI 的存储画像。
-- **不可外推的结论**：toy 不支持任何关于"SKA 级存储节省 99%""算力省一半""不同 $B$ 下质量稳定"的**定量**主张；这些必须由 paper-like 实现 + 论文同源数据才能谈。
+- **求解器已是真算法（不再是 proxy）**：当前重建是真实的 ℓ1-Daubechies-8-正则化 online forward-backward MAP（Algorithm 2），不是 dirty image。online (24.56 dB) 与 offline (24.64 dB) 同档、都优于 dirty (15.11 dB)，rel.diff≈3e-3——这是对论文 Theorem 3.2"online 收敛到与 offline 等价的极小值"的**数值印证**（在本 synthetic 设定下）。注意：这印证的是机制与趋势，**不是**论文 M31 的具体 14.2946 dB 数值。
+- **仍存在的代理（核心）**：
+  - **算子代理**：masked-FFT 是 on-grid 理想化，未含 degridding/NUFFT、w-projection/non-coplanar、baseline 坐标与权重、interpolation kernel 存储（论文指出 kernel 可达 measurement 存储的 16+ 倍）。因此 toy 的 $\eta_s$ 数字只刻画 visibility 部分，不代表真实 RI 的完整存储画像。
+  - **数据代理**：64×64 synthetic 多结构图代替 M31/Cygnus A/W28/3C288 公开射电图；全平面 ~30% 覆盖代替半 Fourier 平面 10% 采样。
+  - **尺度代理**：数据项 $1/(2\sigma^2)$ 折进 $\mu$（$\mu=0.005$），与论文 MATLAB 尺度的 $\mu=10^4$ 不同口径；$B=8$、64×64 远小于论文 $B\in\{50..500\}$、256×256+。
+- **不可外推的结论**：toy 已能定性印证"online≈offline 且峰值存储 $\eta_s\approx1/B$"，但**不**支持任何关于论文 M31 具体 SNR（14.2946 dB）、Table 1 量级（10⁻⁶~10⁻³）、"SKA 级存储节省 99%"或"算力恰省一半"的**逐数值**主张；这些必须由 paper-like 实现 + 论文同源数据 + 真实 NUFFT 算子才能谈。
 - **年份口径风险**：dashboard 标 `year=2019`（刊出年），PDF 本体为 2017（arXiv v1）。引用时需说明二者各自含义，避免"PDF 年份与卡片年份不符"的误读。
 
 ---

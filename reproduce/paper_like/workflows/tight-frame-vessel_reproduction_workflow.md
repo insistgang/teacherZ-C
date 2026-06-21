@@ -26,9 +26,9 @@
 - **paper-like**：用论文同源或等价的公开数据 + 论文级算法实现（此处即真正的 tight-frame / DℂWT 变换），复现论文报告的定性结论与可比指标。
 - **paper-level**：严格复现论文全部实验设置（同数据、同基线、同参数、同表格），数值与论文一致。
 
-**本仓库当前等级**：`reproductionLevel = toy`，`reproductionTruthLevel = toy-completed`。
+**本仓库当前等级**：`reproductionLevel = partial`，`reproductionTruthLevel = partial-completed`。
 
-**纪律声明**：截至当前，本项目 15 篇论文 paper-level 复现仍为 **0/15**。本篇的 toy 复现仅在合成 2D 血管网络上演示 Λ 候选集合的有限收缩与最终二值化，**禁止**把 toy 的 Dice/IoU（见 §7）解释为论文在真实 2D/3D MRA 上的性能。本篇 toy 实现用 **Gaussian smoothing 代替了论文真正的 tight-frame / DℂWT 迭代**（见 §7、§10），这一代理决定了它最多只能说明"候选集收缩 + 局部平滑"的骨架逻辑，而非论文的方向选择性细节提取能力。
+**纪律声明**：截至当前，本项目 15 篇论文 paper-level 复现仍为 **0/15**。本篇的 partial 复现在合成 2D 血管网络上，用**真实 tight-frame 去噪**（pywt 无下采样平稳小波 SWT，本身即 tight frame，满足 perfect reconstruction）替换了原 Gaussian 代理，并按 eq.6–13 实现了梯度初始化、自适应区间 μ/μ±、三段阈值 + 线性拉伸；Λ 候选集合现可单调收缩到 ∅（有限步收敛，对应论文 Theorem 1）。**禁止**把 partial 的 Dice/IoU（见 §7）解释为论文在真实 2D/3D MRA 上的性能——论文本身**未报告 Dice**。仍存在的代理：SWT 用 Haar 无下采样小波而非论文实测的 DℂWT（缺方向选择性），数据仍为合成 2D（无 3D、无基线），因此它演示的是"候选集收缩 + 真实 tight-frame 局部去噪"的忠实骨架，而非论文 DℂWT 的方向选择性细节提取能力。
 
 ## 3. 算法完整流程
 
@@ -129,40 +129,45 @@ paper-like 复现建议至少纳入：(a) Chan-Vese active contour（成熟开�
 
 ## 7. 本仓库当前复现实现
 
-- **runner 文件**：`reproduce/experiments/tubular_tight_frame.py`（该 runner 同时产出 priority 5 framelet-tubular 与 priority 6 tight-frame-vessel 两条 toy 记录，共用同一合成实验与图像）。
-- **它实际做了什么**：
+- **runner 文件**：`reproduce/experiments/tubular_tight_frame.py`（该 runner 同时产出 priority 5 framelet-tubular 与 priority 6 tight-frame-vessel 两条 partial 记录，共用同一合成实验与图像）。
+- **它实际做了什么（已升级为真实算法）**：
   1. 用 `skimage.draw.line` + `skimage.morphology.dilation(disk(3))` 构造一个合成 2D 血管网络 mask（112×112，4 条线段血管），加 Gaussian 噪声得 `image`。
-  2. 用固定区间 `[alpha, beta]=[0.38, 0.62]` 近似论文 `[α_i, β_i]`，迭代 12 次：取 `uncertain = (current>alpha)&(current<beta)` 作为 Λ；记录 |Λ|。
-  3. **代理**：在 uncertain 区域用 `scipy.ndimage.gaussian_filter(sigma=1.0)` 代替论文真正的 tight-frame/DℂWT 软阈值去噪 (eq.14)。
-  4. 把 `>=beta` 且预测为前景的像素固定为 1，`<=alpha` 且预测为背景的固定为 0；每轮把 `alpha += 0.008`、`beta -= 0.008` 收紧区间，模拟 Λ 收缩。
-  5. 阈值 0.5 得二值预测，算 Dice / IoU；画四联图（noisy tube / truth / toy output / Lambda size 曲线）。
-- **当前 runMetrics（来自 reproStructured，非论文值）**：
+  2. **梯度初始化 (eq.6)**：用前向差分 ‖∇f‖₁ ≥ ε（ε=0.02）取初始候选集合 Λ^(0)，`|Λ^(0)| = 12416`。
+  3. **真实 tight-frame 去噪 (eq.14)**：每轮先在 Λ 上做 `pywt.swt2` 分解 → 软阈值（detail 子带，λ=0.08）→ `pywt.iswt2` 重构（Haar，level 2，`norm=True`），仅替换候选集合内像素；SWT 是无下采样平稳小波，**本身即 tight frame，满足 perfect reconstruction（已替换原 Gaussian 代理）**。SWT 要求边长为 2 的幂，故 `symmetric` pad 到 128×128 再裁回。
+  4. **自适应区间 (eq.7–10)**：在 Λ 上算 `μ/μ_-/μ_+`，取中点 mid + 带半宽 τ=0.25(μ_+−μ_-) 得 `[α_i, β_i]`（不再是固定 [0.38,0.62]）。
+  5. **三段阈值 + 线性拉伸 (eq.11–13)**：≤α→0、≥β→1、区间内 (f−m_i)/(M_i−m_i) contrast stretch；更新 Λ^(i+1)=Λ^(i)∩{0<f<1}，因此 |Λ| 单调非增，停机于 |Λ|=0。
+  6. 阈值 0.5 得二值预测，算 toy Dice/IoU、raw 基线 Dice/IoU；画四联图（noisy tube / truth / tight-frame out / Lambda size 曲线）。
+- **当前 runMetrics（来自 runner，确定性可复现，非论文值）**：
 
-| 指标 | 数值 |
-| --- | --- |
-| dice | 0.9981 |
-| iou | 0.9962 |
-| lambda_initial | 651 |
-| lambda_final | 2 |
-| iterations | 12 |
-| runtimeSeconds | 0.076 |
+| 指标 | 数值 | 含义 |
+| --- | --- | --- |
+| dice | 0.9863 | toy 内部重叠（真实算法，优于 raw 基线 0.9823） |
+| iou | 0.9729 | toy 内部重叠（优于 raw 0.9653） |
+| raw_dice | 0.9823 | 对噪声图直接 0.5 阈值的基线 |
+| raw_iou | 0.9653 | 同上 |
+| lambda_initial | 12416 | Λ^(0)（梯度初始化） |
+| lambda_final | 0 | **收敛到空集**（论文 Theorem 1 行为） |
+| iterations | 5 | 实测收敛迭代数（接近论文 Example 1/2 的 5–6 轮量级） |
+| converged_empty_lambda | 1 | 已真正达到 |Λ|=0 收敛准则 |
+| runtimeSeconds | ≈0.19 | CPU < 8s |
 
+Λ 收缩序列 `[12416, 206, 42, 8, 0]` 单调非增并收敛到 0，形态与 PDF Table I（急剧下降后数轮内到 0）一致。
 - **结果图**：`assets/repro/tubular_lambda_shrinkage.png`。
-- **诚实说明（runner 内 notes 原文）**：toy 复现，Λ 收缩与有限收敛模式在合成 2D 血管网络上演示；Dice 仅在简单合成 2D toy 上测量，**不代表真实 2D/3D MRA 论文级性能**。
+- **诚实说明（runner 内 notes 原文）**：partial 复现，用真实 tight-frame（无下采样小波）去噪替换 Gaussian，自适应区间按 eq.6–13 实现，Λ 单调收缩到 0；Dice/IoU 仍是论文未报告的 toy 内部量，仅在合成 2D 上测量，**不代表真实 2D/3D MRA 论文级性能**。
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
 清单（按缺口类别）：
 
-1. **求解器（最关键）**：当前用 Gaussian smoothing 代替 tight-frame。需实现真正的 tight-frame 前向/逆变换：分段线性 B-spline tight-frame（滤波器 eq.1）或 DℂWT（论文实测用 DℂWT，4 层），并在 Λ 上做软阈值 (eq.5) 去噪平滑 (eq.14)。这是从 toy 到 paper-like 的核心鸿沟。
-2. **区间计算**：当前用固定 `[0.38,0.62]` + 线性收紧，未实现论文的 `μ/μ_-/μ_+ → [α_i,β_i]` 自适应计算 (eq.7–10) 与 `m_i/M_i` contrast stretch (eq.11–12)。需替换为论文公式。
-3. **初始化**：当前 Λ^(0) 由固定区间隐式给出，未用梯度阈值 `‖∇f‖_1 ≥ ε` (eq.6)。需按 eq.6 实现，并暴露 ε 参数（2D 0.003 / 3D 0.06）。
+1. **求解器（已升级）**：~~当前用 Gaussian smoothing 代替 tight-frame~~ → **现已用真实 tight-frame 去噪**：pywt 无下采样平稳小波变换 SWT（Haar，level 2，`norm=True`），在 Λ 上做软阈值 (eq.5) 去噪平滑 (eq.14)，SWT 本身满足 perfect reconstruction。**仍缺**：换成论文实测的 DℂWT（4 层，具 ±15°/±45°/±75° 方向选择性）或分段线性 B-spline tight-frame（滤波器 eq.1），这是从 partial 到 paper-like 在算子忠实度上的剩余鸿沟（当前 Haar 无方向选择性）。
+2. **区间计算（已升级）**：~~当前用固定 `[0.38,0.62]` + 线性收紧~~ → **现已实现 `μ/μ_-/μ_+ → [α_i,β_i]` 自适应计算 (eq.7–10) 与 `m_i/M_i` contrast stretch (eq.11–12)**。剩余：当前 [α_i,β_i] 用 μ± 中点加固定半宽 τ=0.25(μ₊−μ₋) 的简化口径，可进一步对齐论文 eq.10 的精确端点定义。
+3. **初始化（已升级）**：~~当前 Λ^(0) 由固定区间隐式给出~~ → **现已用梯度阈值 `‖∇f‖_1 ≥ ε` (eq.6)** 取 Λ^(0)（当前 ε=0.02）。剩余：按论文设 ε（2D 0.003 / 3D 0.06）。
 4. **数据**：当前为单张 112×112 合成图。需接入真实/公开数据（DRIVE/STARE/TubeTK/IRCADb 或论文私有 MRA-CTA），并支持 2D 与 3D 体数据。
-5. **3D 支持**：论文核心贡献含 3D MRA/CTA（Example 3/4，百万级体素）。当前完全无 3D。需实现 3D DℂWT、3D 梯度、`isosurface` 可视化与内存优化（论文 3D 用 120GB RAM 节点）。
-6. **基线对照**：当前无任何 baseline。需接入 Chan-Vese active contour [16]、PDE 各向异性扩散 [23][24]、frame-based 分割 [20] 中至少一两个，复现"提取更多 tubular details"的定性结论。
-7. **指标与表格**：需复现 Table I 的逐轮 |Λ^(i)| 收缩表、迭代次数、运行时间；若用带标注公开集，再补 Dice/IoU/敏感度（论文未给，须标注为等价任务）。
-8. **参数对照**：λ_k=0.1、ε、DℂWT 层数=4 等需可配置并与论文一致。
-9. **稀疏加速**：论文指出可只在 Λ 周围计算（O(n) 但常数更小）。paper-level 还需复现这一工程优化以匹配运行时间量级。
+5. **3D 支持**：论文核心贡献含 3D MRA/CTA（Example 3/4，百万级体素）。当前完全无 3D。需实现 3D DℂWT / 3D SWT、3D 梯度、`isosurface` 可视化与内存优化（论文 3D 用 120GB RAM 节点）。
+6. **基线对照**：当前仅有 raw 0.5 阈值基线对照（用于自证真实算法优于裸阈值）。需接入 Chan-Vese active contour [16]、PDE 各向异性扩散 [23][24]、frame-based 分割 [20] 中至少一两个，复现"提取更多 tubular details"的定性结论。
+7. **指标与表格**：已记录逐轮 |Λ^(i)| 收缩序列（`[12416,206,42,8,0]`）、迭代数、收敛标志。需在论文同源/公开数据上复现 Table I 形式；若用带标注公开集，再补 Dice/IoU/敏感度（论文未给，须标注为等价任务）。
+8. **参数对照**：当前 λ=0.08（SWT 软阈值）、ε=0.02、Haar level 2。需对齐论文 λ_k=0.1、ε（2D 0.003 / 3D 0.06）、DℂWT 层数=4。
+9. **稀疏加速**：论文指出可只在 Λ 周围计算（O(n) 但常数更小）。当前每轮对整图做 SWT 后仅在 Λ 上替换（功能正确但未用 sparse 加速）。paper-level 还需复现这一工程优化以匹配运行时间量级。
 
 ## 9. 运行步骤
 
@@ -189,11 +194,11 @@ cd reproduce && python run_all.py
 
 ## 10. 风险与代理说明
 
-- **Gaussian smoothing ≠ tight-frame**：当前 toy 用各向同性高斯平滑代替论文的 tight-frame / DℂWT 软阈值。高斯平滑无方向选择性、无 perfect reconstruction、无 1-norm 稀疏正则语义，因此**无法复现论文"方向选择性提取更多细血管/分叉细节"的核心优势**。toy 的高 Dice 来自合成图过于简单（清晰直线血管 + 适中噪声），不可外推。
-- **固定区间 ≠ 自适应区间**：固定 `[0.38,0.62]` + 线性收紧只是模拟 Λ 收缩的"现象"，未实现论文 `μ/μ_±` 自适应逼近边界值域，故对真实低对比、强度不均的 MRA 不具代表性。
+- **SWT(Haar) ≈ tight-frame 但 ≠ 论文 DℂWT**：当前 partial 用**真实 tight frame**（pywt 无下采样平稳小波，具 perfect reconstruction、redundant 表示、软阈值 1-norm 稀疏去噪语义），已**替换原各向同性 Gaussian 代理**；但用的是 Haar，缺论文 DℂWT 的方向选择性，因此仍**无法复现论文"方向选择性提取更多细血管/分叉细节"的核心优势**。partial 的高 Dice 来自合成图相对简单（清晰直线血管 + 适中噪声），不可外推。
+- **自适应区间已实现（简化版）**：现已按 eq.7–10 用 `μ/μ_±` 自适应取 `[α_i,β_i]`（不再是固定 `[0.38,0.62]`），Λ 收缩序列 `[12416,206,42,8,0]` 单调非增并到 0；但当前用 μ± 中点 + 固定半宽的简化端点，尚未逐字对齐论文 eq.10，对真实低对比、强度不均 MRA 的代表性仍待真实数据验证。
 - **2D 合成 ≠ 真实 2D/3D MRA**：合成血管无真实 MRA 的 speckle 噪声、partial occlusion、intensity inhomogeneity、血管交叉/分叉复杂拓扑；3D 完全缺失。
-- **指标不可外推**：toy Dice 0.9981 / IoU 0.9962 仅描述合成 toy；论文本身**未报告 Dice**。不得将该数字呈现为论文性能或 paper-level 复现。
-- **有限收敛的可信部分**：Λ 单调收缩、有限步到二值这一**定性现象**与论文 Theorem 1 一致，是 toy 中相对可信的部分；但"几次迭代收敛 / O(n) 复杂度"的论文级量化仍依赖真实 tight-frame 实现与真实数据，当前未验证。
+- **指标不可外推**：partial Dice 0.9863 / IoU 0.9729 仅描述合成 toy（虽优于 raw 基线 0.9823/0.9653，证明真实算法有效）；论文本身**未报告 Dice**。不得将该数字呈现为论文性能或 paper-level 复现。
+- **有限收敛现已演示**：Λ 单调收缩、有限步到二值这一**定性现象**与论文 Theorem 1 一致；升级后 Λ 已**真正收敛到 0**（lambda_final=0、converged_empty_lambda=1，5 轮），且是在真实 tight-frame 算子下演示，比原 toy（停在 2、靠硬阈值出二值）更忠实。但"几次迭代收敛 / O(n) 复杂度"的论文级量化（同数据、同 DℂWT、同参数）仍依赖真实数据，当前未对齐。
 
 ## 11. 参考：精读笔记
 

@@ -31,7 +31,7 @@
 | **paper-level** | 与论文逐表逐图对齐、数值落在论文报告区间，可被独立验证 | **未达；全仓库 paper-level 仍为 0/15** |
 
 - 本篇 `reproductionLevel = partial`，`reproductionTruthLevel = partial-completed`（实验确实运行完成并产出图与指标，但用了 proxy）。
-- **纪律重申**：当前 toy/partial 结果（如 `accuracy_gain = 0.0053`）只能说明"RGB+Lab lifting 在合成退化图上可带来小幅、定性可见的稳健性提升"，**不能**外推为论文 Table I 的 99.21% 平均准确率，也**不能**声称已复现论文级性能。paper-level 复现在全仓库 15 篇中仍为 **0/15**。
+- **纪律重申**：当前 partial 结果（升级后 `accuracy_gain = 0.1533`，RGB-only 0.5418 → RGB+Lab 0.6951）只能说明"真实 CIELab lifting 在合成退化图上带来清晰、定性可见的稳健性提升"，**不能**外推为论文 Table I 的 99.21% 平均准确率，也**不能**声称已复现论文级性能。paper-level 复现在全仓库 15 篇中仍为 **0/15**。
 
 ---
 
@@ -152,23 +152,26 @@ $$
 ## 7. 本仓库当前复现实现
 
 - **runner 文件**：`reproduce/experiments/slat_color.py`
-- **实际做了什么**（partial）：
-  1. 用 numpy 程序化生成一张 96×96 的 4-region 合成彩色图（`truth` 标签 + 4 种 RGB 颜色），加高斯噪声 (σ=0.15) 并对一块区域做亮度衰减，模拟 degraded color image（含噪声 + 局部信息退化）。
-  2. **Stage 1 proxy**：用 `scipy.ndimage.gaussian_filter`（σ=1.1）逐通道平滑——这是对论文式 (4) 严格凸 Mumford-Shah / TV 求解的 **proxy**，不是 primal-dual / split-Bregman。
-  3. **Stage 2 proxy**：构造 **Lab-like** 特征——luminance = 0.2126R+0.7152G+0.0722B，rg = R−G，yb = 0.5(R+G)−B——拼成 RGB+Lab-like 六维特征。这是 toy luminance/chroma transform，**不是严格 CIE Lab（`srgb2lab`）颜色科学复现**。
-  4. **Stage 3**：用 `common.simple_kmeans` 在 3 维 (RGB-only) 与 6 维 (RGB+Lab-like) 特征上分别 K-means（K=4），用 `clustering_accuracy` 算像素准确率。
-  5. 产图对比 degraded / truth / RGB-only / RGB+Lab。
-- **当前 runMetrics**（来自 `reproStructured.runMetrics`）：
+- **依赖**：`numpy`, `matplotlib`, `scipy`, **`skimage`（scikit-image，用于真实 CIELab 变换）**。缺任一时 runner 走 `skipped`，不伪造 completed。
+- **实际做了什么**（partial，已升级为真实 CIELab + 强退化基准）：
+  1. **合成场景（贴近论文 motivating case）**：numpy 程序化生成 100×100 的 4-quadrant 合成彩色图，四个区域的 RGB 三元组**高度相关**（base=0.55，沿 red/green/blue 色相微扰 eps=0.012），即四区在 RGB 空间几乎不可分——这正是论文 Fig. 1 / Fig. 2"RGB 通道高度相关导致单一颜色空间分割失败"的设定。带逐像素 ground-truth。
+  2. **强退化基准（贴近论文 degraded color 设定）**：依次施加 **高斯模糊**（`gaussian_filter` σ=1.0，作 vertical/isotropic blur 代理）+ **加性高斯噪声**（σ=0.08）+ **60% 随机信息丢失**（`loss_mask`，即 known-pixel 子集对应论文 $\omega_i$ 支撑）。丢失像素用 known-pixel 加权高斯平均（normalized-convolution inpainting）填补，作为 Stage-1 TV/H¹ 外推到缺失像素的代理。
+  3. **Stage 1 proxy**：用 `scipy.ndimage.gaussian_filter`（σ=1.1）逐通道平滑——仍是对论文式 (4) 严格凸 Mumford-Shah / TV 求解的 **proxy**（无 TV 保边、无 $\mathcal{A}$ 反卷积、无泊松分支）。
+  4. **Stage 2（真实 CIELab，已去代理）**：用 **`skimage.color.rgb2lab` 做真实 sRGB→CIELab 变换**（取代旧版 luminance/rg/yb 的 "Lab-like" 代理），再按 **CIELab 名义范围**（L∈[0,100]、a,b∈[−128,127]）把每个 Lab 通道 rescale 到 [0,1]（数据无关、确定性，避免逐图 min-max 放大噪声），与 RGB 拼成 6 维向量值图像 $\bar g^*$（论文 Sec. III-B）。
+  5. **Stage 3**：用 `common.simple_kmeans` 在 3 维 (RGB-only) 与 6 维 (RGB+真实 Lab) 特征上分别 K-means（K=4），用 `clustering_accuracy`（匈牙利匹配像素准确率）评分。
+  6. 产图对比 degraded / truth / RGB-only / RGB+Lab。
+- **当前 runMetrics**（runner 实测，确定性可复现）：
 
   | 指标 | 值 |
   |------|----|
-  | `rgb_only_accuracy` | 0.7092 |
-  | `rgb_lab_accuracy` | 0.7145 |
-  | `accuracy_gain` | 0.0053 |
-  | `runtime_seconds` | 0.1102 |
+  | `rgb_only_accuracy` | 0.5418 |
+  | `rgb_lab_accuracy` | 0.6951 |
+  | `accuracy_gain` | **0.1533** |
+  | `runtime_seconds` | ~0.3（< 8 秒目标内）|
 
+- **关键改进**：因 RGB 通道高度相关 + 强退化，RGB-only K-means 准确率仅 **0.5418**（接近随机崩溃），而真实 CIELab lifting 把感知色差展开为可分距离，RGB+Lab 升到 **0.6951**，带来 **+0.1533** 清晰且可复现的增益（旧 toy 仅 0.0053）。这定性复现了论文"Lifting 在 RGB 高相关/退化下显著优于单一颜色空间"的核心结论。
 - **当前 resultFiles**：`assets/repro/slat_rgb_vs_rgblab.png`
-- **runner 自带说明 (notes)**：当前 toy 仅显示小幅 metric gain，需要更好的合成彩色样例来凸显 Lab lifting 的价值。
+- **runner 自带 `fidelityWarning`**：Stage 1 仍为 Gaussian 代理（无 TV 保边 / 无 $\mathcal{A}$ / 无泊松分支）；信息丢失用 normalized-convolution 填补而非论文 TV/H¹ 外推；Lab 用固定名义范围 rescale（非逐图 min-max）；单张合成图，无真实图数据集，无 [31]/[39]/[44] 外部基线，无 Table I/II 量级对齐——**非 paper-level**。
 
 ---
 
@@ -176,14 +179,16 @@ $$
 
 | 缺口类别 | 当前 (partial) | paper-like / paper-level 需补 |
 |----------|----------------|-------------------------------|
-| **Stage 1 求解器** | Gaussian filter proxy | 实现式 (4) 的凸 Mumford-Shah/TV 求解：primal-dual (Chambolle-Pock) 与 split-Bregman；含 $\mathcal{A}$ 模糊算子与泊松 $\Phi$ 分支 |
-| **退化建模** | 仅高斯噪声 + 局部亮度衰减 | 完整三类退化：高斯/泊松噪声、随机 60% information loss（含 $\omega_i$ 掩膜）、10-px vertical motion-blur |
-| **颜色空间 (Stage 2)** | Lab-like toy transform | 严格 sRGB→CIE Lab（`makecform('srgb2lab')` 等价实现）+ rescale 到 [0,1] |
-| **数据集** | 单张 96×96 合成图 | 论文 6-phase (100×100) + 4-quadrant (256×256) 合成图（带 GT）+ 7 张真实图 |
+| **Stage 1 求解器** | Gaussian filter proxy（仍是代理） | 实现式 (4) 的凸 Mumford-Shah/TV 求解：primal-dual (Chambolle-Pock) 与 split-Bregman；含 $\mathcal{A}$ 模糊算子与泊松 $\Phi$ 分支；停止准则 ‖g^{(k)}−g^{(k+1)}‖₂/‖g^{(k+1)}‖₂<10⁻⁴ 或 200 迭代 |
+| **退化建模** | **已加强**：高斯模糊 + 高斯噪声 + 60% 随机信息丢失（$\omega_i$ 掩膜 + normalized-convolution 填补） | 仍缺：泊松噪声分支、严格 10-px vertical motion-blur 卷积核（当前用各向同性高斯 blur 代理）、把信息丢失外推交给真正的 Stage-1 TV/H¹ 求解而非独立 inpainting |
+| **颜色空间 (Stage 2)** | **已升级为真实 CIELab**：`skimage.color.rgb2lab` 做 sRGB→CIELab，按名义范围 rescale 到 [0,1] | 与论文 `makecform('srgb2lab')` 已等价；仅 rescale 策略差异（固定名义范围 vs 论文逐通道 [0,1]）——影响极小，可视作已对齐 |
+| **数据集** | 单张 100×100 合成 4-quadrant 图（带 GT） | 论文 6-phase (100×100) + 4-quadrant (256×256) 合成图（带 GT）+ 7 张真实图 |
 | **类别数 $K$** | 固定 K=4 | 复现"改 $K$ 不重算 Stage 1/2"的工程特性；6-phase 用 $K=6$ |
 | **基线对照** | 仅 RGB-only vs RGB+Lab 内部消融 | 实现/引入 [31] Li、[39] Pock、[44] Storath 三方法 |
-| **指标与表格** | 单一 pixel accuracy | 复现 Table I（三退化 × 4 方法准确率）与 Table II（迭代数 + CPU time），并对齐量级 |
+| **指标与表格** | 单一 pixel accuracy（rgb_only 0.5418 / rgb_lab 0.6951 / gain 0.1533） | 复现 Table I（三退化 × 4 方法准确率）与 Table II（迭代数 + CPU time），并对齐量级 |
 | **元信息核实** | 笔记标"IEEE TIP（相关）" | **事实性待修**：本文正式发表于 *Journal of Scientific Computing*（2017），arXiv 版未标期刊；笔记"IEEE TIP" 应改为"待核实/JSC"以免误导 |
+
+> 升级后到 paper-level 的**剩余关键步骤**（按优先级）：(1) 实现 Stage 1 真正的凸 Mumford-Shah/TV primal-dual + split-Bregman 求解器（含 $\mathcal{A}$ 反卷积、$\omega_i$ 掩膜进数据项、泊松 $\Phi$ 分支），取代当前 Gaussian 代理；(2) 用严格 10-px vertical motion-blur 核 + 泊松噪声补全退化类型；(3) 扩到论文 6-phase + 4-quadrant + 7 张真实图，跑 $K\in\{6,4\}$；(4) 引入 [31]/[39]/[44] 三个外部基线；(5) 复现 Table I/II 的准确率与 CPU time 量级并逐项比对。在 (1)(3)(4)(5) 完成前，本篇维持 partial，全仓库 paper-level 仍为 0/15。
 
 ---
 
@@ -214,10 +219,12 @@ cd reproduce && python run_all.py
 
 ## 10. 风险与代理说明
 
-- **Stage 1 proxy 的局限**：Gaussian filter 是各向同性线性平滑，**会模糊边缘**；论文式 (4) 的 TV 项专门 **保边 (edge-preserving)**。因此本仓库平滑结果在边界稳健性上**弱于**论文，不能据此评判 SLaT 真实分割质量。
-- **Lab-like proxy 的局限**：toy luminance/chroma 变换**不是感知均匀 (perceptually uniform) 的 CIE Lab**，"颜色差异 ∝ 感知差异"这一 Lab 关键性质并不严格成立。因此本仓库 `accuracy_gain=0.0053` 这一**小幅**提升，**不能**外推为论文中 Lifting 带来的显著增益（论文 Fig. 1(b)vs(c) 与 Table I 中 RGB-only 在信息丢失/模糊下大幅落后）。
-- **退化覆盖不全**：当前只模拟噪声 + 局部退化，**未覆盖** 60% information loss 与 motion-blur 这两种 SLaT 最能体现优势的难退化；论文优势主要来自这两种情形，故 toy 难以展现 SLaT 的真正价值。
-- **不可外推的结论**：本仓库**任何数值都不得**被表述为"复现了论文 Table I/II"或"达到论文级性能"。paper-level 在全仓库 15 篇中仍为 0/15。
+- **Stage 1 proxy 的局限（仍存在）**：Gaussian filter 是各向同性线性平滑，**会模糊边缘**，且不含 $\mathcal{A}$ 反卷积与泊松数据项；论文式 (4) 的 TV 项专门 **保边 (edge-preserving)**。因此本仓库平滑结果在边界稳健性上**弱于**论文，不能据此评判 SLaT 真实分割质量。这是当前**最主要的剩余代理**。
+- **信息丢失填补为代理（仍存在）**：60% 丢失像素由 known-pixel 加权高斯平均（normalized-convolution inpainting）填补，是对论文 Stage-1 TV/H¹ 把缺失像素当 $\omega_i=0$ 外推的**近似**，不是同一求解过程。
+- **Lab rescale 策略差异（轻微）**：Stage 2 颜色变换本身已是**真实 CIELab**（`skimage.color.rgb2lab`，等价论文 `srgb2lab`，**不再是 Lab-like 代理**）；唯一与论文的差异是把每个 Lab 通道按**固定名义范围**（L/100、(a+128)/255、(b+128)/255）rescale 到 [0,1]，而非论文的逐图 min-max——这一选择是确定性的、避免噪声放大，对结论影响极小。
+- **退化覆盖（已显著改善，但未全）**：当前已覆盖 **高斯模糊 + 高斯噪声 + 60% information loss** 三类退化（含 $\omega_i$ 已知像素掩膜），这是 SLaT 最能体现优势的设定；**仍缺** 泊松噪声与严格 10-px vertical motion-blur 核（当前 blur 为各向同性高斯代理）。
+- **结果解读（升级后）**：当前 `accuracy_gain=0.1533`（RGB-only 0.5418 → RGB+Lab 0.6951）在合成退化图上**清晰且可复现地**展示了"真实 CIELab lifting 显著优于单一 RGB 颜色空间"这一论文核心结论；但其**绝对数值仍是合成图上的内部消融**，**不得**被表述为"复现了论文 Table I/II"或"达到论文级性能"。
+- **不可外推的结论**：本仓库**任何数值都不得**被外推为论文级 Table I/II（如 Average 99.21%）。paper-level 在全仓库 15 篇中仍为 0/15。
 
 ---
 

@@ -28,10 +28,10 @@
 
 | 维度 | 当前状态 |
 | --- | --- |
-| 本仓库复现等级 reproductionLevel | **toy-to-partial** |
+| 本仓库复现等级 reproductionLevel | **partial** |
 | 真实性等级 reproductionTruthLevel | **partial-completed** |
 
-**纪律声明**：截至本文档，15 篇论文 paper-level 复现仍为 **0/15**。本篇当前为 toy-to-partial。
+**纪律声明**：截至本文档，15 篇论文 paper-level 复现仍为 **0/15**。本篇当前为 partial：headline `rof_threshold_dice` 已由真实凸 ROF（Chambolle-Pock）阈值化产出，Gaussian smoothing 仅作对照 baseline。
 
 特别提醒（针对本篇的核心诚实边界）：本论文的核心贡献是**定理**（Theorem 3.4 / 3.6 / 3.7 与收敛性 Theorem 4.6），不是某个可被"跑分超过"的数据集。代码只能在合成图上**演示** ROF minimizer 阈值化的现象、并对 Theorem 3.6 的 K=2 结论做一个 proxy 检查；**它不构成、也不能替代定理证明**。任何"代码复现了 Theorem 3.6"的表述都是错误的，本仓库当前的 `pcms_like_energy`、`rof_threshold_dice` 等数值只能解读为合成 toy 现象，绝不能与论文 Table 中的 SA/DICE 直接等同。
 
@@ -153,20 +153,21 @@
   - 提供两个**真实凸 ROF 求解器**：`rof_chambolle_pock`（Chambolle-Pock 对偶投影，目标 TV(u)+(μ/2)‖u-f‖²）与 `rof_split_bregman`（交叉验证）。
   - `run_trof_thresholds` 实现 Eq. 4.1 的阈值更新（用 raw image 的 meanf 取均值、相邻均值中点更新阈值），并记录 drift、Lemma 3.2 单调性、Lemma 4.5 符号变号数等诊断量。
   - `run_k2_proposition_demo` 做 **Theorem 3.6 的 K=2 proxy 检查**：在合成两相图上求 ROF 解 u*，按 (m₀+m₁)/2 阈值化得 Σ̃，对比 ROF-threshold 与"直接对原图阈值"的 Dice，并按 λ=μ/(2(m₁-m₀)) 计算派生 λ。
-- **本篇（pcms-rof-linkage）当前 runMetrics**（来自 reproStructured，对应合成两相图的 toy 演示）：
+- **本篇（pcms-rof-linkage）当前 runMetrics**（来自 runner 实测，合成两相图，确定性可复现）：
   - `direct_dice` = **0.8989**（对噪声原图直接阈值的 Dice）；
-  - `rof_threshold_dice` = **0.9962**（"先平滑/恢复后阈值"的 Dice，明显高于 direct）；
-  - `pcms_like_energy` = **204**（仅各向异性 perimeter/TV 形式的能量代理：`Σ|∂x sat2| + Σ|∂y sat2|`，**不含数据保真项**）。
-  - `runtimeSeconds` ≈ **0.7057**，CPU 约 1 秒内。
+  - `gaussian_baseline_dice` = **0.9962**（Gaussian smoothing + 阈值的 Dice，仅作**对照 baseline**）；
+  - `rof_threshold_dice` = **0.9983**（**真实 Chambolle-Pock ROF** 解阈值化的 Dice，是本篇 headline，高于 Gaussian 对照与 direct）；
+  - `pcms_like_energy` = **205**（仅各向异性 perimeter/TV 形式的能量代理：`Σ|∂x sat2| + Σ|∂y sat2|`，**不含数据保真项**；此处 `sat2` 现为真实 ROF 阈值结果）。
+  - `runtimeSeconds` ≈ **0.77**，CPU 约 1 秒内。
 - **当前 resultFiles**：`assets/repro/sat_demo.png`（本篇绑定图；同 runner 另产出 `trof_thresholds.png`、`iterated_rof_convergence.png`、`iterated_rof_chanvese.png` 服务 priority 3）。
-- **fidelity 警示（runner 内置）**：`"Uses proxy smoothing; does not solve the exact ROF model."` 与 `"This synthetic toy demonstrates thresholding after proxy smoothing, but does not solve the exact ROF model or prove Theorem 3.6."`
+- **fidelity 警示（runner `extra` 内置）**：`"Real ROF on a synthetic toy two-phase image; pcms_like_energy is an anisotropic perimeter/TV proxy without the data-fidelity term and is not a paper-reported number. Code cannot substitute for the Theorem 3.4/3.6/3.7 proofs."`
 
-诚实说明：本篇在 dashboard 上挂在 priority 2 的 `direct_dice / rof_threshold_dice / pcms_like_energy` 三项，其中"恢复"路径在 runner 主图里部分用了 `gaussian_filter` 代理（`sat2 = smooth2 > 0.48`），因此本篇标的是 **toy-to-partial**；而 `run_k2_proposition_demo` 已用真实 Chambolle-Pock ROF 做 Theorem 3.6 的现象级检查。两者都**不是**论文级复现。
+诚实说明：本篇在 dashboard 上挂在 priority 2 的 `direct_dice / gaussian_baseline_dice / rof_threshold_dice / pcms_like_energy` 四项。headline `rof_threshold_dice` 现由 runner 主路径的**真实 Chambolle-Pock ROF**（`rof2 = rof_chambolle_pock(image2,...)`，`sat2 = rof2 > 0.48`）产出，Gaussian smoothing 已降级为对照（`gaussian_baseline_dice`）；`run_k2_proposition_demo` 也用真实 ROF 做 Theorem 3.6 的现象级检查。因此本篇升级为 **partial**。但它仍是合成图现象演示，**不是**论文级复现，更**不证明**任何定理。
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
 到 **paper-like** 还缺：
-1. **求解器**：论文用 ADMM 解 ROF（本仓库用 Chambolle-Pock / Split-Bregman 代理；数值现象一致但非同一实现），且本篇 dashboard 主指标路径仍含 Gaussian proxy，需统一切换到真实 ROF 主路径。
+1. **求解器（已部分完成）**：本篇 dashboard headline 路径已统一切换到真实 ROF（Chambolle-Pock），Gaussian 仅作对照。**仍缺**：论文用 **ADMM**（inner param 2）解 ROF，本仓库用 Chambolle-Pock / Split-Bregman，数值现象一致但非同一实现，需对齐求解器与参数。
 2. **完整 Algorithm 1**：缺准则 (4.2)/(4.5) 的完整清理算子 C(·)（去零测度相 + 忽略不必要分割）、缺 FCM(100 迭代) 初始化（论文用 fuzzy C-means 给初始阈值）。
 3. **数据**：缺论文 7 类示例的严格复刻（missing/close-intensity/Gaussian/MRI/stripe/multiphase/retina）。retina 需接入 **DRIVE** 公开集并按论文方式改三相。
 4. **基线**：缺 Li[32]/Pock[35]/Yuan[39]/He[30]/Cai[15] 五个对照的可运行实现。
@@ -189,7 +190,7 @@ cd reproduce && python run_all.py # 运行全部复现实验，产出 assets/rep
 依赖缺失时，runner 会写入 `skipped` 而非伪造 `completed`（符合项目纪律）。本篇属于 `sat_rof_trof` 实验，与 priority 1/3 共用一次运行。
 
 **向 paper-like 扩展的步骤大纲**（设计指引，当前不执行）：
-1. 把 dashboard 主指标路径从 Gaussian proxy 全量切到真实 ADMM/Chambolle-Pock ROF。
+1. （已完成）dashboard headline 路径已从 Gaussian proxy 切到真实 Chambolle-Pock ROF；**下一步**对齐论文的 ADMM(inner param 2) 实现。
 2. 实现完整 Algorithm 1：FCM 初始化 + 阈值循环 + 清理算子 C(·)（准则 4.2/4.5）+ 收敛判据。
 3. 接入 DRIVE retina（三相改造）与公开 brain MRI 等价数据，严格复刻 7 类合成图生成方式。
 4. 实现/接入五个 baseline，按 Eq. 5.2 SA 与逐相 DICE 对齐 Table 5.1-5.4。
@@ -197,9 +198,9 @@ cd reproduce && python run_all.py # 运行全部复现实验，产出 assets/rep
 
 ## 10. 风险与代理说明
 
-- **proxy 局限**：runner 主图用 `scipy.ndimage.gaussian_filter` 作"恢复"代理，Gaussian smoothing **不是** ROF/TV 求解——它没有 TV 的边缘保持与 staircasing 特性，无法承载 Theorem 3.6 的精确结论；`run_k2_proposition_demo` 虽用真实 Chambolle-Pock，但仍是合成图上的**现象级**检查。
+- **真实 ROF 已上 headline，但仍是合成现象**：runner headline 路径（`rof2 = rof_chambolle_pock(image2,...)`，`sat2 = rof2 > 0.48`）现用**真实凸 ROF**，已不再用 Gaussian 代理；Gaussian smoothing（`gaussian_baseline_dice`）仅保留为对照，它**不是** ROF/TV 求解（无 TV 边缘保持与 staircasing），不能承载 Theorem 3.6 的精确结论。`run_k2_proposition_demo` 同样用真实 Chambolle-Pock，但仍是合成图上的**现象级**检查。
 - **不能外推的结论**：
-  1. 不能因 toy 上 `rof_threshold_dice=0.9962` 就声称"复现了 retina 的 0.9962"——两者数值巧合无意义，前者是合成两相 toy，后者是 Table 5.4 retina 背景相 DICE。
+  1. 不能因 toy 上 `rof_threshold_dice=0.9983` 就声称"复现了 retina"——两者数值无对应，前者是合成两相 toy 的真实-ROF 阈值 Dice，后者是 Table 5.4 retina 逐相 DICE。
   2. 不能声称"代码证明了 Theorem 3.4/3.6/3.7"——定理是数学证明，代码只能给一致性佐证。
   3. K>2 的等价性在论文中本就有 ∂Σ_i∩∂Σ_{i+1}=∅ 的前提，toy 演示更不足以支撑多相等价结论。
   4. `pcms_like_energy=204` 仅是各向异性 perimeter/TV（`Σ|∂x sat2|+Σ|∂y sat2|`）的**代理量、不含数据保真项**，非论文任何报告数值，不可与论文能量横向比较。

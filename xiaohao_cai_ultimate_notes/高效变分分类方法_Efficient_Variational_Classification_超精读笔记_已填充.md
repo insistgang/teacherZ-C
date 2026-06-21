@@ -238,7 +238,7 @@ CVM [1]、GL [7]、MBO [7]、TVRF [2]（作者提供代码、主要对照）、L
 
 **一类分类扩展（PDF Section 5.6, Table 8）**：把"目标类 vs outliers"当二类问题，测 2:1 与 1:1 比例。Three Moon 99.58/99.62、COIL 91.30/94.42、MNIST 99.80/99.81、Opt-Digits 99.97/99.97，展示对极端不平衡的鲁棒性（注意此处不与 TVRF 比，因 TVRF 在不平衡下表现差且不稳定）。
 
-> **诚实标注**：以上数值仅供"论文报告值"参照，本仓库当前 toy 复现**未**产生这些数值，禁止把 toy 结果与之类比（详见 ## 复现判断）。
+> **诚实标注**：以上数值仅供"论文报告值"参照，本仓库当前 partial 复现（Three-Moon R² 3 类，真实 graph-TV primal-dual）**未**产生这些 benchmark 数值，禁止把本仓库的 `tv_accuracy=0.9957` 与之类比（详见 ## 复现判断）。
 
 ### 复杂度分析
 
@@ -449,32 +449,37 @@ def solve_primal_dual(u_j, L, alpha, beta, u_init):
 
 ## 复现判断
 
-本项目对本篇采用诚实分级：**当前等级 = partial（partial-completed）**；本项目 **paper-level 复现仍为 0/15**，禁止把 toy/proxy 结果夸大为论文级。
+本项目对本篇采用诚实分级：**当前等级 = partial（partial-completed）**；本项目 **paper-level 复现仍为 0/15**，禁止把 partial 结果夸大为论文级。
 
-| 维度 | 当前仓库实现 | 论文要求（paper-level） |
+> **2026-06 升级**：runner 已从"centroid 初始化 + Laplacian 标签传播代理"升级为**真实算法**——Eq.15 的 graph total variation（ℓ₁）凸模型 + Chambolle-Pock primal-dual（box 投影 + CG 解正定线性系统）+ Algorithm 1 的 β 翻倍外层精炼，配 RBF 加权 kNN 图 + SVM warm init + 论文式 Three-Moon（3 类）。下表 ✓=已落地 / △=部分 / ✗=仍缺。
+
+| 维度 | 当前仓库实现（升级后） | 论文要求（paper-level） |
 |------|--------------|---------------------------|
 | runner | `reproduce/experiments/graph_classification.py`（与第 9 篇共用） | 独立 primal-dual 求解器 |
-| 数据 | toy **two-moons**（360 点, $\mathbb{R}^2$，加噪 0.18） | Three Moon($\mathbb{R}^{100}$)/COIL/Opt-Digits/MNIST 四套 |
-| 权重图 | $k=13$ 的 **0/1 邻接**（cKDTree） | RBF / ZMP 加权（按数据切换） |
-| 初始化 | **类质心最近邻** | linear SVM（或随机） |
-| smoothing | 邻居平均阻尼 `0.72·probs+0.28·avg`（纯 $\ell_2$ 扩散**代理**） | 完整 Eq.15（含 $\ell_1$ graph TV）+ Eq.34 分解 |
-| 求解器 | 无（迭代平均） | Chambolle-Pock primal-dual（Eqs.20–22, 39, 42 + CG） |
-| 外层精炼 | 单层 18 次平均 | Algorithm 1：projection→新 init→$\beta=2\beta$→停在 $\|U^{(l)}-U^{(l+1)}\|=0$ |
-| 基线 | 无 | CVM/GL/MBO/TVRF/LapRF/LapRLS/MP/SQ-Loss-I/k-NN/SGT |
+| 数据 | △ 论文式 **Three-Moon**（**750 点, $\mathbb{R}^2$**, 3 类, 加噪 0.14） | Three Moon($\mathbb{R}^{100}$)/COIL/Opt-Digits/MNIST 四套 |
+| 权重图 | ✓ $k=10$ **RBF 加权**（$\xi=0.5\cdot\mathrm{median}(d^2)$ self-tuning） | RBF / ZMP 加权（按数据切换） |
+| 初始化 | ✓ **linear SVM**（`LinearSVC`） | linear SVM（或随机） |
+| smoothing | ✓ **完整 Eq.15**（fidelity + $(\alpha/2)u^\top Lu$ + $\|\nabla u\|_1$ **graph TV**） | 完整 Eq.15 + Eq.34 训练/测试块分解 |
+| 求解器 | ✓ **Chambolle-Pock primal-dual**（Eqs.20–22, box 投影 39/40, CG 解 Eq.42） | 同 + 自适应 $\theta,\tau,\sigma$（Lemma 2）+ 收敛监控 |
+| 外层精炼 | ✓ **Algorithm 1**：projection→新 init→$\beta=2\beta$→停在标签不变 | 同 + 平均迭代对照 Table 7 |
+| 基线 | △ raw K-means / graph-Laplacian(ℓ₂) / graph-TV(ℓ₁) **内部对照** | CVM/GL/MBO/TVRF/LapRF/LapRLS/MP/SQ-Loss-I/k-NN/SGT |
 
-**当前 runMetrics（toy two-moons，来自 dashboard reproStructured）**：
+**当前 runMetrics（Three-Moon R² 3 类，runner 实际返回）**：
 
 | 指标 | 数值 |
 |------|------|
-| initial_accuracy | 0.8 |
-| smoothed_accuracy | 0.8139 |
-| accuracy_gain | 0.0139 |
-| iterations | 18 |
-| runtime_seconds | 0.0904 |
+| kmeans_accuracy | 0.817 |
+| initial_accuracy | 0.895 |
+| laplacian_accuracy | 0.922 |
+| tv_accuracy | **0.9957** |
+| tv_gain_over_laplacian | 0.0738 |
+| tv_gain_over_init | 0.1007 |
+| outer_iterations | 2 |
+| runtime_seconds | ≈0.45 |
 
 产物图：`assets/repro/graph_classification_before_after.png`。
 
-**结论**：当前实现仅演示"K 个标签函数独立更新 + argmax projection + 重复迭代精炼"这一机制方向。它**缺** $\ell_1$ graph TV、primal-dual 求解器、加权图、SVM 初始化、$\beta$ 翻倍外层与论文 benchmark；因此 toy 的 0.8→0.8139 增益**不可**外推到论文 Table 2/4/5/6（99% 量级）或 Table 7 计时。要升到 paper-like，最小步是先复现 Three Moon 合成 + Eq.15 的真正 primal-dual + Algorithm 1 外层，再对齐趋势。
+**结论**：当前实现已是**真实的 graph-TV（ℓ₁）primal-dual** 算法，实测含 $\ell_1$ graph TV 的方法（tv=0.9957）确实优于仅 $\ell_2$ 的 graph-Laplacian（lap=0.922）与 raw（kmeans=0.817），验证了论文"ℓ₁ 把相似点聚成段"的核心论点方向。但仍是单一合成数据集、保留在 **R²（非 R¹⁰⁰）**、规模缩小（N=750）、**串行而非并行**、**无 CVM/GL/MBO/TVRF 论文对照基线**、无 10 次平均/std、无 Table 8 一类分类；因此 `tv_accuracy=0.9957` **不可**外推到论文 Table 2/4/5/6（99% 量级、R¹⁰⁰/1500 点）或 Table 7 计时。要升到 paper-like，剩余步是把嵌入升到 R¹⁰⁰、放大规模、接入 COIL/Opt-Digits/MNIST 与 TVRF 基线。
 
 ## 完整复现流程
 

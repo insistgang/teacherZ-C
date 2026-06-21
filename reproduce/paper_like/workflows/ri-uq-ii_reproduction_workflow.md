@@ -210,48 +210,52 @@ a^{(i+1)} = soft_{λ^{(i)}μ}( a^{(i)} − λ^{(i)} Ψ†Φ†(ΦΨ a^{(i)} − 
 
 ## 7. 本仓库当前复现实现
 
-- **runner 文件**：`reproduce/experiments/map_uq_toy.py`（一个 runner 同时产出第 11 篇 high-dimensional-uq、第 12 篇 ri-uq-i、第 13 篇 ri-uq-ii 的 toy 结果，共用同一张图）。
-- **它实际做了什么**：
-  - 合成 **32×32** 二圆盘 ground truth（强度 0.85 / 0.55）。
-  - 构造随机 Fourier 欠采样 mask（≈34% 采样），加复 Gaussian 噪声，得 toy 可见度 `y = mask·(FFT(x)+noise)`。
-  - **"MAP" 代理**：35 步梯度下降 `recon ← clip(recon − 0.55·∇, 0, 1)`，每步后接 `gaussian_filter`（sigma=0.45）——这是 smoothing 代理，**非** forward-backward + ℓ₁ soft-thresholding。
-  - **HPD/uncertainty 代理**：`uncertainty = gaussian_filter(σ·ones) + 0.15·|∇recon|`；`gamma_alpha = Σ residual² + √(N)`——**非** Eq.19 的 `f(x_map)+g(x_map)+τ_α√N+N`，缺 ℓ₁ 项、缺 τ_α。
-  - **"MCMC" 代理**：120 步 Gaussian-perturbation + Gaussian-filter 链，丢弃前 40 步，取 95–5 百分位差作 interval——**非** Px-MALA / proximal MCMC，无 accept/reject、无收敛诊断。
-  - 产图 `assets/repro/map_uq_reconstruction_uncertainty.png`（4 联：truth / MAP toy / HPD approx map / MCMC interval）。
-- **本篇当前 runMetrics（来自 dashboard `reproStructured`）**：
+- **runner 文件**：`reproduce/experiments/map_uq_toy.py`（一个 runner 同时产出第 11 篇 high-dimensional-uq、第 12 篇 ri-uq-i、第 13 篇 ri-uq-ii 的结果，共用同一张图）。`reproductionLevel = toy`，但**已从代理升级为本篇 MAP-based UQ 方法的真实可运行实现**——三篇里本篇的方法与 runner 路线最一致（都是 MAP + concentration HPD + local intervals）。
+- **它实际做了什么（真实算法）**：
+  - **真值图**：`skimage` 的 **64×64 Shepp-Logan phantom**（标准测试图，**非** M31/Cygnus A/W28/3C288 论文真值天图）。
+  - **前向算子 Φ（proxy）**：low-freq-biased variable-density Fourier 欠采样 mask（采样率 ≈ **9.8%**），`Φ(x)=mask·FFT(x)/√N`、`Φ†` 为共轭；加复 Gaussian 噪声，**SNR=30 dB**。
+  - **真实 forward-backward MAP（Algorithm 1 风格）**：解 `x_map = argmin μ‖Ψ†x‖₁ + ‖y−Φx‖₂²/2σ²`，Ψ = **Daubechies 8 小波（pywt，level 2）**，软阈值闭式 prox（Eq.7，`Ψ†Ψ=I`），梯度步 `∇ḡ=Φ†(Φx−y)/σ²`（Eq.8），FISTA 动量，250 iters，初值 dirty image `Φ†y`，`μ=3σ`。
+  - **真实近似 HPD 阈值（Eq.19）**：`γ'_α = f(x_map)+g(x_map)+τ_α√N+N`，`τ_α=√(16 log(3/α))`，**α=0.01（99% level）**。
+  - **真实 local credible intervals（Eq.26-28，superpixel 二分搜索）**：8×8 superpixel，对每个 Ω_i 固定区外为 x_map、区内统一设常数 ξ，二分搜索 `ξ_±` 使 `f(x_{i,ξ})+g(x_{i,ξ}) ≤ γ'_α`，输出差图 `(ξ_+ − ξ_-)`。
+  - 产图 `assets/repro/map_uq_reconstruction_uncertainty.png`（4 联：truth / dirty Φ†y / ℓ1-wavelet MAP / LCI width）。
+- **本篇当前 runMetrics（真实算法，Shepp-Logan 测试图）**：
 
   | 指标 | 数值 | 含义 |
   |------|------|------|
-  | `map_psnr` | 18.7123 | toy MAP 重建对 ground truth 的 PSNR（dB，代理保真度） |
-  | `map_snr` | 9.6004 | toy MAP 重建 SNR |
-  | `map_runtime_seconds` | 0.0017 | toy MAP 代理运行时间 |
-  | `mcmc_runtime_seconds` | 0.0041 | toy "MCMC" 代理运行时间 |
-  | `gamma_alpha_toy` | 939.9229 | toy 的 γ 代理值（**非** Eq.19 口径） |
-  | `mean_interval_length` | 0.1739 | toy interval 平均长度（代理 error bar） |
+  | `map_psnr` | 22.2878 | 真实 MAP 重建对 ground truth 的 PSNR（dB） |
+  | `map_snr` | 9.1586 | MAP 重建 SNR |
+  | `dirty_snr` | 7.4821 | dirty image 基线 SNR |
+  | `snr_gain_over_dirty_db` | 1.6766 | **MAP 优于 dirty 基线 +1.68 dB** |
+  | `sampling_rate` | 0.0979 | Fourier 采样率（≈10%） |
+  | `noise_sigma` | 0.019635 | SNR=30 dB 噪声标准差 |
+  | `map_runtime_seconds` | 0.0588 | forward-backward MAP 求解时间 |
+  | `lci_runtime_seconds` | 0.3156 | local credible interval 二分搜索时间 |
+  | `gamma_alpha_hpd` | 6180.6593 | **真实 Eq.19 HPD 阈值 γ'_α**（α=0.01） |
+  | `mean_interval_length` | 0.3709 | 平均 superpixel 可信区间宽度 |
 
-  > 上述均为 **32×32 合成 toy** 结果。`map/mcmc` 时间比约 **2.4×**，与论文 Table 1 的 **≈10⁵×** 完全不同量级，**不可外推**。
+  > 均为 **64×64 Shepp-Logan 标准测试图**结果。**注意**：本 runner **未**实现 Px-MALA 基线，因此**没有** MAP-vs-MCMC 时间比，**绝不可**外推论文 Table 1 的 **≈10⁵×** 加速。
 - **resultFiles**：`assets/repro/map_uq_reconstruction_uncertainty.png`。
-- **fidelity 警告（dashboard `notes` 已记录）**：*"Toy MAP-UQ is faster than the toy sampler and gives a similar uncertainty pattern; not a paper-level SKA experiment. Toy runtime comparison is not comparable to the paper's large-scale 10⁵ speedup claim."*
+- **fidelityWarning（runner `extra` 字段已记录）**：*"Real MAP-based UQ: db8 l1-wavelet MAP (forward-backward), real concentration-inequality HPD threshold (Eq.19) and local credible intervals by bisection (Eq.26-28), on a standard test image. No true RI operator/NUFFT, no Px-MALA baseline, no hypothesis testing, and not the paper's data; the O(10^5) MAP-vs-MCMC speedup is not reproduced here."*
 
 ---
 
 ## 8. 差距分析（到 paper-like / paper-level 还缺什么）
 
-**到 paper-like 的缺口清单：**
+**到 paper-like 的缺口清单（✅ = 升级后已实现，⛔ = 仍缺）：**
 
-1. **MAP 求解器对齐**：当前用 gradient + Gaussian filter；应改为论文 Algorithm 1/2 的 **forward-backward splitting**，含真正的 ℓ₁ soft-thresholding（Eq.10/15）、Daubechies 8 wavelet Ψ、μ=10⁴、λ=0.5、max 500 iters / tol 10⁻⁴。
-2. **HPD 近似公式对齐**：当前 `gamma_alpha` 缺 ℓ₁ 项与 τ_α；应实现 Eq.19 `γ'_α = f(x_map)+g(x_map)+τ_α√N+N`，τ_α=√(16 log(3/α))，并验证 Eq.20 的保守性。
-3. **真实 RI measurement operator Φ**：当前是裸 partial FFT；应实现含 uv 采样 + degridding（NUFFT）的 RI 算子（PURIFY/SOPT 风格），偏低频采样以再现论文"高频不确定性更大"的结论。
-4. **真实测试图**：当前 32×32 双圆盘；应接入 **M31 / Cygnus A / W28 / 3C288** 标准 RI benchmark 图（256×256 / 256×512）。
-5. **真实基线 Px-MALA**：当前 "MCMC" 是 Gaussian 扰动链；应实现论文 I 的 **Px-MALA**（proximal MALA，含 MH accept/reject）作 exact 基准，并对照 1%–5% HPD 误差区间。
-6. **Local credible intervals**：当前只产一张 uncertainty heatmap；应实现 Eq.26-27 的 superpixel 线搜索，复现 10×10 / 20×20 / 30×30 三尺度差图。
-7. **Hypothesis testing**：完全未实现 Eq.29-31 的 segmentation-inpainting knock-out test。
-8. **Analysis vs synthesis**：当前只一套代理；应同时跑 Eq.3 与 Eq.4 两模型并对照（Fig.2c-f）。
+1. ✅ **MAP 求解器（已实现）**：已改为论文 Algorithm 1 风格的 **forward-backward / FISTA splitting**，含真正的 ℓ₁ soft-thresholding（Eq.7/10）、**Daubechies 8 wavelet Ψ**、闭式 prox（`Ψ†Ψ=I`）、梯度步 Eq.8。**仍待对齐**：μ=10⁴（当前 μ=3σ）、λ=0.5、max 500 iters/tol 10⁻⁴ 等论文具体参数。
+2. ✅ **HPD 近似公式（已实现）**：已实现完整 **Eq.19** `γ'_α = f(x_map)+g(x_map)+τ_α√N+N`，`τ_α=√(16 log(3/α))`，α=0.01。**仍待补**：Eq.20 误差界/保守性的数值验证（需 Px-MALA 的 exact γ_α 作参照）。
+3. ⛔ **真实 RI measurement operator Φ（仍缺）**：当前是 low-freq-biased mask·FFT（比裸 partial FFT 更接近偏低频采样思路），但仍**无** uv 采样 + degridding（NUFFT）的真实 RI 算子（PURIFY/SOPT 风格）。
+4. ⛔ **真实测试图（仍缺）**：当前 64×64 Shepp-Logan 标准测试图；应接入 **M31 / Cygnus A / W28 / 3C288** 标准 RI benchmark 图（256×256 / 256×512）。
+5. ⛔ **真实基线 Px-MALA（仍缺）**：当前**未**实现任何采样器基线（旧 Gaussian 扰动链已移除，仅留 dirty image 作重建下界）；应实现论文 I 的 **Px-MALA**（含 MH accept/reject）作 exact 基准，才能对照 §5.3 的 1%–5% HPD 误差并谈加速比。
+6. ✅ **Local credible intervals（已实现）**：已实现 **Eq.26-27 的 superpixel 二分搜索**（当前 8×8 grid，输出 `ξ_+−ξ_-` 差图）。**仍待**：扩展到论文 10×10 / 20×20 / 30×30 三尺度并对照。
+7. ⛔ **Hypothesis testing（仍缺）**：完全未实现 Eq.29-31 的 segmentation-inpainting knock-out test。
+8. ⛔ **Analysis vs synthesis（仍缺对照）**：当前只跑 analysis 模型（Eq.3）；应同时跑 synthesis 模型（Eq.4）并对照（Fig.2c-f）。
 
 **到 paper-level 的额外缺口：**
 
-9. 需严格对齐论文模拟 RI 观测的 uv 覆盖、噪声水平、随机种子，逐图复现 Table 1 的 CPU 时间量级（在可比硬件上），并复现 §5.3 的 1%–5% 误差与 §5.4 的 interval 尺度规律。
-10. 需在真实/接近真实硬件上同时跑 Px-MALA（数千分钟级）与 MAP（分钟内），才能谈论 **≈10⁵×** 这一论文级结论——这是当前 toy 完全无法触及的。
+9. 需严格对齐论文模拟 RI 观测的 uv 覆盖、噪声水平、随机种子与参数（μ=10⁴ 等），逐图复现 Table 1 的 CPU 时间量级（在可比硬件上），并复现 §5.3 的 1%–5% 误差与 §5.4 的 interval 尺度规律。
+10. 需在真实/接近真实硬件上同时跑 Px-MALA（数千分钟级）与 MAP（分钟内），才能谈论 **≈10⁵×** 这一论文级结论——当前 runner 无 Px-MALA，完全无法触及该结论。
 
 ---
 
@@ -288,11 +292,16 @@ node docs/scripts/validate.mjs
 
 ## 10. 风险与代理说明
 
-- **MAP 代理的局限**：gradient + Gaussian filter 是**各向同性线性**平滑，不是凸 ℓ₁-regularised MAP 的 forward-backward 解，不保边、无 sparsity、无 Eq.3/4 的最优性。故 `map_psnr=18.71` 只能反映"欠采样反问题能粗略恢复结构"的**定性**事实，不能当作论文重建质量。
-- **HPD 代理的局限**：`gamma_alpha_toy=939.92` 缺 ℓ₁ 项与 τ_α√N，**不是** Eq.19 的近似 HPD 阈值，更未验证 Eq.20 的保守性界。toy uncertainty map 是手工合成的启发式，不是任何 credible region。
-- **"MCMC" 代理的局限**：Gaussian-perturbation 链无 Metropolis-Hastings 校正、无 burn-in 诊断、无 detailed balance，**不是** Px-MALA/MYULA，不能代表论文 I 的 exact 基准。
-- **时间比不可外推**：toy 的 ≈2.4× 与论文 ≈10⁵× 是两个量级的概念。前者只是"小优化比小采样略快"；后者来自 256×256 真实 RI 上 Px-MALA（数千分钟）对 MAP（分钟内）。**严禁**把 toy 时间比表述为论文级加速。
-- **不可外推的结论**：① 不能说本仓库"复现了" RI-UQ II 的任何论文结果；② toy PSNR/interval/时间均非论文报告值；③ 三类 UQ 输出（HPD region / local intervals / hypothesis testing）中，hypothesis testing 完全未实现，HPD 与 local intervals 仅有代理；④ paper-level 在 15 篇中仍为 0/15，本篇亦然。
+**升级后已消除的代理**（不再适用）：~~gradient + Gaussian filter 代替 MAP~~、~~`gamma_alpha_toy` 占位量代替 Eq.19 HPD 阈值~~、~~Gaussian 扰动链代替采样器~~、~~手工 uncertainty heatmap 代替 local intervals~~。现在 MAP 用真实 forward-backward/FISTA + db8 软阈值 prox 求解，HPD 阈值是完整 Eq.19，local credible interval 是 Eq.26-28 的真实 superpixel 二分搜索，且 MAP 比 dirty 基线 SNR 高 +1.68 dB。
+
+**仍存在的局限 / 代理（诚实标注）**：
+- **非论文数据**：用 64×64 Shepp-Logan 标准测试图，**不是** M31/Cygnus A/W28/3C288 论文真值天图。故 `map_psnr=22.29`、`map_snr=9.16`、`mean_interval_length=0.3709` 是真实算法在标准图上的结果，**非**论文报告值，**不可**与论文 Fig.2-3 或 §5.4 数值逐项对照。
+- **RI 算子仍为 proxy**：low-freq-biased mask·FFT 偏低频采样，定性上能再现"高频不确定性更大"的方向，但**无** uv 几何 / degridding / NUFFT，不能据此推断对真实 RI 阵列的适用性。
+- **无 Px-MALA 基线 ⇒ 无加速比**：本 runner **未**实现论文 I 的 Px-MALA（exact 基准），因此**没有** MAP-vs-MCMC 时间比，论文 Table 1 的 **≈10⁵×** 加速**完全无法**由本 runner 给出或外推；本 runner 不做任何加速断言。
+- **无 Eq.20 保守性验证**：实现了 Eq.19 阈值，但没有 exact γ_α（需 Px-MALA）作参照，故未验证 Eq.20 的 1%–5% 误差界与保守性。
+- **无 hypothesis testing / 无 synthesis 对照**：Eq.29-31 的 segmentation-inpainting knock-out test 完全未实现；只跑 analysis 模型（Eq.3），未跑 synthesis（Eq.4）对照。
+- **参数未对齐论文**：μ=3σ 非论文 μ=10⁴；grid 为单一 8×8 而非论文 10×10/20×20/30×30 三尺度。
+- **不可外推的结论**：① 本仓库可诚实声称"用论文真实的 forward-backward ℓ1-wavelet MAP + Eq.19 HPD 阈值 + Eq.26-28 local credible interval，在标准测试图上跑通并优于 dirty 基线"，但**不能**声称复现了论文 RI-UQ II 的任何具体数值或 ≈10⁵× 加速；② 三类 UQ 输出中，HPD region 与 local intervals 已为真实实现，**hypothesis testing 完全未实现**；③ paper-level 在 15 篇中仍为 **0/15**，本篇亦然。
 
 ---
 

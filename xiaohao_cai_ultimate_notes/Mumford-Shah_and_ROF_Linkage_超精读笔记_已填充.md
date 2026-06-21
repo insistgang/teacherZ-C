@@ -807,46 +807,48 @@ class ROFSolver:
 3. **把阈值化误读成"经验后处理"。** 借 Proposition 3.1/3.3，阈值集 {x:u*(x)>τ} 本身就是某个凸能量 E(·,τ) 的精确解。阈值化是 ROF level set 与 PCMS energy 的**接口**，不是事后修补。
 4. **混淆 (3.7)–(3.8) 与 (3.10)。** T-ROF 模型并不在 τ 上做无约束最小化（那是 (3.10)），而是用"均值中点"条件 τ_i=½(m_{i-1}+m_i) 锚定 τ。PDF 特别用 [17] Remark 1 提醒两者不同。
 5. **把 λ 与 μ 混为一谈。** μ 是 ROF/T-ROF 的参数，λ 是 PCMS/Chan-Vese 的参数，两者经 λ=μ/[2(m₁-m₀)] 联系。论文 Table 里写的是 "λ/µ" 这一比值列，逐例不同（如 retina 取 25），不要直接当成单个 μ 读。
-6. **把 toy 复现数值当论文数值。** 本仓库 runner 的 `rof_threshold_dice`、`pcms_like_energy` 来自合成两相 toy，且主图部分用 Gaussian smoothing 代理 ROF；它与 Table 5.4 的 0.9962 等数值**无对应关系**，更不证明任何定理。
+6. **把 toy 复现数值当论文数值。** 本仓库 runner 的 `rof_threshold_dice`、`pcms_like_energy` 来自合成两相 toy；headline 现已用真实 Chambolle-Pock ROF（Gaussian smoothing 仅作对照 baseline），但它与 Table 5.4 的数值**无对应关系**，更不证明任何定理。
 
 ## 复现判断
 
 | 字段 | 内容 |
 | --- | --- |
-| 复现等级 | toy-to-partial |
+| 复现等级 | partial |
 | 真实性等级 | partial-completed |
 | 难度 | 困难 |
 | 效果 | 很明显 |
-| 最小实验 | synthetic two-phase image，求 ROF/TV-like denoising result u*，按 (m0+m1)/2 阈值化，并与 ground truth 比较。 |
-| 预期产出 | 展示 ROF minimizer thresholding 的分割效果，并记录 PCMS-like energy；toy 上 rof_threshold_dice 明显高于 direct_dice。 |
+| 最小实验 | synthetic two-phase image，用**真实 Chambolle-Pock ROF** 求 denoising result u*，按 (m0+m1)/2 阈值化，并与 ground truth 比较。 |
+| 预期产出 | 展示真实 ROF minimizer thresholding 的分割效果，并记录 PCMS-like energy；toy 上 rof_threshold_dice 明显高于 direct_dice 与 Gaussian 对照。 |
 | 依赖 | numpy / scipy / matplotlib |
 | 数据需求 | synthetic two-phase image（可严格复刻，无私有数据依赖）。 |
 | 算力需求 | CPU，约 1 秒内。 |
-| 实现风险 | 实验只能说明现象，不能声称复现 PCMS partial minimizer 定理；主图部分用 Gaussian smoothing 代理真实 ROF。 |
+| 实现风险 | headline 主路径已用真实 ROF（Gaussian 仅作对照 baseline）；实验仍只能说明现象，不能声称复现 PCMS partial minimizer 定理，也不含 Eq.(8) 模糊算子 A。 |
 
 ### 复现指标
 
 - direct_dice
+- gaussian_baseline_dice
 - rof_threshold_dice
 - pcms_like_energy
 - runtime_seconds
 
 ### 验证计划
 
-对比 noisy direct threshold 与 ROF-threshold 的 Dice，并记录 perimeter + data fitting 的 PCMS-like energy；另在 `run_k2_proposition_demo` 中用真实 Chambolle-Pock ROF 做 Theorem 3.6 的 K=2 现象级 proxy 检查。
+对比 noisy direct threshold、Gaussian-smoothing threshold（对照）与**真实 ROF-threshold** 的 Dice，并记录 perimeter + data fitting 的 PCMS-like energy；另在 `run_k2_proposition_demo` 中用真实 Chambolle-Pock ROF 做 Theorem 3.6 的 K=2 现象级 proxy 检查。
 
 ### 当前运行结果
 
 - direct_dice: 0.8989
-- rof_threshold_dice: 0.9962
-- pcms_like_energy: 204
-- runtime_seconds: 0.7057
+- gaussian_baseline_dice: 0.9962（对照 baseline）
+- rof_threshold_dice: 0.9983（真实 Chambolle-Pock ROF，headline）
+- pcms_like_energy: 205
+- runtime_seconds: ≈0.77
 
 ### 结果说明
 
-This synthetic toy demonstrates thresholding after proxy smoothing, but does not solve the exact ROF model or prove Theorem 3.6.
+rof_threshold_dice now comes from the real convex ROF solution (Chambolle-Pock) thresholded at (m0+m1)/2, not Gaussian smoothing; a Gaussian baseline is kept for comparison. Demonstrates ROF-thresholding segmentation on a synthetic toy two-phase image; does not prove Theorem 3.6.
 
-> 诚实提醒：上表 `rof_threshold_dice=0.9962` 仅来自一张简单合成两相图，且主路径用 **Gaussian smoothing 代理了论文真正的 ROF/TV 求解**（`run_k2_proposition_demo` 虽用真实 Chambolle-Pock，但同为合成图现象检查）。这些数字与论文 Table 5.4 retina 的 0.9962（背景相 DICE）只是巧合，**不可互相解释**，更**不构成定理证明**。本项目 paper-level 复现仍为 **0/15**。可信的只是"ROF 阈值化分割明显优于对噪声原图直接阈值"这一定性现象（与 Theorem 3.6 的方向一致）。
+> 诚实提醒：上表 `rof_threshold_dice=0.9983` 来自一张简单合成两相图，headline 主路径已用**真实 Chambolle-Pock ROF**（`sat2 = rof_chambolle_pock(image2,...) > 0.48`），Gaussian smoothing 已降级为对照（`gaussian_baseline_dice=0.9962`）；`run_k2_proposition_demo` 同为合成图现象检查。这些数字与论文 Table 5.4 retina 的数值**无对应关系**，更**不构成定理证明**，也未含 Eq.(8) 的模糊算子 A。本项目 paper-level 复现仍为 **0/15**。可信的只是"真实 ROF 阈值化分割明显优于对噪声原图直接阈值"这一定性现象（与 Theorem 3.6 的方向一致）。
 
 ## 完整复现流程
 
@@ -854,7 +856,7 @@ This synthetic toy demonstrates thresholding after proxy smoothing, but does not
 
 [`../reproduce/paper_like/workflows/pcms-rof-linkage_reproduction_workflow.md`](../reproduce/paper_like/workflows/pcms-rof-linkage_reproduction_workflow.md)
 
-该文档与本笔记互补：笔记侧重定理直觉与精读，流程文档侧重"怎样从当前 toy-to-partial 一步步走向 paper-like/paper-level，以及每一步还缺什么"。
+该文档与本笔记互补：笔记侧重定理直觉与精读，流程文档侧重"怎样从当前 partial 一步步走向 paper-like/paper-level，以及每一步还缺什么"。
 
 ---
 

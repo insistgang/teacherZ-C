@@ -32,11 +32,11 @@
 | **paper-like** | 用论文同款或公开等价数据集，跑论文同款 pipeline，复现论文表格量级（不要求逐位一致） |
 | **paper-level** | 严格复现论文报告数值（同数据、同基线、同指标、同表号） |
 
-**本仓库当前等级（reproductionLevel）= `toy-to-partial`；真实性（reproductionTruthLevel）= `partial-completed`。**
+**本仓库当前等级（reproductionLevel）= `partial`；真实性（reproductionTruthLevel）= `partial-completed`。**
 
 纪律红线：
 - **paper-level 在 15 篇中仍为 0/15。** 本篇也不例外。
-- 当前实现使用 **Gaussian proxy smoothing** 作为 convex ROF/TV smoothing 的轻量代理（见 §7、§10），且仅在合成 multiphase 图上跑。`runMetrics` 中的 `sat_accuracy=0.9799` 等数值是 toy 合成图上的结果，**不得**被表述为论文级或论文报告的精度。
+- 当前实现的 SaT 主路径已切换为**真实凸 ROF 求解器（Chambolle-Pock 原始-对偶投影，`rof_chambolle_pock`）**：先解 ROF 得 g，再对 g 做 K-means 阈值（见 §7、§10）。Gaussian smoothing 仅保留为对照 baseline（`gaussian_baseline_accuracy`），不再是 headline 指标的来源。仍仅在合成 multiphase 图上跑：`runMetrics` 中的 `sat_accuracy=0.9961`（真实 ROF）等数值是 toy 合成图上的结果，**不得**被表述为论文级或论文报告的精度。
 - 本篇是综述，paper-level 复现意味着覆盖其下属**多个分支**（T-ROF / SLaT / 高光谱 / vascular / spherical / intensity inhomogeneity）。当前仅触及 SaT 两段式骨架 + T-ROF 阈值迭代（与第 2、3 篇 runner 共用 `sat_rof_trof.py`）。
 
 ---
@@ -165,23 +165,23 @@ T-ROF (thresholded-ROF, Cai & Steidl 2013; Cai et al. 2019) 把阈值自动选�
 - **runner 文件**：`reproduce/experiments/sat_rof_trof.py`（与第 2 篇 pcms-rof-linkage、第 3 篇 iterated-rof 共用同一 runner）。
 - **它实际做了什么**：
   - 合成两相圆形图、两套四相图（含"close gray"近强度四相，levels≈[0.28,0.32,0.36,0.40]，更难）。
-  - **Gaussian proxy smoothing**（`scipy.ndimage.gaussian_filter`）作为 SaT 第一段的轻量代理。
-  - 真实 **Chambolle-Pock ROF** 求解器（`rof_chambolle_pock`）与 **Split-Bregman ROF**（`rof_split_bregman`）两套求解器交叉验证。
-  - **T-ROF 阈值迭代**（`run_trof_thresholds`）：用原图均值 `mean_f(Ω_i)` 按 Eq.(15) 风格更新阈值，并检查 Lemma 2/3 的 sign-change 单调性、Assumption A 违反计数、漂移收敛。
-  - **K=2 Proposition/Theorem 2 代理检查**（`run_k2_proposition_demo`）：由 ROF 解阈值化，导出 `λ = μ/(2(m₁-m₀))`，与 Chan-Vese 代理比较。
+  - **SaT 主路径 = 真实凸 ROF**：本篇四相图先用 **Chambolle-Pock ROF**（`rof_chambolle_pock`，μ=8.0，240 步，tol 2e-5）求解 g，再对 g 做 K-means（仓库内 `simple_kmeans`）阈值得四相分割。`sat_accuracy` 即此真实-ROF 路径的像素精度。
+  - **Gaussian smoothing 仅作对照 baseline**（`scipy.ndimage.gaussian_filter`，sigma=1.0），其 K-means 精度记为 `gaussian_baseline_accuracy`，不再是 headline 指标。
+  - 同 runner 另含 **Split-Bregman ROF**（`rof_split_bregman`）交叉验证、**T-ROF 阈值迭代**（`run_trof_thresholds`，按 Eq.(15) 用 `mean_f(Ω_i)` 更新阈值并检查 Lemma 2/3、Assumption A、漂移收敛）、**K=2 Proposition/Theorem 2 代理检查**（`run_k2_proposition_demo`，导出 `λ = μ/(2(m₁-m₀))`），及 **Multi-Otsu** 基线（`skimage.filters.threshold_multiotsu`）——这些主要服务第 3 篇。
   - 产图：`assets/repro/sat_demo.png`（本篇 resultFiles），及 `trof_thresholds.png`、`iterated_rof_convergence.png`、`iterated_rof_chanvese.png`（第 3 篇用）。
-- **本篇当前 runMetrics（来自 dashboard `reproStructured`）**：
+- **本篇当前 runMetrics（来自 runner 实测，确定性可复现）**：
 
   | 指标 | 数值 | 含义 |
   |------|------|------|
   | `direct_accuracy` | 0.6590 | direct K-means（不平滑）在四相 toy 图的像素精度 |
-  | `sat_accuracy` | 0.9799 | SaT（先平滑后 K-means）在同图的像素精度 |
-  | `accuracy_gain` | 0.3210 | SaT 相对 direct 的提升 |
-  | `runtimeSeconds` | 0.7057 | CPU 运行时间（约 1 秒内） |
+  | `gaussian_baseline_accuracy` | 0.9799 | Gaussian smoothing + K-means（**对照 baseline**）的像素精度 |
+  | `sat_accuracy` | 0.9961 | **真实 ROF（Chambolle-Pock）+ K-means** 主路径的像素精度 |
+  | `accuracy_gain` | 0.3371 | sat_accuracy 相对 direct 的提升（真实 ROF 路径） |
+  | `runtimeSeconds` | ≈0.77 | CPU 运行时间（约 1 秒内） |
 
-  > 注意：上述是**合成 toy 图**结果，演示"平滑后再阈值比直接阈值更稳"的趋势，**不是**论文报告值。
+  > 注意：上述是**合成 toy 图**结果，演示"先解真实 ROF 再阈值比直接阈值（及比 Gaussian 平滑）更稳"的趋势，**不是**论文报告值。真实 ROF（0.9961）> Gaussian 对照（0.9799）> direct（0.6590）。
 - **resultFiles**：`assets/repro/sat_demo.png`。
-- **fidelity 警告（dashboard 已记录）**：`Uses Gaussian proxy smoothing, not an exact convex ROF/TV minimizer.`
+- **fidelity 警告（runner `extra` 已记录）**：`Real ROF (Chambolle-Pock) on a synthetic toy four-phase image; no blur operator A, no H1 term, and no paper dataset/baseline. Covers only the SaT skeleton (one of many SaT branches).`
 
 ---
 
@@ -189,7 +189,7 @@ T-ROF (thresholded-ROF, Cai & Steidl 2013; Cai et al. 2019) 把阈值自动选�
 
 **到 paper-like 的缺口清单：**
 
-1. **求解器对齐**：本篇 runMetrics 用的是 Gaussian proxy；应改用 runner 中已有的真实 ROF 求解器（Chambolle-Pock / Split-Bregman），并完整实现 Eq.(8) 含 `A`（模糊算子）与 H¹ 项，而非仅各向同性高斯模糊。
+1. **求解器对齐（已部分完成）**：headline `sat_accuracy` 已切换为真实 Chambolle-Pock ROF 主路径（Gaussian 仅作对照 baseline）。**仍缺**：完整实现 Eq.(8) 的**模糊算子 `A`** 与 **H¹ 半范光滑项**（当前仅纯 ROF = TV + 数据项，无 A、无 H¹），并对齐论文用的 split-Bregman/ADMM 求解器实现细节与参数。
 2. **真实数据**：当前仅合成图。需接入 DRIVE（retina）、BSDS（SLaT）、Indian Pines（高光谱）、Alpert（intensity inhomogeneity）等公开数据。
 3. **分支覆盖**：当前只覆盖 SaT 骨架 + T-ROF 两相/四相。SLaT、Poisson/Gamma、hyperspectral SVM+SaT、tight-frame vascular、spherical wavelet、intensity inhomogeneity sPADMM **均未实现**。
 4. **基线缺失**：未实现 Chan-Vese、Pock 2009a、Yuan 2010b、CURVES/ADA、U-net 等论文对照方法。
@@ -225,7 +225,7 @@ node docs/scripts/validate.mjs
 
 ### 9.2 向 paper-like 扩展的步骤大纲
 
-1. 把本篇 metrics 的 smoothing 从 Gaussian proxy 切换为真实 ROF（runner 已有 `rof_chambolle_pock`），并加入模糊算子 A 与 H¹ 项。
+1. （已完成）本篇 headline metrics 的 smoothing 已从 Gaussian proxy 切换为真实 ROF（`rof_chambolle_pock`）；**下一步**加入模糊算子 A 与 H¹ 项以补全 Eq.(8)。
 2. 新增 `reproduce/data/` 数据接入脚本：下载并预处理 DRIVE / BSDS / Indian Pines / Alpert。
 3. 逐分支补实现：先 retina T-ROF（对齐 Fig.4 设置），再 SLaT（6 维 Lab K-means），再 hyperspectral（SVM 概率图 + Eq.(14) 约束 SaT，目标对照 98.83%）。
 4. 加入论文基线（至少 Chan-Vese、direct K-means、纯 SVM）做并排对照表。
@@ -235,9 +235,9 @@ node docs/scripts/validate.mjs
 
 ## 10. 风险与代理说明
 
-- **Gaussian proxy 的局限**：高斯滤波是**各向同性线性**平滑，不保边、不解凸 TV/ROF 能量、无唯一最优性保证；它**不**等价于 Eq.(8) 的 convex minimizer。因此 `sat_accuracy=0.9799` 只能说明"平滑后阈值更稳"的**定性**趋势，不能外推为 SaT/T-ROF 的论文级精度或 Theorem 1/2 的数值验证。
+- **真实 ROF 已上主路径，但仍非完整 Eq.(8)**：headline `sat_accuracy=0.9961` 来自真实 Chambolle-Pock ROF（TV + L² 数据项），已不再用 Gaussian 代理；但它**仍缺** Eq.(8) 的模糊算子 `A` 与 H¹ 半范项，故只能说明"先解 ROF 再阈值更稳"的**定性**趋势，不能外推为 SaT 的论文级精度或 Theorem 1/2 的数值验证。Gaussian baseline（0.9799）仅作对照，**不**等价于凸 minimizer。
 - **合成数据的局限**：toy 四相图不含真实退化（motion blur、Poisson/Gamma、信息缺失、强度不均匀、彩色通道相关性、球面几何），故无法反映论文在真实数据上的鲁棒性优势。
-- **共享 runner 的口径**：本篇与第 2、3 篇共用 `sat_rof_trof.py`，T-ROF 的较真实部分（Chambolle-Pock + 阈值迭代 + Lemma 检查）记在第 3 篇 (iterated-rof) 的 metrics 下；本篇 metrics 仍是 Gaussian proxy 口径，阅读时勿混淆。
+- **共享 runner 的口径**：本篇与第 2、3 篇共用 `sat_rof_trof.py`；本篇 metrics（`sat_accuracy` 等）现已是真实 ROF 口径，与第 3 篇 (iterated-rof) 的 T-ROF 阈值迭代 metrics 各自独立，阅读时按 id 区分。
 - **不可外推的结论**：① 不能说本仓库"复现了"任一分支的论文结果；② 不能把 toy 精度等同于论文报告精度；③ paper-level 在 15 篇中仍为 0/15，本篇亦然。
 
 ---
