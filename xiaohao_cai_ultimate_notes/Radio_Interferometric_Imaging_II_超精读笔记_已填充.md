@@ -13,7 +13,7 @@
 | **标题** | Uncertainty quantification for radio interferometric imaging: II. MAP estimation |
 | **作者** | Xiaohao Cai, Marcelo Pereyra, Jason D. McEwen |
 | **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
-| **年份** | 2017 (2018修订) |
+| **年份** | 2018（MNRAS Vol.480 正式发表；arXiv 预印本 1711.04819 提交于 2017，与姊妹篇 RI UQ I 同期 companion） |
 | **期刊** | Monthly Notices of the Royal Astronomical Society (MNRAS) |
 | **arXiv ID** | 1711.04819v2 |
 | **机构** | UCL MSSL, Heriot-Watt University |
@@ -74,32 +74,41 @@ C_α := {x : f(x) + g(x) ≤ γ_α}
 ∫_C_α p(x|y)dx = 1 - α
 ```
 
-**MAP近似公式** (Pereyra 2017)：
+**MAP近似公式** (本文 Eq.18-19，源自 Pereyra 2017)：
+
+> ⚠️ **更正（以 PDF Eq.19 为准）**：本文采用的近似阈值是 √N 项与 √(16 log(3/α)) 常数，**不含** 早期文献中出现的"有效维度 p"。早版笔记把它写成 √(N/p) 与 16√(log(3/α)) 是错误的，下面给出忠于 PDF 的正确形式。
+
+近似 HPD region（Eq.18）与阈值（Eq.19）：
 ```
-γ_α⁰ = f(x̂_MAP) + g(x̂_MAP) + τ_α√(N/p) + N
+C_α⁰ := { x : f(x) + g(x) ≤ γ_α⁰ }
+γ_α⁰ = f(x̂_MAP) + g(x̂_MAP) + τ_α√N + N
+```
+
+> 📌 **记号说明**：本笔记的 `γ_α⁰`（gamma 加上标 0）即 PDF / workflow 中的 `γ'_α`（gamma prime，Eq.18-19），是同一个近似 HPD 阈值，仅记法不同；本笔记全文沿用上标 0 写法，配套 workflow 沿用 PDF 的 prime 记法。
+
+其中（universal constant，注意 16 在根号内）：
+```
+τ_α = √( 16 log(3/α) )
+```
+
+N 是图像维度（x∈ℝ^N），100(1−α)% 是 credible level。**关键点：γ_α⁰ 只需 x̂_MAP 即可算出，无 p、无高维积分 → 这是整篇可扩展性的根源。**
+
+**误差界**（Eq.20，对 α ∈ (4 exp(−N/3), 1)）：
+```
+0 ≤ γ_α⁰ - γ_α ≤ η_α√N + N
 ```
 
 其中：
 ```
-τ_α = 16√(log(3/α))
-```
-
-N是图像维度，p是先验的"有效维度"。
-
-**误差界**：
-```
-0 ≤ γ_α⁰ - γ_α ≤ η_α√(N/p) + N/p
-```
-
-其中：
-```
-η_α = 16√(log(3/α)) + 1/α
+η_α = √( 16 log(3/α) ) + √(1/α)
 ```
 
 **理论性质**：
-1. 保守性：γ_α⁰ ≥ γ_α，因此C_α⁰ ⊇ C_α
-2. 稳定性：误差随N线性增长
-3. 通用性：适用于凸优化问题
+1. 保守性：γ_α⁰ ≥ γ_α，因此 C_α⁰ ⊇ C_α（宁可高估 credible region，故 trustworthy）
+2. 稳定性：误差随 N **至多线性**增长（√N√N=N 量级），高维下仍稳定
+3. 通用性：适用于凸的 MAP 估计问题（analysis Eq.21-22 / synthesis Eq.23-24 各有对应阈值 γ̄_α⁰ / γ̂_α⁰）
+
+> **直觉**：γ_α 是后验质量集中处的 log-posterior 等位面（level set），直接求要算高维积分。Pereyra 2017 的 concentration inequality 说"后验质量高度集中在 x̂_MAP 附近"，于是从 x̂_MAP 的目标值加一个 O(N) 的安全裕量 τ_α√N+N，就能保证圈住 ≥(1−α) 的质量。代价是这个圈略大（保守）。
 
 ### 1.2 关键公式推导
 
@@ -183,6 +192,41 @@ x^{(i+1)} = (1 - β^{(i)})x^{(i)} + β^{(i)}x̃^{(i+1)}
 2. **局部可信区间**：空间和尺度相关的误差条
 3. **从MAP估计的后处理不确定量化**：分离估计与不确定量化
 
+### 1.5 关键公式逐项再解释（忠于 PDF）
+
+为避免符号误读，下面把本文最关键的几条公式逐项拆开（章节/公式号对应 arXiv:1711.04819v2）。
+
+**(a) MAP 目标 Eq.3（analysis）/ Eq.4（synthesis）**
+
+| 符号 | 含义 | 维度/类型 |
+|------|------|-----------|
+| `x ∈ ℝ^N` | 待恢复 sky brightness | 实图像 |
+| `y ∈ ℂ^M` | 可见度（visibilities） | 复测量 |
+| `Φ ∈ ℂ^{M×N}` | 测量算子（partial Fourier + degridding） | 线性、欠采样 |
+| `Ψ ∈ ℂ^{N×L}` | 字典（Daubechies 8 wavelet），`x=Ψa` | 稀疏基/over-complete |
+| `μ` | ℓ₁ 正则化强度（实验取 10⁴） | 标量 |
+| `σ` | Gaussian 噪声标准差 | 标量 |
+
+- `μ‖Ψ†x‖₁`（analysis）/ `μ‖a‖₁`（synthesis）= **先验项 f**，促稀疏、降不确定性。
+- `‖y−Φx‖₂²/(2σ²)` = **似然项 g**，对应 Eq.2 的 Gaussian 噪声模型。
+- **analysis vs synthesis 的区别**：analysis 在图像域加 `‖Ψ†x‖₁` 约束（x 是主变量）；synthesis 在系数域优化 a 再 `x=Ψa`。当 `Ψ†Ψ=I`（正交基）时两者**数学上完全相同**（§5.2 footnote 6：identical）；当 `Ψ†Ψ≠I`（over-complete）时两者 **very different**，会给出不同重建。经验上 M31 用正交 Ψ，两模型重建几乎无差别（§5.2 正文，见 Fig.2），故后文只展示 analysis。
+
+**(b) forward-backward 一步 = 梯度步 + 近端步**
+
+- 梯度步（forward，Eq.8）：`∇ḡ(x)=Φ†(Φx−y)/σ²`——把当前估计投到数据域算残差，再回投。
+- 近端步（backward）：`prox_{λf̄}` 用 soft-thresholding（Eq.7，`Ψ†Ψ=I` 时闭式；Eq.9-10 一般式）。soft-thresholding `soft_{λμ}(z)=sign(z)·max(|z|−λμ,0)` 把小系数压零 → ℓ₁ 稀疏。
+- 步长约束：`λ^{(i)}∈(0,2/β_Lip)`，β_Lip 是 ∇g 的 Lipschitz 常数（这里 `β_Lip=‖Φ‖²/σ²`）。实验固定 λ=0.5。
+
+**(c) 三类 UQ 输出的统一入口都是同一个 γ_α⁰**
+
+值得强调：HPD region（Eq.18）、local intervals（Eq.26-27）、hypothesis testing（Eq.30）**共用同一个阈值 γ_α⁰**。换句话说，算一次 x̂_MAP、算一次 γ_α⁰，三种 UQ 全部派生出来——这是"MAP 后处理"范式高效的根本原因（采样法则要为每个量重新统计样本）。
+
+### 1.6 收敛性与复杂度的直觉
+
+- **为什么能收敛**：Eq.3/4 是 **convex + (smooth g) + (nonsmooth but prox-friendly f)** 的复合最小化，forward-backward（proximal gradient）在 λ 满足步长条件时对此类问题有标准收敛保证（Combettes & Pesquet 2010）。带松弛 β^{(i)}∈(ε,1) 的版本可加速。
+- **为什么快**：每步主成本是 Φ/Φ† 各一次。用 NUFFT 后单步 `O(MJ + N log N)`，迭代数 < 500，总成本与"采样数×单步"的 MCMC 相比小几个数量级。
+- **为什么 UQ 也快**：γ_α⁰ 是闭式（O(N)）；local intervals 对每个 superpixel 只需若干次目标函数评估（线搜索/二分），可并行；hypothesis testing 每个结构一次 inpainting（≤200 iters）。没有任何一步需要采样后验。
+
 ---
 
 ## 🔧 2. 工程师Agent：实现分析
@@ -216,9 +260,9 @@ x^{(i+1)} = (1 - β^{(i)})x^{(i)} + β^{(i)}x̃^{(i+1)}
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │  阶段2: 近似HPD可信区域                                             │   │
 │  │  ┌───────────────────────────────────────────────────────────────┐  │   │
-│  │  │ 计算阈值 γ_α⁰:                                               │  │   │
-│  │  │ γ_α⁰ = f(x̂_MAP) + g(x̂_MAP) + τ_α√(N/p) + N               │  │   │
-│  │  │ 其中 τ_α = 16√(log(3/α))                                    │  │   │
+│  │  │ 计算阈值 γ_α⁰ (本文 Eq.19):                                 │  │   │
+│  │  │ γ_α⁰ = f(x̂_MAP) + g(x̂_MAP) + τ_α√N + N                   │  │   │
+│  │  │ 其中 τ_α = √(16 log(3/α))                                   │  │   │
 │  │  │                                                             │  │   │
 │  │  │ HPD区域: C_α⁰ = {x : f(x) + g(x) ≤ γ_α⁰}                  │  │   │
 │  │  └───────────────────────────────────────────────────────────────┘  │   │
@@ -334,6 +378,8 @@ class MAPRadioImaging:
 
 **不确定量化实现**：
 
+> ⚠️ 下方 `compute_hpd_threshold` 的示例代码沿用了早期 √(N/p) 写法（用非零小波系数数估 p）。**这与本文 Eq.19 不一致**——本文阈值是 `γ_α⁰ = obj_val + τ_α·√N + N`、`τ_α=√(16 log(3/α))`，**无 p**。若按本文严格实现，应把 `tau_alpha * np.sqrt(N / p)` 改为 `np.sqrt(16*np.log(3/alpha)) * np.sqrt(N)`，并删去 p 的估计。**另注意**：`tau_alpha` 中常数 16 必须在根号内（`np.sqrt(16*np.log(3/alpha))`），早版 `16*np.sqrt(np.log(3/alpha))`（16 在根号外）也是错的，下方代码已据 Eq.19 修正。此处保留旧 √(N/p) 骨架仅作"实现结构"参考，公式以上文更正块为准。
+
 ```python
 class UncertaintyQuantificationMAP:
     """基于MAP估计的不确定量化"""
@@ -372,8 +418,8 @@ class UncertaintyQuantificationMAP:
         # 计算x_map处的目标值
         obj_val = self.compute_objective(x_map, y)
 
-        # 通用常数
-        tau_alpha = 16 * np.sqrt(np.log(3 / alpha))
+        # 通用常数（16 在根号内，见 Eq.19；旧写法 16*np.sqrt(...) 把 16 放在根号外是错的）
+        tau_alpha = np.sqrt(16 * np.log(3 / alpha))
 
         # 图像维度
         N = x_map.shape[0]
@@ -554,13 +600,27 @@ class UncertaintyQuantificationMAP:
 | 假设检验 | O(inpaint_iter·(MJ + N log N)) | inpaint通常100次迭代 |
 | **总复杂度** | O(iter·(MJ + N log N)) | 主导项为MAP估计 |
 
-**与MCMC对比**：
+**与MCMC对比（M31，同模型内比较）**：
 
-| 方法 | CPU时间 (M31图像) | 加速比 |
-|------|------------------|--------|
-| Px-MALA | 1307分钟 | 1× |
-| MAP (分析) | 0.03分钟 | **~44,000×** |
-| MAP (综合) | 0.02分钟 | **~65,000×** |
+| 方法 | CPU时间 (M31图像) | 加速比（同模型） |
+|------|------------------|------------------|
+| Px-MALA (analysis) | 1307分钟 | 1× |
+| MAP (analysis) | 0.03分钟 | **~43,600×** |
+| Px-MALA (synthesis) | 944分钟 | 1× |
+| MAP (synthesis) | 0.02分钟 | **~47,200×** |
+
+> 注：上表是 M31 单图、同一模型（analysis 对 analysis、synthesis 对 synthesis）的比值。摘要与 **Table 1 图注** 给出的 **"approximately 10⁵ times faster"** 是对全部四图、analysis+synthesis 的总体量级概括（部分图比值更高，见下表 Cygnus A）。
+
+**论文 Table 1 完整 CPU 时间（分钟，PDF 实证）**：
+
+| 图像 (尺寸) | Px-MALA analysis | Px-MALA synthesis | MAP analysis | MAP synthesis |
+|-------------|------------------|-------------------|--------------|---------------|
+| M31 (256×256) | 1307 | 944 | 0.03 | 0.02 |
+| Cygnus A (256×512) | 2274 | 1762 | 0.07 | 0.04 |
+| W28 (256×256) | 1122 | 879 | 0.06 | 0.04 |
+| 3C288 (256×256) | 1144 | 881 | 0.03 | 0.02 |
+
+> Cygnus A analysis 比值 2274/0.07 ≈ **32,500×**；synthesis 1762/0.04 ≈ **44,000×**。综合四图 analysis/synthesis，总体量级落在 ~10⁴–10⁵，论文用 **≈10⁵×** 概括。另：Px-MALA 跑在 high-performance workstation，MAP 仅需 Macbook laptop（i7/16GB），效率差异比表中数字更悬殊。
 
 ### 2.4 实现建议
 
@@ -630,9 +690,9 @@ import pywt
 | 分布式 | 困难 | 天然支持 |
 
 **核心贡献**：
-1. **10^5倍加速**：从1307分钟→0.03分钟
+1. **约 10⁴–10⁵ 倍加速**：论文以 ≈10⁵× 概括全部四图 analysis/synthesis 的总体量级；其中 M31 analysis 为 1307→0.03 分钟 ≈ 4.4×10⁴×（与 §2.3 口径一致）
 2. **大数据可扩展**：首次支持SKA级别数据
-3. **开源实现**：集成到PURIFY包
+3. **（计划）开源实现**：论文 §6 述为 future work——"will be implemented in the existing PURIFY package"（见 §5.5 短期方向）
 
 ### 3.3 落地可行性
 
@@ -662,8 +722,8 @@ import pywt
 ### 4.1 方法论质疑
 
 **理论假设**：
-1. γ_α⁰近似依赖于"有效维度"p的估计 → 缺乏严格指导
-2. 概率集中界可能在大N下宽松 → 保守近似
+1. 近似阈值 γ_α⁰ 仅依赖 x̂_MAP 与图像维度 N（Eq.19 无 p），其保守性来自 concentration inequality；真正的弱点是该界在大 N 下可能偏松（Eq.20 误差至多随 N 线性增长），而非对任何"有效维度 p"的估计
+2. 概率集中界在大 N 下可能宽松 → 近似保守（高估 credible region）
 
 **数学严谨性**：
 - Pereyra (2017)的理论是通用的，但针对RI成像的特化分析不足
@@ -685,7 +745,7 @@ import pywt
 **方法限制**：
 1. 仅适用于凸问题（ℓ₁正则化）
 2. 不适用于非凸先验（如深度学习）
-3. p参数的选择影响结果
+3. 对超参数敏感（§5.1）：μ=10⁴、λ=0.5、停机容差 10⁻⁴、superpixel 尺度（10×10/20×20/30×30）等的选择会影响重建与 UQ 输出（注意：阈值公式 Eq.19 本身不含任何"有效维度 p"）
 
 **实际限制**：
 - 局部可信区间计算成本高（需多次目标函数评估）
@@ -809,6 +869,79 @@ MAP估计 + 概率集中 (论文II, 2017) ← 本文
 - PURIFY包将实现这些方法
 - Forward-Backward算法是基础
 - 软阈值算子高效实现
+
+---
+
+## 🧪 实验设置与论文结果再细读（忠于 PDF §5）
+
+**实验数据与参数（§5.1）**：
+- 四幅 RI 测试图：**M31 galaxy (256×256)**、**Cygnus A galaxy (256×512)**、**W28 supernova remnant (256×256)**、**3C288 (256×256)**；均为在 ground truth 上**模拟** RI 观测（"in a manner akin to Cai et al. 2017a"，即论文 I 的方式）。
+- ℓ₁ 正则化 **μ = 10⁴**；字典 **Ψ = Daubechies 8 wavelets**；步长 **λ^{(i)} = 0.5**；停机：**max 500 iters** 或相对差 **10⁻⁴**。
+- credible level：α ∈ **[0.01, 0.99]**；credible regions/intervals 报告于 **α = 0.01（99%）**。
+- segmented-inpainting：**max 200 iters**。
+- 基准 **Px-MALA** 跑在 high-performance workstation；MAP 仅需 **Macbook laptop（i7 / 16GB）**。
+
+**重建结果（§5.2，Fig.2-3）**：
+- analysis（Eq.3）与 synthesis（Eq.4）两套 MAP 重建与 Px-MALA 点估计**高度一致**（Fig.2c-f）；正交 Ψ（Ψ†Ψ=I）下 analysis 与 synthesis **数学上完全相同**（§5.2 footnote 6：identical），M31 上两模型重建经验上几乎无差别（§5.2 正文，见 Fig.2），故后文只展示 analysis。
+- dirty map（直接 inverse FFT，Fig.2b/3b）噪声大、未正则化，凸显 MAP 重建的去噪/超分辨作用。
+
+**HPD 近似精度（§5.3）**：MAP 近似阈值（Eq.22/24）相对 Px-MALA 计算的 **exact** HPD 阈值，**所有情形误差 1%–5%**，与 Pereyra (2017) 吻合；并确认近似**保守**（高估 credible region）。这是本文最关键的定量验证：用一个点估计 + 闭式公式，复现了采样法几千分钟才能得到的 HPD 阈值，误差仅个位数百分比。
+
+**Local credible intervals（§5.4，Fig.5-8）**：
+- MAP 近似 interval 长度**理论上保守**、略高估 Px-MALA 的 exact interval → trustworthy。
+- **尺度规律**：coarser scale（30×30）→ interval **更短**；finer scale → 更长。
+- **空间规律**：object boundaries / sharp details 处 interval **更长**（不确定性大），homogeneous 区域更短。
+- **物理解释**：RI 采样 profile Φ 主要覆盖**低频**、高频测点极少（见 Cai et al. 2017a Fig.2），故高频图像成分（细节、边界）的 likelihood 信息少 → 更高不确定性 → 更长 interval。这把"不确定性图"与 uv 采样几何直接挂钩，是很有说服力的一致性检验。
+
+**Hypothesis testing（§5.5，Fig.9 / Table 2）**：对结构做 knock-out test——若 surrogate 被推出 C_α⁰（surrogate 目标值 > γ_α⁰）则判 physical。结果分层：
+- **M31、W28、3C288 的主结构**被正确判为 **physical**（surrogate 落在 C_α⁰ 外）。
+- **3C288 的 structure 2** 是**重建 artefact**，测试正确地**未能支持**其物理性（ground truth 中不存在）。
+- **Cygnus A 的真实结构**（ground truth ✓）因仅几像素、孤立且强度弱，测试**无法**给出 physical 的强统计判定（Table 2 中为 **✗**，surrogate 仍落在 C_α⁰ 内）——这是诚实的**负面结果**，说明 knock-out test 对弱小孤立结构的功效有限。
+
+故该检验能区分真实天体结构与重建假象，但对弱小孤立的真实结构可能漏判（不是"真实结构都被判 physical"）。
+
+**批判视角再补充**：四图均为**合成/模拟**观测（非真实望远镜 raw data）；"有效维度 p"在严格 Eq.19 中并不出现（早期写法的混淆点）；local intervals 隐含 superpixel 间近似独立，而真实图像存在跨尺度空间相关，故 interval 图捕捉的是 superpixel 尺度的局部相关，可能漏掉沿参数空间方向的相关结构（§4.2 末论文自陈）。
+
+---
+
+## 🔗 与其它 14 篇的关系（更具体）
+
+- **论文 I（ri-uq-i, priority 12, arXiv:1711.04818）**：同一 companion series。论文 I 用 **Px-MALA / MYULA** 采样完整后验做 UQ（精确但慢，本篇 §5 即以 Px-MALA 为 benchmark）；本篇用 **MAP + concentration** 做同样三类 UQ（近似但快 ≈10⁵×）。**互补**：小数据/需要完整后验用 I，big-data/SKA 用 II。本仓库两篇**共用同一 toy runner** `map_uq_toy.py`，但都只是代理（见复现判断）。
+- **High-dimensional UQ 短文（high-dimensional-uq, priority 11）**：同属 MAP-UQ 思想的一般版/方法论；本篇是其在 RI imaging 上的专门化落地。三篇（11/12/13）共享 `map_uq_toy.py`。
+- **Online RI imaging（priority 14）**：与本篇同面向 **SKA big-data setting**；本篇强调 MAP 的 distributed/parallel 结构，Online 进一步处理流式/在线场景。relation links = [12, 11, 14]。
+- 与 SaT/ROF 主线（1-10 篇）的联系较弱：那条线是 segmentation/restoration 的变分优化；本篇是 Bayesian inverse problem 的 UQ。但**方法工具相通**：forward-backward / proximal splitting / soft-thresholding 在两条线都是核心数值工具。
+
+---
+
+## ⚠️ 阅读陷阱（读这篇时容易踩的坑）
+
+1. **γ_α⁰ 的公式不含 p**：本文 Eq.19 是 `f(x_map)+g(x_map)+τ_α√N+N`、`τ_α=√(16 log(3/α))`。早期 Pereyra 文献有 √(N/p) 形式（p 为有效维度），**别混用**——本笔记上文已更正。
+2. **10⁵× 是大尺度结论，不是任意比值**：它来自 256×256 真实 RI 上 Px-MALA（千分钟级）对 MAP（分钟内）。任何 toy/小图的时间比都**不能**外推为 10⁵×。
+3. **analysis vs synthesis**：正交 Ψ（Ψ†Ψ=I）下两者**数学上完全相同**（§5.2 footnote 6：identical），over-complete（Ψ†Ψ≠I）下 very different。看到论文"只展示 analysis"不要以为 synthesis 没做——是因为在该正交设置下两者无差别（M31 经验观察见 §5.2 正文 Fig.2）。
+4. **MAP 不是终点**：本文最大误读是"MAP 就是把后验塌成一个点、丢了不确定性"。恰相反——MAP 是 UQ 后处理的**入口**，concentration 公式让一个点估计也能给出 credible region。
+5. **保守 ≠ 不准**：γ_α⁰ ≥ γ_α、interval 略偏长，是**有意为之的保守**，保证不漏报不确定性，且误差仅 1%–5%。
+
+---
+
+## 📊 复现判断
+
+| 维度 | 评估 |
+|------|------|
+| **当前复现等级** | `toy`（真实性 `toy-completed`） |
+| **runner 文件** | `reproduce/experiments/map_uq_toy.py`（与 ri-uq-i、high-dimensional-uq 共用） |
+| **toy 做了什么** | 32×32 Fourier 欠采样反问题；gradient+Gaussian-filter 代理 MAP；Gaussian-perturbation 链代理 MCMC；手工合成 uncertainty/interval 图 |
+| **当前 runMetrics** | `map_psnr=18.7123`、`map_snr=9.6004`、`map_runtime_seconds=0.0017`、`mcmc_runtime_seconds=0.0041`、`gamma_alpha_toy=939.9229`、`mean_interval_length=0.1739`（均为 toy 代理值） |
+| **resultFiles** | `assets/repro/map_uq_reconstruction_uncertainty.png` |
+| **与论文差距** | 缺真实 forward-backward MAP（Algorithm 1/2）、缺真正 Eq.19 HPD 阈值、缺 RI measurement operator Φ、缺 M31/Cygnus A/W28/3C288 真实图、缺 Px-MALA 基准、缺 local intervals（Eq.26-27）与 hypothesis testing（Eq.29-31） |
+| **诚实声明** | toy 时间比 ≈2.4×，**不可**外推为论文 ≈10⁵×；toy PSNR/interval 均非论文报告值；paper-level 在 15 篇中仍为 **0/15**，本篇亦然 |
+| **可行性** | 偏难。full reproduction 需 RI 测量算子 + 大图 MAP solver + 与 MCMC 的系统对比；toy 可展示 MAP-UQ 快速路线的方向 |
+
+---
+
+## 完整复现流程
+
+本篇已配套一份"完整复现流程 (Complete Reproduction Workflow)"规范文档，覆盖论文身份核验、算法 step-by-step pipeline、所需数据集（M31/Cygnus A/W28/3C288）、基线（Px-MALA）、论文报告数值（Table 1 时间、1%–5% HPD 误差）、本仓库 toy 实现与到 paper-like 的差距清单。详见：
+[`../reproduce/paper_like/workflows/ri-uq-ii_reproduction_workflow.md`](../reproduce/paper_like/workflows/ri-uq-ii_reproduction_workflow.md)
 
 ---
 

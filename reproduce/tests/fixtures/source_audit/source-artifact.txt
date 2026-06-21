@@ -1,0 +1,2 @@
+teacherZ Iterated ROF source audit fixture artifact.
+This is a tiny local test fixture used to prove SHA-256 artifact checks.

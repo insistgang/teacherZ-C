@@ -1,6 +1,11 @@
 __pycache__/
 *.pyc
 .DS_Store
+.venv/
+venv/
 reproduce/results/
 reviews/extracts/
 *.log
+reproduce/data/iterated_rof/*/images/
+reproduce/data/iterated_rof/*/masks/
+reproduce/data/iterated_rof/*/audit/

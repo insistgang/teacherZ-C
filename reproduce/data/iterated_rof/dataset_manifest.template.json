@@ -1,0 +1,70 @@
+{
+  "families": {
+    "cartoon": {
+      "source_id": "bsds500",
+      "source_name": "Berkeley Segmentation Dataset and Benchmark",
+      "license_reviewed": false,
+      "license_note": "Review dataset terms before paper-like promotion or redistribution.",
+      "citation": "",
+      "provenance_reviewed": false,
+      "provenance_note": "Record how local files were obtained from this source, including download page, date, filtering, and any conversion steps.",
+      "synthetic_fixture": false,
+      "source_audit": {
+        "source_url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/",
+        "downloaded_at": "",
+        "source_artifact_path": "cartoon/audit/source-artifact.ext",
+        "source_artifact_sha256": "",
+        "license_snapshot_path": "cartoon/audit/license-snapshot.html",
+        "license_snapshot_sha256": "",
+        "conversion_notes": "Record filtering, extraction, resizing, mask conversion, and script/version details.",
+        "local_file_mapping_reviewed": false
+      },
+      "notes": "Replace this template entry after placing local files under cartoon/images and cartoon/masks. Add one files[] entry per local image, for example {\"image\":\"sample.png\",\"sha256\":\"...\",\"mask\":\"sample.png\",\"mask_sha256\":\"...\"}.",
+      "files": []
+    },
+    "texture": {
+      "source_id": "prague-texture",
+      "source_name": "Prague Texture Segmentation Benchmark",
+      "license_reviewed": false,
+      "license_note": "Review benchmark terms before paper-like promotion or redistribution.",
+      "citation": "",
+      "provenance_reviewed": false,
+      "provenance_note": "Record how local files were obtained from this source, including download page, date, filtering, and any conversion steps.",
+      "synthetic_fixture": false,
+      "source_audit": {
+        "source_url": "https://mosaic.utia.cas.cz/",
+        "downloaded_at": "",
+        "source_artifact_path": "texture/audit/source-artifact.ext",
+        "source_artifact_sha256": "",
+        "license_snapshot_path": "texture/audit/license-snapshot.html",
+        "license_snapshot_sha256": "",
+        "conversion_notes": "Record filtering, extraction, resizing, mask conversion, and script/version details.",
+        "local_file_mapping_reviewed": false
+      },
+      "notes": "Replace this template entry after placing local files under texture/images and texture/masks. Add one files[] entry per local image, for example {\"image\":\"sample.png\",\"sha256\":\"...\",\"mask\":\"sample.png\",\"mask_sha256\":\"...\"}.",
+      "files": []
+    },
+    "medical": {
+      "source_id": "brainweb",
+      "source_name": "BrainWeb Simulated Brain MRI Database",
+      "license_reviewed": false,
+      "license_note": "Review BrainWeb terms before paper-like promotion or redistribution.",
+      "citation": "",
+      "provenance_reviewed": false,
+      "provenance_note": "Record how local files were obtained from this source, including download page, date, filtering, and any conversion steps.",
+      "synthetic_fixture": false,
+      "source_audit": {
+        "source_url": "https://brainweb.bic.mni.mcgill.ca/brainweb/",
+        "downloaded_at": "",
+        "source_artifact_path": "medical/audit/source-artifact.ext",
+        "source_artifact_sha256": "",
+        "license_snapshot_path": "medical/audit/license-snapshot.html",
+        "license_snapshot_sha256": "",
+        "conversion_notes": "Record filtering, extraction, resizing, mask conversion, and script/version details.",
+        "local_file_mapping_reviewed": false
+      },
+      "notes": "Replace this template entry after placing local files under medical/images and medical/masks. Add one files[] entry per local image, for example {\"image\":\"sample.png\",\"sha256\":\"...\",\"mask\":\"sample.png\",\"mask_sha256\":\"...\"}.",
+      "files": []
+    }
+  }
+}

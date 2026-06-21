@@ -13,7 +13,7 @@ def run():
     import matplotlib.pyplot as plt
     from scipy.ndimage import gaussian_filter
     from skimage.draw import line
-    from skimage.morphology import binary_dilation, disk
+    from skimage.morphology import dilation, disk
 
     elapsed = timer()
     rng = np.random.default_rng(SEED + 56)
@@ -23,7 +23,7 @@ def run():
     for r0, c0, r1, c1 in segments:
         rr, cc = line(r0, c0, r1, c1)
         mask[rr, cc] = True
-    mask = binary_dilation(mask, disk(3))
+    mask = dilation(mask, disk(3))
     image = mask.astype(float) * 0.75 + 0.18 + rng.normal(0, 0.13, (n, n))
     image = np.clip(image, 0, 1)
 

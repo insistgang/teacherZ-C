@@ -40,6 +40,7 @@ node docs/scripts/validate.mjs
 - `run_all.py` - 运行所有复现实验
 - `experiments/` - 实验代码
 - `results/` - 实验结果
+- `paper_like/workflows/<id>_reproduction_workflow.md` - 15 篇 per-paper 完整复现流程规范（paper-level 目标流程，非已完成复现；dashboard 复现报告页每张卡片链接此处）。新增 reproAssessment id 时需同步新增同名文档，否则 `validate.mjs` 报错。
 
 ### 精读笔记 (`xiaohao_cai_ultimate_notes/`)
 - 15 个独立 Markdown 精读笔记文件；一篇 PDF 对应一份笔记。
@@ -67,5 +68,6 @@ node docs/scripts/validate.mjs
 └── reproduce/                         # 复现实验代码
     ├── run_all.py
     ├── experiments/
-    └── results/
+    ├── results/
+    └── paper_like/workflows/         # 15篇 per-paper 完整复现流程文档
 ```

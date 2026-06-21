@@ -17,7 +17,7 @@
 | **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
 | **年份** | 2022 |
 | **arXiv ID** | 2106.03646v3 |
-| **会议/期刊** | 待定 (arXiv preprint) |
+| **会议/期刊** | Statistics and Computing, 2022, 32(5):87（DOI 10.1007/s11222-022-10152-9）；arXiv:2106.03646v3 预印本 |
 | **研究领域** | 贝叶斯统计, 计算成像, 模型选择 |
 | **关键词** | Nested sampling, MCMC sampling, marginal likelihood, Bayesian evidence, inverse problems, proximal optimisation, model selection |
 
@@ -842,3 +842,141 @@ class AdaptiveMYULA(MYULA):
 - 如何扩展到非对数凹分布？
 - 自适应参数选择策略？
 - 与深度学习生成模型（如VAE、GAN）的结合？
+
+---
+
+## 🧩 6. 深度补充：约束采样机制、显式 prox 与实验结果（基于 PDF §4-6 逐项核对）
+
+> 本节是对前文的加深，所有数值与公式编号均按 PDF (arXiv:2106.03646v3) 核对，未在 PDF 出现的数字一律不写。
+
+### 6.1 nested sampling 难在哪一步：约束采样
+
+nested sampling 的整体骨架（Algorithm 1）很简单：维护 $N_{\text{live}}$ 个 live 样本，每步剔除似然最低的那个、累加其对证据的贡献、再补一个新样本。**唯一的难点在"补样本"这一步**——新样本必须满足硬约束 $\mathcal{L}(x) > L_i$，即落在似然水平集 $\Omega_{L_i} = \{x : \mathcal{L}(x) > L_i\}$ 内，且仍服从 prior。低维时可用 rejection sampling（反复从 prior 采样直到命中），但随维度上升命中概率指数衰减，于是标准 nested sampling 被限制在 $\mathcal{O}(10^2)$–$\mathcal{O}(10^3)$ 维。本篇的全部创新都为攻克这一步。
+
+### 6.2 把硬约束变成可微：Moreau-Yosida 近似 characteristic function（PDF §4.1-4.2）
+
+这是本篇最关键、也最容易被前文一笔带过的技术细节，逐步拆解如下：
+
+1. **硬约束 → indicator**：设 prior $\pi(x)=\exp(-f(x))$，likelihood $\mathcal{L}(x)=\exp(-g(x))$，$f,g$ 凸 l.s.c.。约束 $\mathcal{L}(x)>L^*$ 因 $\log$ 单调等价于 $g(x)<\tau$，其中 $\tau=-\log L^*$（Eq.(29)）。定义约束集 $\mathcal{B}_\tau=\{x: g(x)<\tau\}$，则约束写成 characteristic function $\chi_{\mathcal{B}_\tau}(x)$（属于为 0，否则 $+\infty$，Eq.(30)）。
+
+2. **约束 prior 的负对数**（Eq.(32)）：
+$$-\log \pi_{L^*}(x) = f(x) + \chi_{\mathcal{B}_\tau}(x).$$
+这是一个 $f$（可微/可 prox）+ $\chi_{\mathcal{B}_\tau}$（非光滑硬约束）的复合目标，正是 proximal MCMC 的标准形式。
+
+3. **Moreau-Yosida 抹平硬墙**（Eq.(34)(35)）：characteristic function 的 $\lambda$-Moreau-Yosida envelope 有惊人简洁的形式
+$$\chi_{\mathcal{B}_\tau}^\lambda(x) = \frac{1}{2\lambda}\|x - x^*\|_2^2,\qquad x^* = \text{prox}_{\chi_{\mathcal{B}_\tau}}(x) = \text{proj}_{\mathcal{B}_\tau}(x),$$
+其梯度 $\nabla\chi_{\mathcal{B}_\tau}^\lambda(x) = (x-x^*)/\lambda$。**直觉**：硬墙（无穷高势垒）被换成一个二次"软墙"，到约束集的投影 $x^*$ 给出梯度方向；样本在墙内时该项为 0（自由扩散），跑出墙外时被一个正比于"越界距离"的力推回约束集。
+
+4. **constrained ULA 迭代**（Eq.(36)，$f$ 可微时）：
+$$x^{(k+1)} = x^{(k)} - \frac{\delta}{2}\nabla f(x^{(k)}) - \frac{\delta}{2\lambda}\big[x^{(k)} - \text{prox}_{\chi_{\mathcal{B}_\tau}}^\lambda(x^{(k)})\big] + \sqrt{\delta}\, w^{(k+1)}.$$
+$f$ 非光滑时对 $f$ 也用 Moreau-Yosida（Eq.(38)）。
+
+5. **Metropolis-Hastings 校正保证硬约束严格满足**（Eq.(39)(40)）：Moreau-Yosida 是近似，会让样本偶尔漏到约束外。加一步 MH，接受概率 $\min\{1,\, q(x^{(k)}|x')\pi_{L^*}(x') / (q(x'|x^{(k)})\pi_{L^*}(x^{(k)}))\}$；只要候选落在 $\mathcal{B}_\tau$ 外就有 $\pi_{L^*}(x')=0$ 必被拒——**于是 MYULA 的近似偏差被消除、硬似然约束被严格保证**。这是"近似换效率、MH 兜底正确性"的经典组合。
+
+> **阅读要点**：前文（工程师 Agent 那段伪码）把约束采样写成"MYULA 步进 + 硬约束检查（不满足就拒绝当前步）"，这是简化版；论文真正的机制是**把约束本身编码进目标函数的 Moreau-Yosida envelope**（Algorithm 2 ProxSampleDraw），约束是通过投影项 + MH 共同满足的，而非简单的 accept/reject 当前 MYULA 步。读 PDF 时要抓住 Eq.(30)→(34)→(36)→(39) 这条主线。
+
+### 6.3 三个核心算法的分工（PDF §4.2-4.4）
+
+| 算法 | 作用 | 关键依赖 |
+|------|------|----------|
+| **Algorithm 2** `ProxSampleDraw`$(x^{(0)},L^*)$ | 从约束 prior 抽**一个**满足 $\mathcal{L}>L^*$ 的样本 | 迭代 Eq.(36)/(38) + MH(Eq.(39))，步数 $k\geq K_{\text{gap}}$ |
+| **Algorithm 3** | 抽 $N_{\text{live}}$ 个**无约束** prior 初始样本 | 迭代 Eq.(41)，burn-in $K_{\text{burn}}$，thinning $K_{\text{gap}}$ |
+| **Algorithm 4** | proximal nested sampling 主循环 | 在 Algorithm 1 骨架里用 Algorithm 2 替换"补样本"步 |
+
+Algorithm 4 每步：找最低似然 $L_i$ → 算权重 $w_i=(\xi_{i-1}-\xi_{i+1})/2$ → 累加 $\mathcal{Z}\mathrel{+}=L_i w_i$ → 随机选一 live 样本作起点跑 Algorithm 2 得替换样本；末尾补 live 样本剩余贡献 $\mathcal{Z}\mathrel{+}=\sum_n \mathcal{L}(x_n) w_{i+1}/N_{\text{live}}$，算后验权重 $p_i=L_i w_i/\mathcal{Z}$。
+
+### 6.4 显式 prox 形式：成像里到底算什么（PDF §5）
+
+论文聚焦 sparsity-promoting prior $f(x)=\mu\|\Psi^\dagger x\|_1$（$\Psi$ 正交 sparsifying 变换）与 Gaussian likelihood $g(x)=\|y-\Phi x\|_2^2/(2\sigma^2)$。需要两个 prox：
+
+- **prior 的 prox（软阈值，Eq.(43)）**：
+$$\text{prox}_f^\lambda(x') = x' + \Psi\big(\text{soft}_{\lambda\mu}(\Psi^\dagger x') - \Psi^\dagger x'\big),$$
+$\text{soft}_\lambda$ 为逐元素软阈值（Eq.(44)）。这正是 ℓ₁ 稀疏先验对应的近端算子，**也是为什么本篇能处理非光滑 prior**。
+
+- **likelihood 的 prox = 投影到约束集（Eq.(45)-(46)）**：
+  - $\Phi=I$（**去噪**）：约束集是半径 $\sqrt{2\tau\sigma^2}$ 的 ℓ₂ 球，投影有闭式解（Eq.(46)）。
+  - $\Phi\neq I$（**重建**）：投影需解约束最小化（Eq.(47)），论文给两套求解器——**ADMM（Algorithm 5）** 与 **primal-dual（Algorithm 6）**。primal-dual 不必解线性系统 $(\beta\Phi^\dagger\Phi+I)x=\dots$（Eq.(56)），通常更快，是数值实验默认；ADMM 在线性系统可高效求解的特定问题上更合适。
+
+> **细节**：uniform / Gaussian / Laplacian prior 的显式迭代式分别是 Eq.(66)/(67)/(68)（约束采样）与 Eq.(69)/(70)/(71)（无约束 live 样本）。读 §5 时按"$f$ 给哪种 prox、$g$ 给哪种投影"两条线索对号入座即可。
+
+### 6.5 实验结果逐表精读（PDF §6，含具体数值）
+
+论文实验分两块，**读时重点是"Bayes 证据 log Z 的排序是否与真值已知时的最优选择一致"，而非单张重建图**。
+
+**(A) 高维 Gaussian 验证（§6.2）**——证明算法在已知解析证据时正确，并展示可扩展性：
+- 合成 $y=x+w$，$x\sim\text{Unif}[0,1]^d$，$w$ 标准正态；$f(x)=\mu\|\Psi^\dagger x\|_2^2$（$\mu=1/2,\Psi=I$），$g(x)=\|y-\Phi x\|_2^2/(2\sigma^2)$（$\sigma=1,\Phi=I$）。解析 log evidence 见 **Appendix A**。
+- **vanilla Monte Carlo integration** 作对照：Fig.1 显示其只在 $d\lesssim 20$ 可用，高维彻底失效；proximal nested sampling 在 $d=2$ 到 $200$ 全程贴合 ground truth。
+- 中维 $d=10^5$ 约 10 分钟（Fig.2，$N_{\text{live}}=10^3$，$N=10^4$）。
+- **高维 $d=10^6$**：ground truth $\log=2.3850\times10^5$；10 次运行均值 $\mathbf{2.3851\times10^5}$，标准差 $0.0002\times10^5$，每次约 30 分钟。**这是全文最硬的可扩展性证据**。
+
+**(B) 成像 model selection（§6.3）**——三组任务，分别选 dictionary / 正则参数 / measurement model：
+
+| 实验 | 图像 | 选什么 | 论文结论（log Z 选最优，与 RMSE 一致） |
+|------|------|--------|----------------------------------------|
+| Table 1（§6.3.1） | Cameraman 256² | dictionary $\Psi\in\{I,\text{DB2},\text{DB8}\}$ | **DB2 最优**（log Z $-3.06\times10^4$，RMSE 14.29）> DB8（$-3.09\times10^4$，14.51）≫ I（$-6.54\times10^4$，41.07） |
+| Table 2（§6.3.2） | W28 射电图 256² | 正则参数 $\mu\in\{10^6,10^7,10^8\}$，30% Fourier | **$\mu=10^6$ 最优**（log Z $-2.61\times10^4$，RMSE 1.82）>$10^7$（$-5.39\times10^4$，2.81）>$10^8$（$-2.90\times10^5$，6.70） |
+| Table 3（§6.3.3） | M31 射电图 256² | measurement model $\Phi=M_\gamma F$，10% Fourier | **$\gamma=0$（真值 mask）最优**（log Z $-4.47\times10^3$，RMSE 3.40）；$\gamma$ 越大 log Z 单调降到 $\gamma=0.12$ 的 $-1.44\times10^4$（RMSE 18.08） |
+
+**读表三个要点**：
+1. **log Z 排序与 RMSE 排序完全一致**——而 RMSE 需要 ground truth、实际不可用，log Z 不需要，这正是方法的价值：无真值也能客观选模。
+2. **log Z 绝对值很大（$10^3$–$10^5$ 量级）是因为问题极高维**（256²≈6.5×10⁴ 维），属正常（Table 1 脚注 6），别误读为误差。
+3. **不要用 Jeffrey's scale**：高维下 Bayes factor 可极大，传统定性量表无意义，论文建议**直接比较 log Z 数值**（§6.3.1 末）。
+
+算力（§6.1）：低维 MacBook i7/16GB；高维 24 核工作站/256GB。实现为 MATLAB，后有 Python `proxnest`（`github.com/astro-informatics/proxnest`）。
+
+### 6.6 误差估计（PDF §3.3，前文未展开）
+
+prior volume $\xi_i$ 是随机估计，是证据不确定性的主导来源。论文用 Skilling (2006) 的熵法（Eq.(26)(27)）：负相对熵 $H=\int\mathcal{P}(\xi)\log\mathcal{P}(\xi)d\xi \approx \sum_i \frac{L_i w_i}{\mathcal{Z}}\log\frac{L_i}{\mathcal{Z}}$，于是
+$$\log\mathcal{Z} = \log\Big(\sum_{i=1}^N L_i w_i\Big) \pm \sqrt{H/N_{\text{live}}}.$$
+Chopin & Robert (2010) 证明误差渐近高斯、以 $\mathcal{O}(N^{-1/2})$ 消失，且**误差随维度 $d$ 近似线性增长**——这解释了为什么各表 log Z 都带 ±标准差，且高维仍可控。
+
+---
+
+## 🔗 7. 与其它 14 篇的具体关系（本仓库口径）
+
+本篇是 15 篇中**问题层级最高**的一篇，把"图像/不确定性是什么"升级为"哪个模型更可信"。具体连接：
+
+- **与 RI UQ I（第 12 篇，Cai/Pereyra/McEwen 2018）**：共享 **proximal MCMC（MYULA）** 这一底层引擎。RI UQ I 用 proximal MCMC 做单模型下的后验采样与不确定性量化；本篇把同一引擎装进 nested sampling 的"约束采样"位置，从 UQ 上升到 model selection。两篇作者高度重叠（McEwen、Pereyra）。
+- **与 Quantifying UQ（第 11 篇）/ RI UQ II（第 13 篇）**：共享 **Bayesian inverse problem + log-concave posterior** 语境与射电成像应用（W28 为超新星遗迹、M31 为星系的射电图像）。它们回答"给定模型，后验不确定性多大"；本篇回答"在多个候选模型/prior/dictionary/measurement model 中选哪个"。
+- **与 SaT/ROF/framelet 主线（第 1-10 篇）**：这些论文反复在 ℓ₁/TV/framelet 等**非光滑正则**与不同 dictionary 间做选择，但多靠经验或 ground truth。本篇提供了一个**客观、可计算**的选择准则（Bayes 证据），原则上可回头给那些方法的 prior/字典/参数选择提供模型选择依据——例如"TV vs wavelet vs framelet 哪个 prior 证据更高"。
+- **方法论意义**：本篇是整组论文在贝叶斯方向的"收口"——前面各篇造了很多 model/prior/solver，本篇给了一把"选模型"的尺子。
+
+---
+
+## ⚠️ 8. 阅读陷阱（reading traps）
+
+1. **别把约束采样读成简单 accept/reject**：核心是 Moreau-Yosida 把硬约束编码进目标（§6.2），MH 只是兜底，不是主机制。
+2. **log Z 绝对值大 ≠ 误差大**：高维问题 log Z 天然在 $10^3$–$10^5$ 量级（§6.5 要点 2）。
+3. **RMSE 是"作弊"对照**：论文给 RMSE 只为验证 log Z 排序正确，RMSE 本身需 ground truth、实际不可用——这恰恰反衬 evidence 的价值。
+4. **log-concave + 可能非光滑是适用边界**：方法**不**处理多峰/非 log-concave 后验（§4.4 末、Conclusion 明确点出多峰是 future work）。
+5. **Bayes factor 别套 Jeffrey's scale**：高维下传统量表失效，直接比 log Z（§6.5 要点 3）。
+6. **toy 复现 ≠ 论文复现**：本仓库当前只在 d=2 上跑了 nested sampling 骨架（rejection sampling），**没有** proximal 约束采样，详见下节复现判断与完整复现流程。
+
+---
+
+## ✅ 复现判断
+
+| 维度 | 判断 |
+|------|------|
+| **本仓库复现等级** | `toy`（reproductionLevel） |
+| **复现真实性** | `toy-completed`（reproductionTruthLevel） |
+| **runner 文件** | `reproduce/experiments/nested_sampling_toy.py` |
+| **实际复现了什么** | 在 d=2 Gaussian likelihood + uniform prior 上跑 standard nested sampling 骨架，演示 evidence 积分 → prior-volume 一维 quadrature 求和的教学核心 |
+| **关键缺失** | **完全未实现论文创新**：proximal constrained sampler（Algorithm 2/3/4）、Moreau-Yosida characteristic function、MYULA + MH、ℓ₁ prox（Eq.(43)）、ℓ₂ 球投影 / primal-dual（Eq.(46)/Algorithm 6） |
+| **当前 toy 数值** | `estimated_log_evidence=-5.5996`，`reference_log_evidence=-3.1319`，`absolute_log_error=2.4676`（误差**大**），`live_points=80`，`iterations=180`，`runtimeSeconds≈0.0419` |
+| **约束采样实现** | rejection sampling（uniform prior 内重采样），**非** proximal MCMC；维度一升即失效 |
+| **结果文件** | `assets/repro/nested_sampling_evidence_trace.png` |
+| **可外推性** | 仅 nested sampling 机制演示。**不得**外推为论文级证据估计精度、不得等同于论文 d=10⁶ 的 $2.3851\times10^5$、不得宣称验证了 Table 1/2/3 任何 model-selection 结论 |
+| **paper-level 状态** | 0/15，本篇亦未达成 |
+| **数据壁垒** | 低（Gaussian 可合成，Cameraman/W28/M31 公开）；真正壁垒在算法实现与高维算力（24 核/256GB） |
+
+> 诚实说明：当前实现 `absolute_log_error=2.4676` 很大，dashboard 已标 `resultQuality: rough illustrative`、`warning: large evidence error; toy only`。它只用于演示"nested sampling 如何把高维证据积分变成一维求和"这一机制，**不是**论文报告值，也未触及论文的近端约束采样创新。
+
+---
+
+## 完整复现流程
+
+本篇的"完整复现流程 (Complete Reproduction Workflow)"规范文档（含论文身份核验、算法 step-by-step、所需数据集、基线、论文 Table 1/2/3 报告数值、当前 toy 实现、到 paper-like/paper-level 的差距清单、运行步骤与代理风险）见：
+[`../reproduce/paper_like/workflows/proximal-nested-sampling_reproduction_workflow.md`](../reproduce/paper_like/workflows/proximal-nested-sampling_reproduction_workflow.md)
+
+简述：当前仓库为 `toy` 等级（d=2 Gaussian nested sampling 骨架 + rejection sampling），尚未实现论文的 proximal constrained sampler；向 paper-like 推进需依次补齐 ℓ₁/ℓ₂ prox、MYULA+MH 约束采样（Algorithm 2-4）、中维 Gaussian 解析证据对照、再到 Cameraman/W28/M31 的 dictionary/正则参数/measurement model 选择实验。

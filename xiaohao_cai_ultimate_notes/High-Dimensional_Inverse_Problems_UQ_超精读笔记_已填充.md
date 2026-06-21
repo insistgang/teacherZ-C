@@ -16,7 +16,7 @@
 | **年份** | 2018/2019 (v1: 2018-11, v2: 2019-09) |
 | **arXiv ID** | 1811.02514 |
 | **期刊** | EUSIPCO 2019 (European Signal Processing Conference) |
-| **机构** | UCL MSSL, Heriot-Watt University, University of Geneva |
+| **机构** | UCL MSSL (Xiaohao Cai & Jason D. McEwen), Maxwell Institute for Mathematical Sciences / Heriot-Watt University (Marcelo Pereyra) |
 | **领域** | 信号处理、贝叶斯推断、不确定性量化、凸优化 |
 
 ### 📝 摘要翻译
@@ -25,7 +25,9 @@
 
 在本文中，我们提出了一系列可视化这种不确定性的策略，例如最高后验密度（HPD）可信区域，以及单个像素和超像素的局部可信区间（相当于误差条）。我们的方法支持反问题的非光滑先验，并且可以扩展到高维设置。此外，我们提出了自动设置正则化参数的策略，使得提出的不确定性量化（UQ）策略更容易使用。此外，我们还使用了不同类型的字典（完全和过完备）来表示图像/信号，并研究了它们在所提出的UQ方法中的性能。
 
-**关键词**: 不确定性量化、反问题、凸优化、贝叶斯推断、稀疏先验、射电干涉成像、X射线成像
+**关键词（PDF Index Terms）**: 不确定性量化、图像/信号处理、反问题、贝叶斯推断、凸优化
+
+**相关主题/应用背景（非论文 Index Terms）**: 稀疏先验、射电干涉成像
 
 ---
 
@@ -67,14 +69,19 @@ $$x^*_\mu = \arg\min_{x \in \mathbb{R}^N} \left\{ \underbrace{\mu \|\Psi^\dagger
 
 **定理2：HPD可信区域的高维近似**
 
-基于概率集中理论（probability concentration），对于高维对数凹后验分布，HPD可信区域可近似为：
+先看**精确** HPD region 的定义（PDF Eq.(5)）。给定置信水平 $1-\alpha$，HPD region 为
+$$C_\alpha := \{x : \mu f(x) + g_y(x) \leq \gamma_\alpha\}, \quad \text{其中 } \gamma_\alpha \text{ 满足 } \int_{x \in C_\alpha} p(x|y)\,\mathbb{1}_{C_\alpha}\,dx = 1 - \alpha.$$
+直觉：HPD region 是后验密度最高、把 $1-\alpha$ 的概率质量"装进去"的那一块；因为后验 $p(x|y) \propto \exp(-(\mu f(x)+g_y(x)))$，密度高 ⟺ 目标泛函 $\mu f + g_y$ 小，所以 HPD region 就是目标泛函的一个 sublevel set。**问题**：高维下精确求 $\gamma_\alpha$（要做 $N$ 维积分）不可行。
 
-$$C_\alpha = \{x : \mu f(x) + g_y(x) \leq \gamma'_\alpha\}$$
+**近似**（PDF Eq.(6)，承自 Pereyra SIIMS 2016 ref [11]）：用 MAP 点的目标值加一个只依赖 $N, \alpha$ 的校正项替代 $\gamma_\alpha$：
+$$C'_\alpha = \{x : \mu f(x) + g_y(x) \leq \gamma'_\alpha\}, \quad \gamma'_\alpha = \mu f(x^*_\mu) + g_y(x^*_\mu) + \sqrt{16\log(3/\alpha)} \cdot \sqrt{N} + N$$
 
-其中阈值 $\gamma'_\alpha$ 的近似公式为：
-$$\gamma'_\alpha = \mu f(x^*_\mu) + g_y(x^*_\mu) + \sqrt{16\log(3/\alpha)} \cdot \sqrt{N} + N$$
+**逐项拆解**：
+- $\mu f(x^*_\mu) + g_y(x^*_\mu)$：MAP 点处的目标泛函值，是 sublevel set 的"地板"（最小可能值）。
+- $+N$：来自高维各向同性涨落的一阶项（"半径平方"量级 $\sim N$）。
+- $+\sqrt{16\log(3/\alpha)}\cdot\sqrt{N}$：置信水平相关的涨落项；$\alpha$ 越小（要求覆盖越高）→ $\log(3/\alpha)$ 越大 → 阈值越大 → region 越大，符合直觉。其 $\sqrt N$ 标度正是高维 concentration of measure 的典型形态。
 
-**近似误差界**：当 $N$ 足够大时，该近似的相对误差趋近于零。
+**近似性质**：该近似对**大 $N$ 渐近精确**（相对误差随 $N$ 增大趋于 0），且**保守**——它给出的是包含真 HPD region 的外近似（不会漏判），这是 UQ 安全侧的取向。**代价**：小/中维（$N \sim 10^2$–$10^3$）时校正项可能偏松。
 
 **定理3：局部可信区间**
 
@@ -83,10 +90,13 @@ $$\gamma'_\alpha = \mu f(x^*_\mu) + g_y(x^*_\mu) + \sqrt{16\log(3/\alpha)} \cdot
 $$\xi^{-,\Omega_i} = \min_\xi \left\{ \mu f(x_{i,\xi}) + g_y(x_{i,\xi}) \leq \gamma'_\alpha \right\}$$
 $$\xi^{+,\Omega_i} = \max_\xi \left\{ \mu f(x_{i,\xi}) + g_y(x_{i,\xi}) \leq \gamma'_\alpha \right\}$$
 
-其中 $x_{i,\xi} = x^*_\mu \odot \mathbb{1}_{\Omega \setminus \Omega_i} + \xi \cdot \mathbb{1}_{\Omega_i}$，即仅在区域 $\Omega_i$ 上将值设为 $\xi$，其余保持 MAP 估计值。
+其中 $x_{i,\xi} = x^*_\mu \odot \mathbb{1}_{\Omega \setminus \Omega_i} + \xi \cdot \mathbb{1}_{\Omega_i}$，即仅在区域 $\Omega_i$ 上将值统一设为常数 $\xi$，其余像素保持 MAP 估计值。约束 $\xi \in [0, +\infty)$（论文 Eq.(7)(8) 显式写明非负约束）。
 
-**全局可信区间**：
+**直觉（为什么这是 error bar）**：固定 MAP 重建 $x^*_\mu$，只在第 $i$ 个 superpixel 上把像素值"扭"成 $\xi$，然后问："$\xi$ 能在多大范围内变动而**仍留在** HPD region $C'_\alpha$ 内？"——即仍满足 $\mu f(x_{i,\xi}) + g_y(x_{i,\xi}) \leq \gamma'_\alpha$。能容许的 $\xi$ 的下确界/上确界 $[\xi^{-,\Omega_i}, \xi^{+,\Omega_i}]$ 就是该区域在 $1-\alpha$ 置信水平下的局部可信区间；区间越宽 → 该区域越不确定。因为目标泛函关于单区域常数 $\xi$ 通常是凸的（U 形），$\xi^{-}, \xi^{+}$ 正好是其与阈值线的两个交点，可用**二分搜索**高效求解。
+
+**全局可信区间（拼接，PDF Eq.(9)）**：
 $$\xi^- = \sum_i \xi^{-,\Omega_i} \cdot \mathbb{1}_{\Omega_i}, \quad \xi^+ = \sum_i \xi^{+,\Omega_i} \cdot \mathbb{1}_{\Omega_i}$$
+逐 superpixel 的区间长度图 $(\xi^+ - \xi^-)$ 是论文的主要 UQ 产物（Fig. 4）。论文用 **grid scale $10\times10$ 与 $15\times15$**、$\alpha=0.01$（99% credible level）；Fig. 5 显示 grid 越细，相对 Px-MALA 的区间长度误差越小（grid > $10\times10$ 时 < ~5%）。
 
 ### 1.3 关键证明思路
 
@@ -99,13 +109,14 @@ $$\xi^- = \sum_i \xi^{-,\Omega_i} \cdot \mathbb{1}_{\Omega_i}, \quad \xi^+ = \su
 
 **自动正则化参数选择的推导**：
 
-采用层次贝叶斯模型，将 $\mu$ 视为随机变量，其先验为：
-$$p(\mu) \propto \mu^{N/k} \cdot \exp(-\gamma \mu)$$
+采用层次贝叶斯模型（承自 Pereyra et al. 2015, ref [25]），将 $\mu$ 视为随机变量并联合 MAP 估计 $(x^{(i)}, \mu^{(i)})$。论文 Eq.(4) 给出的迭代格式为：
 
-联合 MAP 估计 $(x^*, \mu^*)$ 满足不动点方程：
-$$\mu^{(i)} = \frac{N/k + \gamma^{-1}}{f(x^{(i)}) + \beta}$$
+$$x^{(i)} = \arg\min_{x \in \mathbb{R}^N} \left\{ \mu^{(i-1)} f(x) + g_y(x) \right\}$$
+$$\mu^{(i)} = \frac{N/k + \gamma - 1}{f(x^{(i)}) + \beta}$$
 
-其中 $k$ 与先验 $f$ 的结构相关（$\ell_1$ 范数时 $k=1$）。
+其中 $\gamma, \beta$ 为固定超参（论文默认值均为 1），$k$ 与先验 $f$ 的结构相关（$\ell_1$ 范数时 $k=1$）。
+
+> **⚠️ 公式勘误**：本笔记早期版本曾把分子写成 $N/k + \gamma^{-1}$，与 PDF Eq.(4) 的 $N/k + \gamma - 1$ 不一致。已据 PDF 修正为 $\gamma - 1$。在默认 $\gamma=k=1$ 时分子化简为 $N/1 + 1 - 1 = N$，即 $\mu^{(i)} = N/(f(x^{(i)}) + \beta)$，这一化简形态在阅读时便于校验。论文实验用 **10 次迭代**，每次内层 MAP 用 forward-backward splitting 求解（ref [12]）。
 
 ### 1.4 理论性质总结
 
@@ -131,7 +142,7 @@ $$\mu^{(i)} = \frac{N/k + \gamma^{-1}}{f(x^{(i)}) + \beta}$$
 │  初始化: μ⁽⁰⁾ = 1, x⁽⁰⁾ = 0                                    │
 │  迭代 i = 1, 2, ...:                                            │
 │    x⁽ⁱ⁾ = argminₓ {μ⁽ⁱ⁻¹⁾‖Ψ†x‖₁ + (1/2σ²)‖y - Φx‖²₂}        │
-│    μ⁽ⁱ⁾ = (N/k + γ⁻¹) / (‖Ψ†x⁽ⁱ⁾‖₁ + β)                       │
+│    μ⁽ⁱ⁾ = (N/k + γ - 1) / (‖Ψ†x⁽ⁱ⁾‖₁ + β)                     │
 │  直到收敛                                                       │
 └─────────────────────────────────────────────────────────────────┘
   ↓
@@ -305,19 +316,33 @@ def compute_credible_intervals(x_map, y, Phi, Psi, mu, sigma, gamma_alpha, grid_
 
 ### 3.2 实验结果
 
-**实验设置**：
-- 测试图像：M31星系（射电天文）、Shepp-Logan幻影（X射线）
-- 对比方法：MCMC采样（作为ground truth参考）
-- 评估指标：相对误差、可信区间覆盖率、计算时间
+**实验设置（据 PDF §IV 核实）**：
+- 测试图像：**M31 星系**（RI imaging，Fig. 2 左，log10 尺度）与 **MRI brain image**（来自 BrainWeb 数据库 ref [30]，Fig. 2 右）。
+  > **⚠️ 勘误**：本 PDF 实验**只用**这两张图，并**未**使用 Shepp-Logan 幻影 / X-ray Radon 重建。X-ray/Radon 仅在 Abstract/Introduction 作为"逆问题可推广到的场景"被一般性提及，不是本文的实验。笔记其余处若出现 Shepp-Logan 作为本文实验，均应理解为推广性举例，而非论文结果。
+- 观测：`y = Φx + n`，`Φ = Fourier transform + downsampling mask`，采样率 `M = N/10`（即 10%）；噪声 `σ = ‖x*‖_∞ · 10^{-SNR/20}`，**SNR = 30**；置信水平 **α = 0.01（99% credible level）**。
+- 对比方法（baseline）：**Px-MALA**（proximal MALA，ref [6] = Pereyra 2016 "Proximal Markov chain Monte Carlo algorithms"），作为 state-of-the-art MCMC ground-truth benchmark；同时对比 orthonormal DB8 与 over-complete SARA 字典、synthesis 与 analysis 先验。
+- 评估指标：point estimator 的 SNR、自动 μ、HPD 阈值 γ'_α 曲线、local credible interval length、相对 Px-MALA 的逐像素相对误差。
 
-**关键结果**：
+**论文 Table I 报告数值（SNR 与自动 μ，可从 PDF 直接核实）**：
 
-| 指标 | 本文方法 | MCMC | 说明 |
-|------|----------|------|------|
-| 相对误差 | < 5% | - | 与MCMC后验均值对比 |
-| 计算时间 | 秒级 | 小时级 | 加速比 $\sim 10^5$ |
-| 可信区间覆盖率 | $\geq 1-\alpha$ | $1-\alpha$ | 满足名义覆盖 |
-| HPD区域准确度 | 高 | 高 | 视觉一致性好 |
+| Image | Library/basis | SNR (Synthesis) | SNR (Analysis) | 自动 μ |
+|-------|---------------|-----------------|----------------|--------|
+| M31 | Orthonormal (DB8) | 25.04 | 25.04 | 196 |
+| M31 | SARA | 23.66 | 31.09 | 65 |
+| Brain | Orthonormal (DB8) | 19.06 | 19.06 | 33 |
+| Brain | SARA | 19.89 | 23.63 | 11 |
+
+**关键定性结果（PDF Fig. 3-5 / §IV）**：
+
+| 指标 | 结论 | 出处 |
+|------|------|------|
+| orthonormal 下 synth vs analysis | SNR 完全相同（25.04/25.04、19.06/19.06），γ'_α 差异可忽略 | Table I, Fig. 3 |
+| SARA 下 synth vs analysis | SNR 显著不同（M31: 23.66↔31.09；Brain: 19.89↔23.63） | Table I |
+| 相对 Px-MALA 误差 | 随 grid scale 增大单调下降，grid > 10×10 时 **< ~5%** | Fig. 5 |
+| 计算速度 | MAP 比 Px-MALA 快 **$\mathcal{O}(10^5)$** 量级 | §IV 末 |
+| 运行环境 | MacBook i7 CPU，16 GB，MATLAB R2015b | §IV |
+
+> **关于"可信区间覆盖率 ≥ 1-α"**：这是 MAP-UQ 方法的*预期*性质（HPD region 名义覆盖 1-α），但本 5 页短文**未**给出完整覆盖率校准曲线 / CRPS 等标准评测来确证该数字，应视为定性预期而非论文报告的实测覆盖率。
 
 **字典性能对比**：
 
@@ -409,7 +434,7 @@ def compute_credible_intervals(x_map, y, Phi, Psi, mu, sigma, gamma_alpha, grid_
 | **理论** | 基于概率集中理论的 HPD 区域高维近似 | ★★★★★ |
 | **方法** | 支持非光滑先验的 MAP-based UQ 框架 | ★★★★★ |
 | **应用** | 自动正则化参数选择策略 | ★★★★☆ |
-| **实验** | 射电干涉与X射线成像的 UQ 验证 | ★★★★☆ |
+| **实验** | M31 射电干涉图像与 MRI brain 图像的 UQ 验证（X-ray/Radon 仅为推广举例，非本文实验） | ★★★★☆ |
 
 ### 5.2 技术演进脉络
 
@@ -426,7 +451,7 @@ MAP估计 (凸优化)
   └── 劣势: 仅单点估计，无不确定性
         │
         ▼
-MAP-based UQ (Cai et al., 2018) ← 本文
+MAP-based UQ (Cai et al., EUSIPCO 2019; arXiv v1 2018) ← 本文
   │
   ├── 创新: 概率集中理论 → HPD近似
   ├── 创新: 局部可信区间（误差条）
@@ -434,19 +459,24 @@ MAP-based UQ (Cai et al., 2018) ← 本文
         │
         ▼
 后续工作 (2019-至今)
-  ├── 近端MCMC (UQ for RI I & II)
+  ├── Proximal Nested Sampling (贝叶斯模型比较)
   ├── 深度学习UQ
   └── 实时UQ系统
 ```
+
+> **脉络勘误**：UQ for RI I（proximal-MCMC，ref [5]）与 RI II（MAP estimation + UQ，ref [12]）是本文的**前序/基础**工作，不是後续工作；本文正是把 RI II 的 MAP-UQ 一般化。Pereyra SIIMS 2016（ref [11]）提供 HPD 近似的理论根（Eq.(6)）。真正的"後续"是把同一可扩展贝叶斯框架推向模型比较的 Proximal Nested Sampling 等。
 
 ### 5.3 与作者其他工作的关系
 
 | 论文 | 关系 | 区别 |
 |------|------|------|
-| UQ for RI I (MNRAS 2017) | 前序工作 | 近端MCMC，计算较慢 |
-| UQ for RI II (MNRAS 2018) | 前序工作 | MAP估计，无UQ |
-| **本文 (EUSIPCO 2019)** | 核心贡献 | MAP-based UQ，高效 |
-| Proximal Nested Sampling | 后续发展 | 嵌套采样框架 |
+| UQ for RI I (Cai-Pereyra-McEwen, MNRAS 2018, ref [5]) | 前序工作 | proximal-MCMC（Px-MALA/MYULA）做完整后验采样，给出 ground-truth 级 UQ，但计算昂贵 |
+| UQ for RI II (Cai-Pereyra-McEwen, MNRAS 2018, ref [12]) | 前序工作 / 直接基础 | **MAP estimation + HPD region approximation** 做 UQ（标题虽为 "MAP estimation"，但确实做 UQ），专注 RI imaging，且**假设 μ 已知** |
+| **本文 (EUSIPCO 2019)** | 一般化短入口 | 把 [12] 的 MAP-based UQ 从 RI 专用**推广到一般逆问题**，并**新增**：(i) μ 自动估计；(ii) over-complete SARA 字典下 synthesis/analysis 先验对比 |
+| Pereyra (SIIMS 2016, ref [11]) | 理论基础 | 提供 HPD region 的 Bayesian confidence region 近似（Eq.(6) 的来源） |
+| Proximal Nested Sampling (后续) | 后续发展 | 把贝叶斯模型比较 / 嵌套采样引入同一可扩展框架 |
+
+> **辨析**：本文相对 RI UQ II 的三处明确"加法"（PDF §III 末段亲述）：① 面向 general image/signal inverse problems 而非仅 RI；② μ **自动**估计（[12] 假设 μ 给定）；③ 引入 over-complete SARA 字典，研究 synthesis vs analysis prior 的差异（[12] 未涉及）。
 
 ### 5.4 未来方向
 
@@ -481,14 +511,18 @@ MAP-based UQ (Cai et al., 2018) ← 本文
 
 ## 📚 关键参考文献
 
-1. **Pereyra (2016)**. Proximal Markov chain Monte Carlo algorithms. *Statistics and Computing*. — 近端MCMC的理论基础
-2. **Cai, Pereyra, McEwen (2017)**. Uncertainty quantification for radio interferometric imaging: I. proximal MCMC methods. *MNRAS*. — 作者前序工作，近端MCMC方法
-3. **Cai, Pereyra, McEwen (2018)**. Uncertainty quantification for radio interferometric imaging: II. MAP estimation. *MNRAS*. — 作者前序工作，MAP估计
+> 本节仅列**本文 PDF 真实参考文献**（年份/出处据 PDF 参考文献页核实）。扩展/背景阅读另列于下方分区，避免与本文参考混淆。
+
+1. **Pereyra (2016)**. Proximal Markov chain Monte Carlo algorithms. *Statistics and Computing*. — 近端MCMC的理论基础（PDF [6]）
+2. **Cai, Pereyra, McEwen (2018)**. Uncertainty quantification for radio interferometric imaging: I. proximal MCMC methods. *MNRAS* vol.480. — 作者前序工作，近端MCMC方法（PDF [5]，与第 471 行关系表一致）
+3. **Cai, Pereyra, McEwen (2018)**. Uncertainty quantification for radio interferometric imaging: II. MAP estimation. *MNRAS*. — 作者前序工作，MAP估计（PDF [12]）
 4. **Carrillo, McEwen, Wiaux (2012)**. Sparsity averaging reweighted analysis (SARA). — SARA字典的提出
-5. **Combettes, Pesquet (2011)**. Proximal splitting methods in signal processing. — 近端分裂方法综述
-6. **Vershynin (2018)**. High-dimensional probability. — 概率集中理论
-7. **Parikh, Boyd (2014)**. Proximal algorithms. — 凸优化基础
-8. **Robert (2007)**. The Bayesian choice. — 贝叶斯推断理论
+5. **Combettes, Pesquet (2011)**. Proximal splitting methods in signal processing. — 近端分裂方法综述（PDF [10]）
+6. **Pereyra (2016)**. Maximum-a-posteriori estimation with Bayesian confidence regions. *SIAM J. Imaging Sciences*. — HPD 近似（Eq.(6)）的理论根（PDF [11]）
+7. **Chambolle, Pock (2016)**. An introduction to continuous optimization for imaging. *Acta Numerica*. — 凸优化综述（PDF [9]）
+8. **Robert (2001)**. The Bayesian choice (2nd ed.). — 贝叶斯推断理论（PDF [8]）
+
+> **扩展/背景阅读（非本文参考文献）**：Vershynin (2018) *High-dimensional probability*、Parikh & Boyd (2014) *Proximal algorithms* 是高维概率与近端算法的优秀教材，但**不在本文 30 条参考文献中**，仅作背景补充。
 
 ---
 
@@ -546,3 +580,54 @@ pywt (PyWavelets)  # 小波变换
 - 如何自适应选择超像素尺度？
 - 与深度学习先验（如 DnCNN、深度展开）如何结合？
 - 在线/流式场景下的实时 UQ 如何实现？
+
+---
+
+## ⚠️ 阅读陷阱 (Reading Pitfalls)
+
+精读本文时易踩的坑（均基于 PDF 核实）：
+
+1. **HPD region 是"外近似"而非"等价"**：$\gamma'_\alpha$（Eq.6）给出的 $C'_\alpha$ 是真 HPD region $C_\alpha$ 的**保守包含**近似，对大 $N$ 渐近精确，但小/中维偏松。不要把"local credible interval"读成 MCMC 后验分位数——它是 sublevel-set 饱和边界，是一种**几何**的、而非采样的不确定性度量。
+
+2. **μ 自动估计公式分子是 $N/k+\gamma-1$，不是 $\gamma^{-1}$**（Eq.4）。默认 $\gamma=k=1$ 时分子化简为 $N$。这是常见笔误点（本笔记已勘误）。
+
+3. **本文实验只有 M31 + MRI brain 两张图**。X-ray / Radon / Shepp-Logan 只是 Abstract 里"逆问题可推广到的场景"，**不是**本文实验。把它当作本文实验结果是过度解读。
+
+4. **synthesis vs analysis 在 orthonormal 下等价、在 over-complete 下不等价**：Table I 中 orthonormal DB8 的 synthesis/analysis SNR 完全相同（25.04/25.04），SARA 下却差很多（23.66/31.09）。这不是实验误差，而是 over-complete frame 的结构性事实（$\Psi\Psi^\dagger \neq I$）。
+
+5. **$\mathcal{O}(10^5)$ 加速是相对 Px-MALA、在大规模真实 pipeline 下的结论**，与图像维度强相关；小规模 toy 上的 runtime 对比**不可外推**到这个量级。
+
+6. **"99% 覆盖"是名义/预期，不是实测**：5 页短文未给完整 calibration / coverage 曲线，相对误差 < ~5%（Fig. 5）是相对 Px-MALA benchmark 的*区间长度*误差，并非覆盖率的统计验证。
+
+7. **这是"短入口"而非完整方法论**：很多细节（proximal splitting 收敛证明、concentration 不等式精确常数）在 ref [11][12] 里，本文只引述结果。要深读理论须回到 Pereyra SIIMS 2016（ref [11]）与 RI UQ II（ref [12]）。
+
+---
+
+## 复现判断
+
+本节诚实记录本仓库当前对本篇的复现等级与差距，遵守项目纪律：**paper-level 在 15 篇中仍为 0/15**，本篇为 `toy`。
+
+| 维度 | 当前状态 | 说明 |
+|------|----------|------|
+| **复现等级 (reproductionLevel)** | `toy` | 32×32 合成图 + 随机 Fourier 掩模，演示直觉骨架 |
+| **真实性 (reproductionTruthLevel)** | `toy-completed` | runner 跑通并出图，但用代理算子 |
+| **runner 文件** | `reproduce/experiments/map_uq_toy.py` | 第 11/12/13 三篇 RI-UQ 论文共用 |
+| **MAP 求解** | Gaussian smoothing 迭代代理 | **非** forward-backward / ℓ1 proximal；丢失 sparsity 结构 |
+| **HPD 阈值** | `gamma_alpha_toy=939.9229`（简化版） | **非**完整 Eq.(6)，不校准 coverage |
+| **local credible interval** | smoothing 代理 | **非** Eq.(7-9) 二分搜索 superpixel 饱和 |
+| **基线** | 随机游走 "MCMC" 代理 | **非** Px-MALA（ref [6]） |
+| **字典** | 无（像素域） | 缺 DB8 / SARA，无 synthesis-vs-analysis 对照 |
+| **toy 指标** | map_psnr=18.7123, map_snr=9.6004, mean_interval_length=0.1739 | 合成图结果，**不可**与论文 Table I（SNR 19–31）对照 |
+| **产物图** | `assets/repro/map_uq_reconstruction_uncertainty.png` | truth / MAP toy / HPD approx map / MCMC interval 四联图 |
+
+**到 paper-like 的核心缺口**：真实 forward-backward 求解器、DB8/SARA 字典、自动 μ 算法(4)、完整 Eq.(6) 阈值、Eq.(7-9) 二分搜索区间、Px-MALA 基线、M31/BrainWeb 数据（数据公开，门槛主要在求解器与字典）。详见完整复现流程文档。
+
+---
+
+## 完整复现流程
+
+本篇的完整复现流程规范（论文身份核验、算法 step-by-step、数据集、基线、指标与论文报告数值、当前 toy 实现、差距分析、运行步骤、风险代理说明）见独立文档：
+
+[`../reproduce/paper_like/workflows/high-dimensional-uq_reproduction_workflow.md`](../reproduce/paper_like/workflows/high-dimensional-uq_reproduction_workflow.md)
+
+该文档诚实标注：当前为 `toy` 等级（非 paper-level），用 Gaussian smoothing 代理 ℓ1-MAP 求解器，HPD 阈值与"MCMC"基线均为教学代理，论文的 $\mathcal{O}(10^5)$ 加速与 Table I 数值**不可**由当前 toy 外推。

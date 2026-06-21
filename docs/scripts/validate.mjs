@@ -2,12 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import { execFileSync } from "node:child_process";
+import { syncSnapshotDifferences } from "../../reproduce/sync_to_dashboard.mjs";
 
 const repoRoot = path.resolve(process.cwd());
 const docsDir = path.join(repoRoot, "docs");
 const jsDir = path.join(docsDir, "js");
+const reproAssetsDir = path.join(docsDir, "assets", "repro");
 const notesDir = path.join(repoRoot, "xiaohao_cai_ultimate_notes");
 const reproAssetResultsPath = path.join(docsDir, "assets", "repro", "repro_results.json");
+const overrideReproRunResultsPath = process.env.TEACHERZ_VALIDATE_REPRO_RESULTS_PATH
+  ? path.resolve(repoRoot, process.env.TEACHERZ_VALIDATE_REPRO_RESULTS_PATH)
+  : null;
 
 const expectedNoteFiles = [
   "Framelet_Based_Tubular_Structures_超精读笔记_已填充.md",
@@ -43,6 +48,26 @@ function walk(dir) {
     if (entry.isDirectory()) return walk(fullPath);
     return [fullPath];
   });
+}
+
+function resolveResultFile(file) {
+  if (typeof file !== "string" || !file.trim()) return null;
+  if (file !== file.trim() || file.includes("\\")) return null;
+  if (path.posix.isAbsolute(file) || path.posix.normalize(file) !== file) return null;
+  if (file.startsWith("../") || file.includes("/../")) return null;
+  if (!file.startsWith("assets/repro/")) return null;
+  return path.resolve(docsDir, file);
+}
+
+function isPathUnder(child, parent) {
+  try {
+    const childPath = fs.realpathSync.native(child);
+    const parentPath = fs.realpathSync.native(parent);
+    const relative = path.relative(parentPath, childPath);
+    return relative === "" || (relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+  } catch {
+    return false;
+  }
 }
 
 const context = { window: {}, console };
@@ -103,20 +128,25 @@ if (data) {
     const noteIdSet = new Set(noteIds);
     const reproIds = reproAssessments.map((item) => item.id);
     const allowedTruthLevels = new Set(["toy-completed", "partial-completed", "paper-level-completed", "assessment-only"]);
-    const paperLevelCount = reproAssessments.filter((item) => item.reproductionTruthLevel === "paper-level-completed").length;
     const resultsPath = path.join(repoRoot, "reproduce", "results", "repro_results.json");
-    const runResults = fs.existsSync(resultsPath)
-      ? JSON.parse(readText(resultsPath))
-      : (fs.existsSync(reproAssetResultsPath) ? JSON.parse(readText(reproAssetResultsPath)) : []);
+    const defaultRunResultsPath = fs.existsSync(resultsPath) ? resultsPath : reproAssetResultsPath;
+    const runResultsPath = overrideReproRunResultsPath || defaultRunResultsPath;
+    const runResults = fs.existsSync(runResultsPath) ? JSON.parse(readText(runResultsPath)) : [];
+    const assetResults = fs.existsSync(reproAssetResultsPath) ? JSON.parse(readText(reproAssetResultsPath)) : null;
     const runResultById = new Map(runResults.map((item) => [item.id, item]));
     const satSource = readText(path.join(repoRoot, "reproduce", "experiments", "sat_rof_trof.py"));
     check(new Set(reproIds).size === reproIds.length, "reproAssessment.id 不唯一");
-    check(process.env.ALLOW_PAPER_LEVEL === "1" || paperLevelCount === 0, `paper-level-completed 当前必须为 0，实际为 ${paperLevelCount}`);
     check(Array.isArray(runResults) && runResults.length === 15, "静态复现实验结果不是 15 条");
     check(runResults.every((item) => noteIdSet.has(item.id)), "静态复现实验结果存在 15 篇之外的 id");
+    if (Array.isArray(runResults)) {
+      syncSnapshotDifferences({ reproAssessments }, runResults, assetResults, process.env)
+        .forEach((failure) => check(false, failure));
+    }
 
     reproAssessments.forEach((item) => {
       check(noteIdSet.has(item.id), `${item.id} 无法匹配 paperNotesV2.id`);
+      const workflowDocPath = path.join(repoRoot, "reproduce", "paper_like", "workflows", `${item.id}_reproduction_workflow.md`);
+      check(fs.existsSync(workflowDocPath), `${item.id} 缺少完整复现流程文档：reproduce/paper_like/workflows/${item.id}_reproduction_workflow.md`);
       check(allowedTruthLevels.has(item.reproductionTruthLevel), `${item.id} reproductionTruthLevel 无效或缺失`);
       check(Number.isInteger(item.difficultyScore) && item.difficultyScore >= 1 && item.difficultyScore <= 5, `${item.id} difficultyScore 不在 1-5`);
       check(Number.isInteger(item.effectScore) && item.effectScore >= 1 && item.effectScore <= 5, `${item.id} effectScore 不在 1-5`);
@@ -131,7 +161,10 @@ if (data) {
         check(Array.isArray(item.resultFiles) && item.resultFiles.length > 0, `${item.id} completed 但没有 resultFiles`);
         check(Boolean(item.resultQuality || item.notes), `${item.id} completed 但缺少 resultQuality 或 notes`);
         (item.resultFiles || []).forEach((file) => {
-          check(fs.existsSync(path.join(docsDir, file)), `${item.id} resultFile 不存在：${file}`);
+          const resolved = resolveResultFile(file);
+          check(Boolean(resolved), `${item.id} resultFile 必须是 assets/repro 下的安全相对路径：${file}`);
+          check(Boolean(resolved) && fs.existsSync(resolved), `${item.id} resultFile 不存在：${file}`);
+          check(Boolean(resolved) && isPathUnder(resolved, reproAssetsDir), `${item.id} resultFile 不在 docs/assets/repro 下：${file}`);
         });
       }
       if (item.resultStatus === "skipped") {

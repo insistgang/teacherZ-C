@@ -850,6 +850,86 @@ def segment_earth_topography():
 
 ---
 
+## 🧭 6. 实验细节深读（基于 PDF §4 与 Table 4.1–4.4）
+
+> 这一节把摘要里"几次迭代收敛、优于 K-means"的笼统说法，落到 PDF 表格里的硬数字，便于复现时对照趋势。注意：本文是**定性可视化 + 收敛/时间表**为主的论文，**全程未报告 Dice/IoU 等定量分割指标**（见下方"阅读陷阱"与"复现判断"）。
+
+### 6.1 统一实验设置（PDF §4 开头）
+
+- 球面 band-limit $L=512$，最小角向尺度 $J_{\min}=2$，方向小波方向数 $N\in\{5,6\}$，离散球面 $512\times1023=523776$ 个样本。
+- Hybrid 小波 transition band-limit $L_{\text{trans}}\in\{32,64\}$：$\ell\lesssim L_{\text{trans}}$ 用 curvelets，其余用 directional wavelets。
+- 噪声：SNR $=30$ dB、零均值 Gaussian，$\sigma=\|f\|_\infty 10^{-\mathrm{SNR}/20}$。去噪阈值 $\bar\lambda=\sigma/4$（式 3.1），分割阈值 $\lambda=\sigma/100$（式 3.10）。
+- 梯度阈值 $\epsilon$ 因数据而异（按五张实验图分别取值）：Earth map $0.02$、light probe $0.05$、Solar map 1（太阳耀斑）$0.04$、Solar map 2（活动磁区）$0.05$、retina（Fig 4.5 与 4.6）均 $0.04$。
+- 机器：MacBook，2.2 GHz Intel Core i7，16 GB RAM。K-means 用 MATLAB 内置 `kmeans`，球面小波变换用 **S2LET**（依赖 SSHT、SO3）。
+
+### 6.2 四类实验对象与结论
+
+| 实验 | 数据来源 | 关键观察（PDF 原文要点） |
+|------|----------|--------------------------|
+| Earth topographic map | EGM2008（NGA），band-limit 到 $L=512$ | 所有方法都能合理分出陆海（注意：分界不必严格等于海岸线）；WSSA 优于 K-means；WSSA-D/H 在保留方向特征上略优于 WSSA-A |
+| Light probe（Uffizi Gallery） | Paul Debevec Probes 库，两张镜面球照片拼成全球面 | 结论同 Earth；特别在分离天空与窗框亮部时 WSSA 比 K-means 更能检出细节结构；WSSA-A 更快 |
+| Solar map 1（太阳耀斑） | SDO/AIA + STEREO-A/B SECCHI，2012-07-08，30.4 nm 拼接 | WSSA-A/D/H 明显优于 K-means，更完整保留方向特征；WSSA-H 在 sunspot 面积上略优于 WSSA-D，但更慢 |
+| Solar map 2（活动磁区） | 径向磁场 synoptic 图，Carrington Rotation 1974（2001 春） | K-means 能拉出部分 sunspot 但漏掉弥散/斑块特征；因数据本身缺强方向纹理，WSSA-A/D/H 结果接近，但 WSSA-D/H 更抗噪 |
+| Retina ×2（强各向异性血管） | DRIVE 数据集，绿通道→去背景→加噪→投影到球面 | K-means 大量丢失血管；WSSA 检出大部分血管；WSSA-D/WSSA-H 优于 WSSA-A，伪影更少；WSSA-H 在抑制北极附近非血管伪影上优于 WSSA-D |
+
+### 6.3 收敛性与计算时间的硬数字（可复现对照锚点）
+
+- **收敛速度**：四张表一致显示 WSSA **约 10 次迭代内** $|\Lambda^{(i)}|\to 0$；**第 3 次迭代后**未分类像素数已远小于 $|\mathbb{S}^2|=523776$。例（Earth map，Table 4.1，WSSA-A）：$|\Lambda^{(i)}|$ 序列 $111371\to106977\to25880\to6352\to1824\to615\to229\to96\to28\to5\to0$。这正是式 3.3 区间"每步约缩一半"性质的实证。
+- **计算时间随小波方向性单调上升**（与 $\mathcal{O}(L^3)\!<\!\mathcal{O}(NL^3)\!<\!\mathcal{O}(L^3\log_2 L)$ 一致）：
+
+| 数据（表号） | K-means | WSSA-A | WSSA-D (N=5) | WSSA-D (N=6) | WSSA-H |
+|--------------|---------|--------|--------------|--------------|--------|
+| Earth (4.1) | <1 s | 51.9 s | 200.5 s | 217.2 s | 883.5 s |
+| Light probe (4.2) | <1 s | 41.9 s | 145.7 s | 152.2 s | 702.7 s |
+| Solar 1 (4.3) | <1 s | 34.1 s | 124.3 s | 151.8 s | 682.2 s |
+| Retina (4.4) | <1 s | 50.66 s | 160.54 s | 197.0 s | 789.6 s ($L_{\text{trans}}=32$) / 4538.9 s ($L_{\text{trans}}=64$) |
+
+  解读：K-means 永远最快（秒级）但质量差；hybrid 含 curvelet 最慢；retina 中把 $L_{\text{trans}}$ 从 32 提到 64（更多 band 用 curvelet）时间暴涨近 6 倍，而分割改善很小——这是论文给出的一个"性价比"提醒。
+
+### 6.4 阅读陷阱（易被误读处）
+
+1. **没有 Dice/IoU**：论文**未**报告任何标准定量分割指标，比较以可视化（含 Mollweide 投影与红框放大）+ 收敛/时间表为主。任何引用"球面小波分割的 Dice/IoU 数值"都不来自本文，复现时切勿编造。
+2. **"陆海分割不必精确"**：Earth map 实验明确指出分界不必严格落在海岸线，因此视觉上的陆海不完全吻合并非算法缺陷。
+3. **WSSA-H 不总是最优**：hybrid 在 solar/retina 上仅"略优"于 WSSA-D，却显著更慢；在缺方向纹理的 Solar 2 上三变体几乎并列。不要把"hybrid 最复杂"等同于"hybrid 最好"。
+4. **proxy 误用风险**：把 Gaussian smoothing 当作球面小波、把 equirectangular 网格当作 $\mathbb{S}^2$，会丢失方向选择性与极点几何——这恰是本仓库 toy 的局限（见"复现判断"）。
+5. **收敛定理是继承来的**：WSSA 收敛性证明 follow 前作 [10]（Euclidean tight-frame），并非本文新证；理论新意在"球面适配 + hybrid 构造"，而非新的收敛定理。
+
+### 6.5 与其他 14 篇的更具体关系
+
+- **直接前作**：tight-frame vessel segmentation（[9,10]，本项目 *Framelet/Tight-frame Vessel* 篇）。本文式 2.6–2.8、3.1、3.10 与之同构，只是把 Euclidean framelet 的 $\mathcal{A}$ 换成球面小波变换，把平面梯度换成球面梯度（式 2.5）。
+- **SaT/SLaT 谱系**：与 SaT/SLaT 并列于"先平滑/去噪再阈值"的 smoothing-and-thresholding 思路。区别在于：SLaT 扩的是**特征/颜色空间**（彩色分割），本文扩的是**数据定义域**（Euclidean→sphere）。式 3.9 的"对各向同性结构用单阈值替代迭代"正是 SaT 经济性思路在球面上的延续。
+- **与 Mumford-Shah/ROF 的关系**：背景里把 Mumford-Shah、Chan-Vese、T-ROF 作为 Euclidean 变分分割的对照谱系引出，但本文并未与它们直接定量比较，仅与 K-means 对比。
+- **向后延伸**：结论与 §3 讨论指向 spherical CNN（SphereNet、Spherical CNNs、DeepSphere 等）——可用球面神经网络替代 Algorithm 1 的 line 2、9（去噪/平滑步），是与深度学习结合的接口。
+
+---
+
+## ✅ 复现判断
+
+> 诚实分级口径：toy / partial / paper-like / paper-level，纪律是**绝不把 synthetic/proxy 结果夸大为论文级**。paper-level 在本项目当前为 0/15，本篇亦为 0。
+
+| 维度 | 现状 | 说明 |
+|------|------|------|
+| 复现等级 | **toy**（`reproductionLevel=toy`，`reproductionTruthLevel=toy-completed`） | 仅思路演示，非对 WSSA 的复现 |
+| runner | `reproduce/experiments/sphere_wavelet_toy.py` | equirectangular 合成图 + Gaussian smoothing + 近似球面梯度 + 单步阈值 |
+| 当前指标 | `dice=0.8418`、`gradient_threshold_quantile=0.93`、`runtime≈0.0723 s` | Dice 仅 toy 内部度量，**与论文不可比**（论文不报告 Dice） |
+| 用到的 proxy | Gaussian smoothing 代替球面小波去噪；`max(cos(lat),0.2)` 代替 $1/\sin\theta$；`np.gradient` 代替式 2.5 | 无 S2LET/SSHT/SO3，无 axisymmetric/directional/curvelet/hybrid |
+| 到 paper-like 的主要缺口 | 球面小波栈、WSSA 区间迭代（式 3.3–3.10）、真实数据（EGM2008/Probes/SDO+STEREO/DRIVE）、K-means 对照、收敛/时间表对照 | 数据均公开可得，主要门槛是 S2LET 栈与采样约定 |
+| 产物图 | `assets/repro/sphere_wavelet_toy.png` | 图注已标注 approximation toy |
+
+**结论**：当前实现只能支撑最弱命题——"球面几何加权梯度 + 平滑能在合成 band 图上给出合理分割"。论文关于 WSSA-D/H 优于 WSSA-A、WSSA 优于 K-means、约 10 次迭代收敛等结论**不可**从本 toy 外推；要复现需接入球面小波栈与真实数据，详见完整复现流程文档。
+
+---
+
+## 🔁 完整复现流程
+
+本篇的完整复现流程规范（论文身份核验、WSSA 算法 step-by-step、四类公开数据集、K-means 基线、Table 4.1–4.4 的收敛/时间对照、当前 toy 实现与差距分析、运行步骤与代理风险）见独立文档：
+
+- [`../reproduce/paper_like/workflows/sphere-wavelet_reproduction_workflow.md`](../reproduce/paper_like/workflows/sphere-wavelet_reproduction_workflow.md)
+
+文档同样恪守"toy 不等于 paper-level"的纪律，并明确列出从 toy 走向 paper-like 的最小充分条件。
+
+---
+
 ## 📚 参考文献
 
 **核心引用：**

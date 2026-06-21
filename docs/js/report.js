@@ -336,7 +336,7 @@ RI UQ I
   function renderSiteVersion() {
     const target = byId("reportVersion");
     if (!target || !siteMeta) return;
-    target.textContent = `commit: ${siteMeta.commit} · last updated: ${siteMeta.lastUpdated}`;
+    target.textContent = `scope: ${siteMeta.scope || siteMeta.commit} · last updated: ${siteMeta.lastUpdated}`;
   }
 
   function renderReport() {

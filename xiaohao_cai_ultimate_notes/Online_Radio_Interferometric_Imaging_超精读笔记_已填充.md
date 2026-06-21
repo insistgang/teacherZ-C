@@ -3,7 +3,8 @@
 > **超精读笔记** | 5-Agent辩论分析系统
 > 分析时间：2026-02-16
 > 作者：Xiaohao Cai, Luke Pratley, Jason D. McEwen
-> 来源：MNRAS (2017) | arXiv:1712.04462
+> 来源：arXiv:1712.04462v1（2017-12-12 预印本）→ 正式刊出 MNRAS (2019)
+> 第一作者：Xiaohao Cai（MSSL, UCL；通讯邮箱 x.cai@ucl.ac.uk）
 
 ---
 
@@ -13,12 +14,13 @@
 |------|------|
 | **标题** | Online Radio Interferometric Imaging: Assimilating and Discarding Visibilities on Arrival |
 | **作者** | Xiaohao Cai, Luke Pratley, Jason D. McEwen |
-| **第一作者核验** | 是，PDF 首页作者列表以 Xiaohao Cai 开头 |
-| **年份** | 2017 |
-| **arXiv ID** | 1712.04462 |
-| **期刊** | Monthly Notices of the Royal Astronomical Society |
-| **机构** | Mullard Space Science Laboratory, UCL |
-| **领域** | 射电天文、在线优化、压缩感知 |
+| **第一作者核验** | 是。PDF 首页作者行 `Xiaohao Cai^{1*}, Luke Pratley^{1*} and Jason D. McEwen^{1*}`，星号脚注为通讯邮箱 `x.cai@ucl.ac.uk`，上标 1 指向唯一机构 MSSL/UCL；Xiaohao Cai 为唯一第一作者 |
+| **年份** | PDF/arXiv v1 为 2017（"Preprint 14 December 2017"，© 2017 The Authors）；正式刊出版本为 MNRAS 2019（dashboard `year=2019` 取刊出年） |
+| **arXiv ID** | 1712.04462v1 [astro-ph.IM]（页边竖排标识 12 Dec 2017） |
+| **期刊** | Monthly Notices of the Royal Astronomical Society (MNRAS) |
+| **机构** | Mullard Space Science Laboratory (MSSL), University College London (UCL), Surrey RH5 6NT, UK |
+| **资助** | EPSRC EP/M011089/1；STFC ST/N000811/1（见 Acknowledgements） |
+| **领域** | 射电天文 (RI imaging)、在线优化 (online optimisation)、压缩感知 / 稀疏正则化 |
 
 ### 📝 摘要翻译
 
@@ -172,6 +174,30 @@ while Stopping criterion type I not reached
 x* = x^(i)
 ```
 
+> **两层停止准则的工程含义**（PDF §3.2）：
+> - **type I（数据块级，外层）**：已知总块数时设为 `b = B`；未知（真实流式）时由"无新块到达"的反馈触发。
+> - **type II（迭代级，内层）**：最大内迭代数，**实践中设为 1**（每块只做一次 FB，算力最省）；或用连续两次迭代的相对误差。
+> 注意：当块数 B 较小（小于标准 FB 收敛所需迭代数）时，可在处理完最后一块后**追加**几次"额外迭代"（Algorithm 2/3 的可选 while 段），但论文 Figure 5 显示这点改进有限、可选。big-data 下 B 通常很大，无需额外迭代。
+
+### 3.4b 在线 FB 的 analysis 显式实例（PDF §4.1.1, Algorithm 2）
+
+把抽象 prox/梯度落到 RI 的 analysis 模型（式 10）上。设 $\bar f(x)=\mu\|\Psi^\dagger x\|_1$、$\bar g_k(x)=\|y_k-\Phi_k x\|_2^2/2\sigma^2$。当 $\Psi^\dagger\Psi=\mathrm I$（正交基，论文用 Daubechies-8）时：
+
+**proximity（软阈值，式 38/40）**：
+```
+prox_{λf}(z) = z + Ψ( soft_{λμ}(Ψ†z) − Ψ†z )
+soft_λ(z_k) = z_k(|z_k|−λ)/|z_k|  if |z_k|>λ  else 0
+```
+
+**部分梯度（只用前 b 块，式 39）**：
+```
+∇g_{1:b}(x) = Σ_{k=1}^b Φ_k†(Φ_k x − y_k) / σ²
+```
+
+合起来即式 41/42 的两步：先梯度步 `v = x − λ·∇g_{1:b}(x)`，再 prox 步 `x⁺ = v + Ψ(soft_{λμ}(Ψ†v) − Ψ†v)`。
+
+> **关键算力优化**：dirty map 项 $\Phi_k^\dagger y_k$ 以及 $\Phi_k^\dagger\Phi_k$ 可**预计算一次**反复调用（Remark 4.2）。这样在线第 b 步只需触及 $b/B$ 比例的算子，而标准法每次迭代都要全部 B 块——这正是 §4.3 算力比 $\eta_c\approx(B+1)/(2 i_{\max})$ 的来源。synthesis 模型见 Algorithm 3（式 49），正交基下与 analysis 性能差异可忽略，论文只报告 analysis。
+
 ### 3.5 收敛性分析
 
 **核心假设**（假设29）：
@@ -185,6 +211,13 @@ x* = x^(i)
 **收敛定理**（定理3.2）：
 
 在假设(29)下，设x*为问题(24)的极小化子，则序列F_y(x^(i))单调递减至F_y(x*)。
+
+**证明骨架（PDF 式 30–35）**：要证 $\forall i$，$\mathcal F_y(x^{(i)})\ge\mathcal F_y(x^{(i+1)})$。
+- 若 $x^{(i+1)}$ 用了**全部** B 块（$b=B$），则式 30 直接由 splitting 方法标准收敛性给出。
+- 若 $x^{(i+1)}$ 只用了 $b<B$ 块，则对**部分**目标有 $\mathcal F_{y_1^b}(x^{(i)})\ge\mathcal F_{y_1^b}(x^{(i+1)})$（式 31，部分目标的能量单调下降，仍由 splitting 收敛性保证）。
+- 把完整目标拆成"已用块部分目标 + 未用块之和"（式 32）：$\mathcal F_y(\cdot)=\mathcal F_{y_1^b}(\cdot)+\sum_{k=b+1}^B g_k(\cdot)$。对前者用式 31、对后者用假设 29（未用块之和也下降），相加即得式 33–35 的 $\mathcal F_y(x^{(i)})\ge\mathcal F_y(x^{(i+1)})$。∎
+
+> **直觉**：online 算法在任一时刻只"看见"前 b 块，但论文要保证的是对**完整**目标 $\mathcal F_y$ 的单调下降。桥梁就是假设 29——"随着同化更多数据，中间重建对尚未到达的块也拟合更好"。这是个**温和但非平凡**的假设：它不是无条件成立的，论文也把"放宽/验证假设 29"列为未来方向（见本笔记局限性）。
 
 ---
 
@@ -208,21 +241,35 @@ x* = x^(i)
 
 **关键优势**：存储从O(M)降至O(M_b)，通常M_b << M
 
-### 主要结果
+### 实验设置（PDF §5.1，均可核实）
 
-**重建质量**：
-- 理论结果：在线方法与离线方法精度相同
-- 实际结果：非常相似的重建保真度
+| 项 | 设置 |
+|------|------|
+| 测试图 | **M31**(HI region, 256×256)、**Cygnus A**(256×512)、**W28**(超新星遗迹, 256×256)、**3C288**(256×256) |
+| 采样 | variable-density profile（Puy et al. 2011），**半个 Fourier 平面**取 **10%** 离散 Fourier 系数 |
+| 噪声 | 零均值高斯，$\sigma=\|f\|_\infty 10^{-\mathrm{SNR}/20}$，输入 **SNR=30 dB** |
+| sensing 算子 | $\Phi_k=M_k F$（FFT + masking，on-grid 简化；真实 off-grid 需 degridding） |
+| 稀疏基 $\Psi$ | **Daubechies-8** wavelets（MATLAB `wavedec2`），$\Psi^\dagger\Psi=\mathrm I$ |
+| 正则参数 | $\mu=10^4$（试错定） |
+| 迭代 | 标准法 $i_{\max}=50$；在线法每块 1 次内迭代 |
+| 块数 | $B=50$（默认；SNR 分析中 $B\in\{50,100,200,300,500\}$，每块约 2% 系数） |
+| 硬件 | MacBook 2.2 GHz i7 / 16 GB / MATLAB R2015b |
 
-**存储节省**：
+> 论文是 **simulation**（从公开射电图的 ground-truth 生成 visibilities），不是真实 telescope 观测。
 
-| 场景 | 离线存储 | 在线存储 | 节省比例 |
-|------|----------|----------|----------|
-| SKA规模 | 数PB | 数TB | ~99.9% |
+### 主要结果（PDF §5.2，定量数值均来自论文，禁止外推）
+
+**重建质量 — SNR（式 53）**：$\mathrm{SNR}=20\log_{10}(\|x\|_2/\|x-x^*\|_2)$ dB。
+- **M31**：online 与 standard 取得**完全相同** SNR **14.2946 dB**（analysis 模型，$B=50$）；用另一种 splitting（均匀随机 vs 按距原点）得 14.2943 dB，几乎不变 → 说明 online 对 splitting 策略稳健。
+- **Table 1**（四图 × $B\in\{50,100,200,300,500\}$ 的相对差，式 54）：M31 量级约 **10⁻⁶~10⁻⁷**，3C288 约 **10⁻⁶~10⁻⁸**，Cygnus A/W28 约 **10⁻²~10⁻³**；正负号互现，**无实质差异**——量化印证"online ≈ offline"。
+
+**存储节省（式 50）**：$\eta_s=\max_k\{M_k\}/M$，等块时 $\eta_s=1/B$。$B>100$ 时所需存储 **< 1%** 全量 visibilities。论文未给具体 PB/TB 数字，仅给比值 $\eta_s$ 与趋势曲线（Figure 2 蓝实线）。
+
+**算力节省（式 51/52）**：$\eta_c\approx\frac{\sum_b b/B}{i_{\max}}=\frac{(B+1)/2}{i_{\max}}$；当 $i_{\max}$ 足够大且两法迭代数相近时 $\eta_c\approx 1/2$，即在线约**省一半计算**。
 
 **时间优势**：
-- 在线方法在数据采集完成时接近完成重建
-- 离线方法在数据采集完成后才能开始重建
+- 在线方法**边采集边重建**，在数据采集完成时已**接近完成**重建（Figure 5 显示前几次迭代因数据少而极快）。
+- 离线方法**必须等采集完成**才能开始重建——这是 online 在"开始重建时刻"上永远获胜的根本原因。
 
 ---
 
@@ -257,6 +304,12 @@ x* = x^(i)
 
 - 为SKA等大型射电望远镜提供实时成像方案
 - 推动在线优化在天文成像中的应用
+
+### 与本项目其余 14 篇的具体关系
+
+- **RI UQ 系列（Cai et al. 2017a/b，本文引为 [Cai et al. 2017a]/[Cai et al. 2017b]）**：2017b 是 RI inverse problem + convex MAP 的方法学综述（本文 §2 多处引它"for further details"）；2017a 提出 MAP-UQ（local credible intervals / error bars）。本文专攻"在线重建 + 存储"，与 2017a 的"不确定性近似"**正交互补**——论文 Conclusion 明确说要把二者结合做 big-data 的"efficient imaging + UQ"。这构成 dashboard 中 relation links 13/12/11 的依据。
+- **优化求解器谱系**：本文的 online FB 是把 forward-backward splitting（Combettes & Pesquet 2010）改造成"分块同化"；与本项目里用 tight-frame / framelet 软阈值的几篇（vessel、sphere、color SLaT 等）共享"$\mathcal A^\top\,\mathrm{soft}_\lambda\,\mathcal A$ 风格的 proximal 算子"骨架，区别在于本文把数据保真项**按块在线拆分**。
+- **方法学定位**：相对 CLEAN/MEM/CS 这些 offline 重建，本文的贡献不是"更好的重建质量"（它刻意证明质量**等价**），而是"把求解器搬进数据获取流程"这一**范式**转变。
 
 ---
 
@@ -361,24 +414,23 @@ class OnlineRIReconstructor:
 
 ### 应用场景
 
-1. **射电天文实时成像**
-   - SKA实时数据处理
-   - LOFAR快速成像
-   - 突变天体事件监测
+1. **射电天文实时成像（论文主战场）**
+   - SKA / SKA precursor（ASKAP, MWA, LOFAR, EVLA）的 big-data RI imaging
+   - 论文明确目标：把 RI imaging 推向 big-data era，并规划集成进 **PURIFY** 包（github.com/basp-group/purify）
 
-2. **地球观测**
-   - 卫星数据实时处理
-   - 灾害监测快速响应
+2. **论文自述的可迁移性（PDF §1 Introduction，p.2 左栏）**
+   - 论文指出该 online 框架"is generic and therefore can be directly applied to many other applications, **such as medical imaging**"
+   - 注：这是论文一句**泛化性陈述**，论文本身**未**做 MRI/CT 实验；下面具体场景为合理外推，非论文结论
+     - （外推）MRI 流式 k-space 重建、CT 在线成像等其他逆问题成像
 
-3. **医学成像**
-   - MRI流式数据重建
-   - CT在线成像
+> ⚠️ 修正：原笔记此处曾写"地球观测/卫星/灾害监测"与"节省数PB存储成本"等具体数字，**论文未给这些场景或 PB 级数字**。论文只给比值型结论（$\eta_s=1/B$、$\eta_c\approx1/2$），已在上文实验结果中据 PDF 修正。
 
-### 商业潜力
+### 价值定位（据论文，避免编造商业数字）
 
-- **SKA项目**：节省数PB存储成本
-- **实时成像**：加速科学发现
-- **边缘计算**：降低传输带宽需求
+- **存储**：相对全量 visibilities 仅需 $\eta_s=1/B$（$B>100$ 时 < 1%），把存储从 $O(M)$ 降到 $O(M_b)\approx O(N)$。
+- **算力**：迭代数相近时约省一半（$\eta_c\approx1/2$）。
+- **时效**：与采集**同步**重建，采集结束即近完成——这是 online 相对 offline 的根本时序优势。
+- **集成路径**：拟并入 PURIFY，并与 Cai et al. (2017a) 的 MAP-UQ 框架结合做 streaming imaging + UQ。
 
 ---
 
@@ -410,7 +462,7 @@ class OnlineRIReconstructor:
    - 理论与工程结合紧密
 
 2. 技术亮点：
-   - 存储需求降低99.9%
+   - 存储需求按 η_s=1/B 下降，B>100 时降到全量 visibilities 的 <1%（实验 B=500 时约 0.2%）
    - 重建质量与离线方法等价
    - 统一的算法框架
 
@@ -441,4 +493,41 @@ class OnlineRIReconstructor:
 
 ---
 
-*本笔记由5-Agent辩论分析系统生成，结合了多智能体精读报告内容。*
+## 🪤 阅读陷阱（Reading Pitfalls）
+
+1. **"online" 不是"实时低延迟"那种 online**：这里指**沿数据获取流程逐块处理**（streaming/online optimisation，Shalev-Shwartz 2011），核心是"用完即丢"，不是延迟指标。
+2. **质量等价 ≠ 质量更好**：本文刻意证明 online 与 offline **重建质量相同**（M31 同为 14.2946 dB）。它的卖点是**存储与时序**，不是 SNR 提升。读 Table 1 时要看的是"相对差极小"，而非"谁更高"。
+3. **假设 29 是收敛的命门**：Theorem 3.2 的单调下降**依赖**式 29（未观测块之和随同化下降）。这是温和但**非无条件**的假设，论文自己把"验证/放宽假设 29"列为未来方向。不要把收敛当作无前提的定理。
+4. **storage 不只来自 visibilities**：PDF §4.2 提醒——baseline 坐标、权重、NUFFT interpolation kernel 也占存储（kernel 可达 measurement 的 16+ 倍）。$\eta_s=1/B$ 只描述 visibility 部分。
+5. **simulation vs 真实观测**：实验是从公开射电图**模拟**生成 visibilities（on-grid masked-FFT），不是真实 uv-track 观测；真实 off-grid 要换 degridding/NUFFT。
+6. **年份双口径**：PDF 是 2017（arXiv v1），刊出是 2019。引用时注明各自含义。
+
+---
+
+## 复现判断
+
+> 本节为项目固定纪律小节：诚实标注本仓库对该论文的复现真实等级，**绝不把 synthetic/proxy 结果夸大为论文级**。
+
+| 维度 | 判断 |
+|------|------|
+| 复现等级 (`reproductionLevel`) | **toy** |
+| 真实性 (`reproductionTruthLevel`) | **toy-completed** |
+| paper-level 进度 | **0/15**，本篇亦为 0 |
+| runner | `reproduce/experiments/online_ri_toy.py`（experiment_id=`online_ri_toy`，CPU ~0.07 s） |
+| 当前指标 | offline_psnr=12.3359，online_psnr=12.3359，offline_snr=2.6069，online_snr=2.6069，peak storage 585(offline) vs 98(online) |
+| 用的 proxy | 40×40 synthetic 双圆盘 + 随机 Fourier 掩码（masked-FFT）；inverse-FFT **dirty image** 代替 ℓ1-正则化 MAP；逐块注入 Fourier 系数代替 online proximal 同化 |
+| 缺什么（到 paper-like） | (1) M31/Cygnus A/W28/3C288 公开图 + variable-density 10% 半 Fourier 采样 + 30 dB 噪声；(2) Daubechies-8 的 online FB（Algorithm 2，$\mu=10^4$, $i_{\max}=50$）；(3) standard offline FB 基线；(4) SNR(式53)/存储比/算力比曲线，复现 Table 1 与 M31≈14.2946 dB |
+
+**诚实结论**：当前 toy 仅演示了"分块同化—丢弃—峰值存储下降"的**工程直觉**与"online 末态与 offline 等价"的**信息无损**直觉。它**不复现**论文的正则化重建质量（toy SNR≈2.6 dB 是 dirty-image 量级，远低于论文 14.29 dB），也不复现 Table 1 数值。任何"论文级 online RI 已复现"的陈述都是错误的。
+
+---
+
+## 完整复现流程
+
+本篇的"完整复现流程 (Complete Reproduction Workflow)"规范文档已单独成文，覆盖论文身份核验、诚实分级、算法 step-by-step、所需数据集、基线、指标与论文报告数值、当前 toy 实现、差距分析、运行步骤与风险说明。
+
+➡️ 详见：[`../reproduce/paper_like/workflows/online-ri_reproduction_workflow.md`](../reproduce/paper_like/workflows/online-ri_reproduction_workflow.md)
+
+---
+
+*本笔记由5-Agent辩论分析系统生成，结合了多智能体精读报告内容；本轮基于 arXiv:1712.04462v1 全文（14 页）做 grounding 增强，并按项目纪律修正了若干无 PDF 依据的数值/场景陈述。*

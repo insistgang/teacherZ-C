@@ -45,7 +45,8 @@ teacherZ-C/
 └── 📁 reproduce/                         # 15项复现评估的 toy/partial 实验代码
     ├── run_all.py
     ├── experiments/
-    └── results/
+    ├── results/
+    └── paper_like/workflows/             # 15篇 per-paper 完整复现流程文档（<id>_reproduction_workflow.md）
 ```
 
 ---
@@ -143,6 +144,8 @@ node docs/scripts/validate.mjs
 
 `completed` 只表示 toy/partial 脚本跑通，不表示论文级完整复现。当前 `paper-level-completed = 0 / 15`。
 
+每篇论文还配有一份**完整复现流程规范**：`reproduce/paper_like/workflows/<id>_reproduction_workflow.md`（论文身份与第一作者核验、完整算法管线、所需数据集与公开等价来源、对照基线、评价指标与论文报告数值、本仓库当前实现、差距分析、运行步骤、风险与代理说明）。这些文档描述的是 paper-level 目标流程而非已完成复现，复现报告页每张卡片均链接到对应文档。
+
 ---
 
 ## 📄 许可证
@@ -151,4 +154,4 @@ node docs/scripts/validate.mjs
 
 ---
 
-**最后更新**: 2026年6月4日
+**最后更新**: 2026年6月21日

@@ -417,7 +417,7 @@ const paperNotesV2 = [
     keyModelOrFormula: "ROF: min_u TV(u)+μ/2∫(u-f)^2dx; T-ROF: E(Σ,τ)=Σ_i[Per(Σ_i;Ω)+μ∫_{Σ_i}(τ_i-f)dx]; nested segments Ω_i=Σ_i\\Σ_{i+1}; update τ_i=1/2(m_{i-1}+m_i).",
     algorithmFlow: ["初始化有序阈值 τ_i。", "先求解一次 ROF 模型得到 u。", "按当前阈值令 Σ_i={x:u(x)>τ_i} 并由差集得到 Ω_i。", "计算每个 Ω_i 上的均值 m_i。", "用 τ_i=1/2(m_{i-1}+m_i) 更新阈值并重复，直到阈值序列收敛。"],
     theoremOrGuarantee: "论文给出 projected T-ROF algorithm 在 assumption (A) 下阈值序列收敛的定理；K=2 时模型与 Chan-Vese 之间有等价/联系，并带有调整后的正则参数解释。",
-    experimentFocus: "实验对象包括 cartoon、texture 和 medical images；重点看灰度值相近类别是否被正确分开，以及算法速度相对其他 variational segmentation 方法的差异。",
+    experimentFocus: "实验对象包括 cartoon、texture（stripe 条纹图，对应 Table 1 / Example 4）和 medical（brain MRI）images；论文真正的难点是 close-intensity / close-gray-value（相近灰度）类别，重点看相近灰度类别是否被正确分开，以及 T-ROF 相对其他 variational segmentation 方法的速度优势。",
     howToRead: "先读 Abstract 和 Section 2，理解为什么 ROF 与 Chan-Vese 能接上；再读 Algorithm T-ROF 和阈值更新规则；最后看 texture/medical 实验中的失败与成功样例。",
     relation: { text: "它是 Linkage 论文的算法前身，也是 SaT 方法论中 T-ROF 分支的核心实例。", links: [1, 2, 4] },
     readingQuestions: ["为什么 τ_i 要用相邻区域均值的一半和更新？", "只解一次 ROF 与迭代更新阈值之间如何配合？", "T-ROF 在灰度值相近类别上的优势来自模型还是阈值更新？"],
@@ -1089,7 +1089,7 @@ const reproDetails = {
     difficultyLabel: "中",
     effectScore: 3,
     effectLabel: "明显",
-    fullReproductionFeasibility: "偏难。paper-level 需要真实 cartoon / texture / medical 数据、多组 mu 参数与 paper Table 1-2 baseline 完整对照；当前 partial 已加入 Chambolle-Pock ROF solver 和 Split-Bregman 对照。",
+    fullReproductionFeasibility: "偏难。paper-level 需要真实 cartoon / close-intensity / medical 数据、多组 mu 参数与 paper Table 1 / Fig. 1-6 baseline 完整对照（PDF 仅有 Table 1 即 stripe 图，无 Table 2）；当前 partial 已加入 Chambolle-Pock ROF solver 和 Split-Bregman 对照。",
     minimalExperiment: "close-gray-value (差 0.04) 4-phase synthetic image + K=2 synthetic case；先解一次 Chambolle-Pock ROF，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)，其中 m_i := mean_f(Omega_i) on raw f。",
     expectedOutcome: "partial 复现显示 ROF T-ROF 可从 raw K-means 0.5650 提升到 0.9463；Gaussian proxy baseline 为 0.9438，Split-Bregman 对照为 0.9510，并记录 Lemma 2/3 指标与 K=2 Proposition 2 proxy。",
     metrics: ["raw_kmeans_accuracy", "gaussian_proxy_trof_accuracy", "rof_trof_accuracy", "split_bregman_trof_accuracy", "threshold_iterations", "max_threshold_drift", "monotonicity_violated", "sign_changes_final", "sign_changes_nonincreasing", "assumption_a_violations", "rof_iterations_chambolle_pock", "rof_iterations_split_bregman", "k2_lambda_derived", "k2_rof_threshold_dice", "k2_chanvese_proxy_dice", "k2_segmentation_disagreement", "runtime_seconds_total", "runtime_seconds_rof", "runtime_seconds_threshold"],
@@ -1377,10 +1377,11 @@ const reproDetails = {
 const reproAssessments = paperNotesV2.map((note) => {
   const paper = papers.find((item) => item.priority === note.priority);
   const detail = reproDetails[note.priority];
-  const reproductionTruthLevel = detail.reproductionTruthLevel
-    || (detail.reproductionLevel === "paper-level" ? "paper-level-completed"
-      : detail.reproductionLevel.includes("partial") ? "partial-completed"
-        : detail.reproductionLevel === "assessment-only" ? "assessment-only" : "toy-completed");
+  const reproductionTruthLevel = detail.resultStatus && detail.resultStatus !== "completed" ? "assessment-only"
+    : detail.reproductionLevel === "paper-level" ? "paper-level-completed"
+      : detail.reproductionLevel === "assessment-only" ? "assessment-only"
+        : detail.reproductionLevel.includes("partial") || detail.reproductionLevel === "paper-like" ? "partial-completed"
+          : "toy-completed";
   return {
     id: note.id,
     priority: note.priority,
@@ -1388,14 +1389,14 @@ const reproAssessments = paperNotesV2.map((note) => {
     titleEn: note.titleEn,
     pdf: note.pdf || paper?.file || "",
     theme: note.theme,
-    reproductionTruthLevel,
-    ...detail
+    ...detail,
+    reproductionTruthLevel
   };
 });
 
 const siteMeta = {
   scope: "15-paper-scope",
-  lastUpdated: "2026-06-04"
+  lastUpdated: "2026-06-21"
 };
 
 window.ZX_READING_DATA = {

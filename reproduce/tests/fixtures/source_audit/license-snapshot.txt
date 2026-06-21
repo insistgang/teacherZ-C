@@ -1,0 +1,2 @@
+teacherZ Iterated ROF license snapshot fixture.
+This is a tiny local test fixture used to prove license snapshot checks.

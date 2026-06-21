@@ -9,6 +9,15 @@
       "priority": 1,
       "fit": "Best match for the paper's texture experiments: benchmark texture mosaics with corresponding ground-truth and mask images.",
       "local_layout": "texture/images and texture/masks",
+      "image_selection_rule": "After terms review, choose a small reviewed subset of benchmark texture mosaics that have corresponding ground-truth segmentation labels.",
+      "mask_mapping_rule": "Convert each matching ground-truth label or mask image to a label PNG with the same relative path and extension as the input mosaic.",
+      "conversion_checklist": [
+        "Save the raw downloaded archive or source-file bundle under texture/audit/ and record it as source_artifact_path.",
+        "Convert the texture mosaic to grayscale or single-channel PNG without resizing unless the conversion notes explicitly record the change.",
+        "Convert the paired ground-truth labels to an integer-valued PNG and verify that it has at least two labels and the same shape as the image.",
+        "Run --refresh-manifest-file-claims and --refresh-source-audit-artifact-claims after placing the PNG and audit files."
+      ],
+      "final_naming_example": "texture/images/<source_id>/<case>.png with texture/masks/<source_id>/<case>.png",
       "download_policy": "manual_or_site_form",
       "license_note": "Use only files allowed by the benchmark terms; keep downloaded archives local unless license-safe.",
       "paper_like_role": "Primary texture source"
@@ -24,6 +33,15 @@
       "priority": 1,
       "fit": "Stable MRI-like source with simulated volumes and anatomical labels; suitable for grayscale multiclass segmentation before using heavier clinical datasets.",
       "local_layout": "medical/images and medical/masks",
+      "image_selection_rule": "After terms review, download one simulated MRI volume and its matching anatomical/label volume, then select representative 2D slices.",
+      "mask_mapping_rule": "For each selected MRI slice, export the matching anatomical label slice to the same relative PNG path under medical/masks.",
+      "conversion_checklist": [
+        "Keep the raw BrainWeb volume or downloaded payload under medical/audit/ and record its hash.",
+        "Normalize each selected MRI slice to grayscale PNG while recording modality, noise, slice index, and scaling in conversion_notes.",
+        "Export the corresponding anatomical labels as integer-valued PNG masks with identical dimensions.",
+        "Verify image/mask shape equality before running --strict-data-ready."
+      ],
+      "final_naming_example": "medical/images/brainweb/<volume>_slice_<index>.png with medical/masks/brainweb/<volume>_slice_<index>.png",
       "download_policy": "manual_form_or_script_after_terms_check",
       "license_note": "Verify BrainWeb terms before redistributing; prefer keeping raw volumes local.",
       "paper_like_role": "Primary medical source"
@@ -37,6 +55,15 @@
       "priority": 2,
       "fit": "Real brain MRI segmentations, but much larger and tumor/metastasis-specific; useful after BrainWeb.",
       "local_layout": "medical/images and medical/masks",
+      "image_selection_rule": "After TCIA terms and citation review, select a small matched image/segmentation case pair that can be converted locally.",
+      "mask_mapping_rule": "Export the selected segmentation mask to the same relative path and extension as the converted MRI slice.",
+      "conversion_checklist": [
+        "Keep collection metadata, case id, and license/citation snapshots under medical/audit/.",
+        "Convert a matched DICOM/NIfTI image slice to grayscale PNG and record the tool, slice, windowing, and anonymized case id.",
+        "Convert the corresponding segmentation to an integer-valued PNG mask with the same shape.",
+        "Do not commit clinical image data unless redistribution terms are explicitly approved."
+      ],
+      "final_naming_example": "medical/images/tcia/<case>_slice_<index>.png with medical/masks/tcia/<case>_slice_<index>.png",
       "download_policy": "manual_large_dataset",
       "license_note": "Large clinical archive; check TCIA usage and citation requirements before committing derived assets.",
       "paper_like_role": "Secondary real-medical source"
@@ -52,6 +79,15 @@
       "priority": 1,
       "fit": "Natural-image public substitute with human segmentations; useful for smooth-region / cartoon-like qualitative checks, but not the original paper cartoon data.",
       "local_layout": "cartoon/images and cartoon/masks",
+      "image_selection_rule": "After terms review, choose a small subset of BSDS images with smooth/cartoon-like regions and available human segmentation ground truth.",
+      "mask_mapping_rule": "Convert one reviewed human segmentation for each image into an integer label PNG with the same relative path and extension as the grayscale input image.",
+      "conversion_checklist": [
+        "Keep the original image and ground-truth source bundle or manifest snapshot under cartoon/audit/.",
+        "Convert RGB images to grayscale PNG and record the conversion formula.",
+        "Convert the selected human segmentation labels to PNG and verify at least two labels and matching image shape.",
+        "Record the original BSDS image id and selected annotator/ground-truth id in conversion_notes."
+      ],
+      "final_naming_example": "cartoon/images/bsds500/<image_id>.png with cartoon/masks/bsds500/<image_id>.png",
       "download_policy": "manual_download",
       "license_note": "Use according to Berkeley dataset terms; keep original archives local unless redistribution is permitted.",
       "paper_like_role": "Primary cartoon/smooth-natural substitute"
@@ -65,6 +101,15 @@
       "priority": 2,
       "fit": "Small natural-image segmentation database with ground truth; useful as backup if BSDS setup is inconvenient.",
       "local_layout": "cartoon/images and cartoon/masks",
+      "image_selection_rule": "After research-use terms review, choose reviewed image/ground-truth pairs as a backup cartoon-like natural-image source.",
+      "mask_mapping_rule": "Convert each reviewed ground-truth segmentation to a label PNG with the same relative path as the grayscale image.",
+      "conversion_checklist": [
+        "Save the download page, terms, and selected file list under cartoon/audit/.",
+        "Convert the input image to grayscale PNG and document the source filename.",
+        "Convert the matching segmentation to an integer label PNG with identical dimensions.",
+        "Use file-level source_audit overrides if images in one family come from mixed sources."
+      ],
+      "final_naming_example": "cartoon/images/weizmann/<case>.png with cartoon/masks/weizmann/<case>.png",
       "download_policy": "manual_download_research_only",
       "license_note": "Research-use disclaimer and image-source terms are restrictive; do not commit images without review.",
       "paper_like_role": "Backup cartoon/smooth-natural source"

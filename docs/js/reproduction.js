@@ -240,6 +240,12 @@
             <h4>诚实标注</h4>
             <p>${escapeHtml(item.notes)}</p>
           </section>
+
+          <section class="report-subsection">
+            <h4>完整复现流程文档</h4>
+            <p>本篇的完整复现流程规范（论文身份与第一作者核验、算法完整管线、所需数据集与公开等价来源、对照基线、评价指标与论文报告数值、本仓库当前实现、差距分析、运行步骤、风险与代理说明）见独立文档：</p>
+            <p><a href="../reproduce/paper_like/workflows/${escapeHtml(item.id)}_reproduction_workflow.md" target="_blank" rel="noopener">reproduce/paper_like/workflows/${escapeHtml(item.id)}_reproduction_workflow.md</a></p>
+          </section>
         </article>
       `;
     }).join("");

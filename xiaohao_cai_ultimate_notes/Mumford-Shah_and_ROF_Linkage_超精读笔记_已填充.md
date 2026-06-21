@@ -61,7 +61,7 @@ Per(A; Ω) := TV(χ_A)
 **核心公式1：PCMS模型 (分段常数Mumford-Shah)**
 
 ```
-E_PCMS(Ω, m) = Σ_{i=0}^{K-1} Per(Ω_i; Ω) + (λ/2) Σ_{i=0}^{K-1} ∫_{Ω_i} (m_i - f(x))² dx
+E_PCMS(Ω, m) = (1/2) Σ_{i=0}^{K-1} Per(Ω_i; Ω) + λ Σ_{i=0}^{K-1} ∫_{Ω_i} (m_i - f(x))² dx
 ```
 
 其中：
@@ -118,12 +118,26 @@ E(Σ, τ) = Σ_{i=1}^{K-1} Per(Σ_i; Ω) + μ Σ_{i=1}^{K-1} ∫_{Σ_i} (τ_i - 
    - 避免了PCMS模型的非凸性
    - ROF模型是凸的，有全局最小值
 
+**Theorem 3.4 / 3.6 证明骨架（逐项解释，忠于 PDF Section 3.2）：**
+
+理解这两个定理的关键是看到"配方 (completing the square)"如何把单阈值能量 E(Σ, τ) 变成 Chan-Vese 能量 E_CV。
+
+- **第一步：定阈值的两个不等式锁住区间。** 由 T-ROF 解满足 E(Σ*₁, τ*₁) ≤ E(∅, τ*₁) = 0，得 ∫_{Σ*₁}(τ*₁ - f)dx < 0，即 **τ*₁ < meanf(Σ*₁) = m*₁**；又由 E(Σ*₁, τ*₁) ≤ E(Ω, τ*₁)，得 0 < Per(Σ*₁;Ω) ≤ μ∫_{Ω\Σ*₁}(τ*₁ - f)dx，即 **m*₀ = meanf(Ω\Σ*₁) ≤ τ*₁**。两式合起来给出 m*₀ < m*₁，保证了 λ = μ/[2(m*₁-m*₀)] 的分母为正且有限。
+
+- **第二步：加常数 + 取 τ*₁ = (m*₁+m*₀)/2 配方。** 论文加一个与 Σ 无关的常数 C := λ∫_Ω(m*₀-f)²dx（不改变最小元），再把 μ(τ*₁ - f) 展开：当 τ*₁ 恰为两均值中点时，μ(τ*₁ - f) = (μ/2)·[(m*₁-f)² - (m*₀-f)²]/(m*₁-m*₀)（这一步用到 a²-b²=(a-b)(a+b) 的代数恒等式）。代入 λ = μ/[2(m*₁-m*₀)]，得到 (3.13)：
+  E(Σ, τ*₁) + C = Per(Σ;Ω) + λ[∫_Σ(m*₁-f)²dx + ∫_{Ω\Σ}(m*₀-f)²dx] = **E_CV(Σ, m*₀, m*₁)**。
+  于是"Σ*₁ 最小化 E(·, τ*₁)" 直接翻译成"Σ*₁ 最小化 Chan-Vese 能量"，这就是 partial minimizer 的"对 Σ 那一半"。再由 m*_i = meanf(Ω*_i) 满足 (3.12)，得到"对 m 那一半"。两半合起来即 partial minimizer。
+
+- **第三步：Theorem 3.6 把"T-ROF 解"换成"ROF 解 + 阈值"。** Theorem 3.4 假设手上已有 T-ROF 解 (Σ*₁, τ*₁)；Theorem 3.6 则更进一步：直接取 ROF minimizer u*，令 Σ̃ = {x : u*(x) > (m₁+m₀)/2}，借 Proposition 3.3（Σ_τ={x:u*>τ} 解 E(·,τ) ⟺ u* 解 ROF）得知 Σ̃ 自动是 E(·,(m₁+m₀)/2) 的解，再套同样的 (3.14) 配方即得 Chan-Vese minimizer。这一步才真正兑现标题里的"ROF↔PCMS linkage"——**阈值化不是后处理技巧，而是 ROF level set 与 PCMS energy 的精确接口**。
+
+- **Remark 3.5 的直觉（为何 T-ROF 能分相近灰度）：** 因 f∈[0,1] 故 0<m*₁-m*₀≤1，于是 λ = μ/[2(m*₁-m*₀)] ≥ μ，且当两类灰度差 m*₁-m*₀→0 时 λ→∞，即数据项被极度加权。Chan-Vese 需要**事先盲选** λ（不知道 m*₁-m*₀），很难给对；T-ROF 只需自动调阈值 τ*₁，就隐式给出了与灰度差匹配的"有效 λ"。这是理论解释 T-ROF 实验上能分开 close-intensity 多相图的根因（对应 Section 5 的 Example 2、6、7）。
+
 ### 1.3 理论性质分析
 
 **收敛性分析：**
 - **Theorem 4.6**：T-ROF Algorithm 1 产生的阈值序列 τ^(k) 收敛到 τ*
 - **Lemma 3.2**：对于 0 < τ_1 < τ_2 < 1，有 Σ_1 ⊇ Σ_2（嵌套性质）
-- 收敛速度：实验显示5-15次迭代即可收敛
+- 收敛速度：PDF 原文称一般十步内收敛（generally within ten iterations，Fig. 5.8）
 
 **稳定性讨论：**
 - ROF模型解的唯一性（在特定条件下）
@@ -149,6 +163,19 @@ E(Σ, τ) = Σ_{i=1}^{K-1} Per(Σ_i; Ω) + μ Σ_{i=1}^{K-1} ∫_{Σ_i} (τ_i - 
 1. 建立了两个经典模型（PCMS和ROF）之间的理论桥梁
 2. 验证了SaT方法的数学正确性
 3. 提供了K>2情况下的理论分析
+
+**K>2 的理论边界（Theorem 3.7 + PCMS-V，精读重点，忠于 PDF Section 3.2）：**
+
+K>2 时论文**没有**直接把 T-ROF 连到标准 PCMS (1.3)，而是连到一个**变体** PCMS-V 模型 (3.16)：
+min Σ_i Per(Ω_i∪…∪Ω_{K-1}; Ω) + Σ_i μ̃_i ∫_{Ω_i}(m_i-f)²dx，其中正则参数 **逐相不同**（Eq. 3.17）：
+- 边界相：μ̃₀ = μ/[2(m*₁-m*₀)]，μ̃_{K-1} = μ/[2(m*_{K-1}-m*_{K-2})]；
+- 内部相：μ̃_i = μ/[2(m*_i-m*_{i-1})] + μ/[2(m*_{i+1}-m*_i)]（相邻两个"差"的倒数加权之和）。
+
+Theorem 3.7 的结论是：若 T-ROF 解满足 m*_i < m*_{i+1}，则 {Ω*_i, m*_i} 是 PCMS-V 的 partial minimizer。证明思路是利用 E(Σ,τ) 在各 i 上**可分**（separable），对每个 i 套用 Theorem 3.4 的 K=2 结果再求和。
+
+**关键限制（最容易读漏的陷阱）：** T-ROF 与**标准** PCMS 的等价性，在 K>2 时只有当 **∂Σ_i ∩ ∂Σ_{i+1} = ∅**（相邻阈值集边界不重叠，即 int(Σ_i) ⊃ closure(Σ_{i+1})）时才成立——此时 Σ Per(Σ_i;Ω) = ½ Σ Per(Ω_i;Ω)（Eq. 3.15），PCMS-V 退化回标准 PCMS。一旦相邻边界重叠（来自 ROF 解的跳变，是原图 f 跳变的子集，见 [20, Theorem 5]），就只能得到对 PCMS 的**近似**。Remark 3.8 进一步指出：PCMS-V 的逐相自适应 μ̃_i 反而对"相近灰度多相图"更有利，这也是 K>2 时 T-ROF 实验仍优于标准 PCMS 方法的原因（lack of equivalence ≠ 性能更差）。
+
+**收敛性 Theorem 4.6 的证明结构（直觉）：** 论文不直接证 τ 的单调性（多相 τ 可能反复升降），而是引入符号序列 ζ^(k)（记录每个 τ_i 相邻迭代升/降，Eq. 4.10-4.12）与其"变号数" s_k。Lemma 4.5 证明 **s_k 关于 k 单调不增**，且当首分量符号改变时严格下降。由于变号数是非负整数、有限且单调下降，必在有限步稳定；配合 τ 有界于 [0,1]，归纳得到 (τ^(k)) 收敛到 τ*，且 (Σ*,τ*) 解 T-ROF 模型。**K=2 时 s_k ≡ 0**，收敛尤其平凡——这呼应了"K=2 结论最干净"的整体基调。
 
 **跨领域融合：**
 - 连接了图像分割和图像恢复两个研究领域
@@ -454,6 +481,26 @@ class ROFSolver:
 - 低灰度血管DICE提升：36.6% (0.7749 vs 0.5673)
 - 速度提升：40% (2.09s vs 3.51s)
 
+> 数据溯源与诚实标注：上表数值逐项对应 PDF **Table 5.4**（retina 例，Fig. 5.9），T-ROF 行：SA 0.9929 / DICE_Ω0 0.9962 / DICE_Ω1（右侧低强度血管）0.7749 / DICE_Ω2（左侧血管）0.9991 / time 2.09s（迭代记法 35(15) 表示求 u 用 35 步、求 τ 用 15 步）。**Ω1=0.7749 vs SaT 的 0.5673** 这一对比在 PDF 正文与 Table 5.4 双重出现，可信。其下的"1.3% / 36.6% / 40%"是基于这些数派生的相对量，**非 PDF 原文表格列**，仅供直观；λ/μ 在此例 T-ROF 取 25。
+
+**实验全景（七个 Example，忠于 PDF Section 5 / Table 5.1-5.4）：**
+
+论文用一组刻意设计的退化图覆盖"恢复+阈值化"范式的不同压力点，且大多数是**可严格复刻的合成图**（生成方式 PDF 写明），只有 MRI 取自他人、retina 来自 DRIVE 公开集：
+
+| Example | 数据 | 压力点 | T-ROF 关键结果（PDF） |
+| --- | --- | --- | --- |
+| 1 | 两相 cartoon（256²），随机抹掉 80% 像素 | missing pixels / 信息丢失 | SA 0.9913（Table 5.1） |
+| 2 | 两相 close-intensity（128²，常数 0.5+方差 10⁻⁵ 噪声+mask） | 极近灰度 | SA 0.9845，**0.38s 最快**（Table 5.1） |
+| 3 | 五相（five-phase）noisy cartoon 图（91×96，clean 图 + Gaussian 噪声方差 10⁻²） | 多相+重噪声 | SA 0.9831，**0.32s 最快**（Table 5.1） |
+| 4 | 四相 brain MRI（319×256，gray/white matter，取自 Pock[35]） | 多相医学图 | time **1.96s 最快**（Table 5.1） |
+| 5 | stripe 图（140×240，30 条纹+方差 10⁻³ 噪声） | 细周期结构 | 见 Fig. 5.5 / Table（最快且高 SA） |
+| 6 | 三相（three-phase）close-intensity 合成图 | 近灰度 | SA 0.9550（2.07s，Table 5.3 Exa.6） |
+| 7 | 四相（four-phase）close-intensity 合成图（噪声方差 3×10⁻²） | 近灰度 | SA 0.9798（3.13s，Table 5.3 Exa.7） |
+
+**两个最值得记住的实验论点：**
+1. **计算时间几乎与相数 K 无关**（Table 5.2/5.3 的核心卖点）：因为 ROF 只解一次、后续只是对同一个 u 做不同阈值，故 5/10/15 相的 time 仅 1.39/2.33/3.74s 温和增长；而基于 PCMS 的方法相数越高耗时越显著上升。对照 Cai[15]（SaT）在 15 相 SA 退化到 0.5280，说明"K-means 选固定阈值"在高相数 close-intensity 下失效，而 T-ROF 的**迭代阈值更新 (4.1)** 救回了精度。
+2. **retina 右侧低强度血管**（Table 5.4 DICE_Ω1）是全篇最强证据：几乎所有 PCMS/level-set 基线在这一相 DICE 都 ≤0.18（Li 0.0278、Pock 0.1487、Yuan 0.1764、He 0.1435），只有 SaT 的 0.5673 和 T-ROF 的 0.7749 拿得出手——这量化印证了 Remark 3.5 的理论："灰度差越小、有效 λ 越大、数据项被加权越重"。
+
 ### 3.3 落地可行性
 
 | 因素 | 评估 | 说明 |
@@ -650,6 +697,15 @@ class ROFSolver:
 - **局限应对**：理论上有局限（K>2），但实际效果证明有效
 - **改进方向**：结合深度学习可能是未来方向
 
+### 5.4b 与其它 14 篇的关系（精读定位）
+
+本篇在 15 篇口径里扮演**理论合法性中枢**，向上承接方法论、向下支撑算法与应用：
+
+- **vs SaT Overview（第 1 篇，theme 同为 sat-rof）**：SaT Overview 提出"Smoothing-and-Thresholding"两阶段范式（先恢复/平滑、再阈值化分割）。本篇是它的**理论后盾**：证明了在 K=2 时这种两阶段做法给出 PCMS partial minimizer，并在 K>2 时给出 PCMS-V 联系。论文 Section 4 明说"T-ROF 可视为 SaT 的特例"，区别是 T-ROF 用**迭代阈值更新 (4.1)** 替换 SaT 的 K-means 固定阈值，这正是 retina/多相 close-intensity 上 T-ROF 超过 SaT 的来源。
+- **vs Iterated ROF（第 3 篇，theme 同为 sat-rof）**：第 3 篇（Cai-Steidl, EMMCVPR 2013）是**多类阈值更新算法的原型**，给出 Proposition/Lemma 与符号变号收敛证明的早期版本；本篇把同一套机器**升级并系统化**到 PCMS↔ROF 的完整 linkage（Theorem 3.4/3.6/3.7）与更完整的 Algorithm 1 + 收敛 Theorem 4.6，并补上大量退化图实验。两篇共用本仓库同一个 runner `sat_rof_trof.py`。
+- **vs Segmentation-Restoration 系列**：本篇强调的是 **two-stage thresholding 的理论连接**（先恢复、后阈值，两步解耦）；联合优化型的 segmentation-restoration 工作强调 joint optimization（一步到位）。理解这条分界，才能解释为什么本篇能把"分割"问题外包给成熟的"凸恢复"求解器。
+- **vs framelet / weighted-TV 类分割（如把 (1.5) 的 TV 换成 wavelet frame / weighted TV 的工作）**：PDF Introduction 明确指出，那类替换后**没有**类似 [23] 的理论保证——即换核之后"u>ρ 的阈值集是否对应某个能量的解"无人证明。本篇的价值正是为标准 ROF/TV 这一情形补齐了缺失的理论，这也是它在 SaT 家族里"理论核心篇"定位的由来。
+
 ### 5.5 未来展望
 
 **短期方向（1-2年）：**
@@ -723,7 +779,7 @@ class ROFSolver:
 3. T-ROF算法的简洁性是其优势：
    - 只需要求解一次ROF
    - 然后迭代更新阈值
-   - 收敛快（10-20次迭代）
+   - 收敛快（一般十步内收敛，generally within ten iterations，Fig. 5.8）
 
 4. 对比深度学习方法：
    - 优势：无需训练数据，理论保证
@@ -739,6 +795,66 @@ class ROFSolver:
    - 方法简洁
    - 应用导向
 ```
+
+---
+
+## 🪤 阅读陷阱（Reading Pitfalls）
+
+精读本篇时最容易踩的几个坑（均有 PDF 依据）：
+
+1. **把 partial minimizer 当成 local minimizer。** Eq. (3.11) 的 partial minimizer 只要求"分别对 Σ、对 m 各自最优"，PDF Fig. 3.1 用 x⁴-6(xy)²+y⁴ 在原点的例子明确说明：partial minimizer **不必**是 local minimizer，反之亦然。定理保证的是这种"分块最优"，不是全局最优，更不是局部最优——这是读懂"linkage 强到什么程度"的关键尺度。
+2. **以为 K=2 与 K>2 的结论一样强。** K=2 时 T-ROF↔PCMS/Chan-Vese 是干净的 partial minimizer（Theorem 3.4/3.6）；K>2 时连的是**变体** PCMS-V（Theorem 3.7），且与标准 PCMS 等价**仅当** ∂Σ_i∩∂Σ_{i+1}=∅，否则只是近似。漏掉这个边界条件会高估理论覆盖面。
+3. **把阈值化误读成"经验后处理"。** 借 Proposition 3.1/3.3，阈值集 {x:u*(x)>τ} 本身就是某个凸能量 E(·,τ) 的精确解。阈值化是 ROF level set 与 PCMS energy 的**接口**，不是事后修补。
+4. **混淆 (3.7)–(3.8) 与 (3.10)。** T-ROF 模型并不在 τ 上做无约束最小化（那是 (3.10)），而是用"均值中点"条件 τ_i=½(m_{i-1}+m_i) 锚定 τ。PDF 特别用 [17] Remark 1 提醒两者不同。
+5. **把 λ 与 μ 混为一谈。** μ 是 ROF/T-ROF 的参数，λ 是 PCMS/Chan-Vese 的参数，两者经 λ=μ/[2(m₁-m₀)] 联系。论文 Table 里写的是 "λ/µ" 这一比值列，逐例不同（如 retina 取 25），不要直接当成单个 μ 读。
+6. **把 toy 复现数值当论文数值。** 本仓库 runner 的 `rof_threshold_dice`、`pcms_like_energy` 来自合成两相 toy，且主图部分用 Gaussian smoothing 代理 ROF；它与 Table 5.4 的 0.9962 等数值**无对应关系**，更不证明任何定理。
+
+## 复现判断
+
+| 字段 | 内容 |
+| --- | --- |
+| 复现等级 | toy-to-partial |
+| 真实性等级 | partial-completed |
+| 难度 | 困难 |
+| 效果 | 很明显 |
+| 最小实验 | synthetic two-phase image，求 ROF/TV-like denoising result u*，按 (m0+m1)/2 阈值化，并与 ground truth 比较。 |
+| 预期产出 | 展示 ROF minimizer thresholding 的分割效果，并记录 PCMS-like energy；toy 上 rof_threshold_dice 明显高于 direct_dice。 |
+| 依赖 | numpy / scipy / matplotlib |
+| 数据需求 | synthetic two-phase image（可严格复刻，无私有数据依赖）。 |
+| 算力需求 | CPU，约 1 秒内。 |
+| 实现风险 | 实验只能说明现象，不能声称复现 PCMS partial minimizer 定理；主图部分用 Gaussian smoothing 代理真实 ROF。 |
+
+### 复现指标
+
+- direct_dice
+- rof_threshold_dice
+- pcms_like_energy
+- runtime_seconds
+
+### 验证计划
+
+对比 noisy direct threshold 与 ROF-threshold 的 Dice，并记录 perimeter + data fitting 的 PCMS-like energy；另在 `run_k2_proposition_demo` 中用真实 Chambolle-Pock ROF 做 Theorem 3.6 的 K=2 现象级 proxy 检查。
+
+### 当前运行结果
+
+- direct_dice: 0.8989
+- rof_threshold_dice: 0.9962
+- pcms_like_energy: 204
+- runtime_seconds: 0.7057
+
+### 结果说明
+
+This synthetic toy demonstrates thresholding after proxy smoothing, but does not solve the exact ROF model or prove Theorem 3.6.
+
+> 诚实提醒：上表 `rof_threshold_dice=0.9962` 仅来自一张简单合成两相图，且主路径用 **Gaussian smoothing 代理了论文真正的 ROF/TV 求解**（`run_k2_proposition_demo` 虽用真实 Chambolle-Pock，但同为合成图现象检查）。这些数字与论文 Table 5.4 retina 的 0.9962（背景相 DICE）只是巧合，**不可互相解释**，更**不构成定理证明**。本项目 paper-level 复现仍为 **0/15**。可信的只是"ROF 阈值化分割明显优于对噪声原图直接阈值"这一定性现象（与 Theorem 3.6 的方向一致）。
+
+## 完整复现流程
+
+本篇的"完整复现流程 (Complete Reproduction Workflow)"规范文档（含论文身份核验、算法 step-by-step、所需数据集/DRIVE/MRI、五个 baseline、Table 5.1-5.4 指标溯源、当前 toy/partial 实现与差距分析、运行步骤、代理风险）见：
+
+[`../reproduce/paper_like/workflows/pcms-rof-linkage_reproduction_workflow.md`](../reproduce/paper_like/workflows/pcms-rof-linkage_reproduction_workflow.md)
+
+该文档与本笔记互补：笔记侧重定理直觉与精读，流程文档侧重"怎样从当前 toy-to-partial 一步步走向 paper-like/paper-level，以及每一步还缺什么"。
 
 ---
 
