@@ -1,7 +1,7 @@
 # Xiaohao Cai 学术研究精读与复现项目
 
 > **目标**: 系统精读 15 篇 Xiaohao Cai 第一作者论文，并提供 toy/partial 复现评估
-> **状态**: 15 个结构化精读卡片已完成，15 个独立 Markdown 笔记文件已整理
+> **状态**: 15 篇精读笔记 + 15 篇结构化卡片 + 15 篇完整复现流程文档已完成；9 个复现 runner 已升级为真实算法。当前进展与路线图见 [PROJECT_STATUS.md](PROJECT_STATUS.md)。
 
 ---
 
@@ -132,17 +132,9 @@ node docs/scripts/validate.mjs
 
 ## 📈 复现效果
 
-| 论文 | 复现等级 | 难度 | 效果 |
-|:---|:---:|:---:|:---:|
-| SaT总览 / Mumford-Shah / T-ROF | toy-to-partial | 3/5 | 优秀 |
-| 分割恢复 | toy | 4/5 | 良好 |
-| Framelet / Tight-frame管状结构 | toy | 4/5 | 良好 |
-| SLaT | partial | 3/5 | 明显 |
-| 球面小波 | toy | 5/5 | 一般 |
-| 两阶段 / 高效变分分类 | partial | 4/5 | 良好 |
-| UQ / RI / Online RI / Nested Sampling | toy | 4-5/5 | 一般到良好 |
+9 个 runner 已从 toy 代理升级为真实算法（真实 ROF / 小波 tight-frame / CIELab / graph-TV / wavelet-MAP 等）。**当前真实性：partial-completed 9 / toy-completed 6 / `paper-level-completed = 0 / 15`。**
 
-`completed` 只表示 toy/partial 脚本跑通，不表示论文级完整复现。当前 `paper-level-completed = 0 / 15`。
+逐篇等级、9 个 runner 的真实算法、以及到 paper-level 的剩余步骤，统一见 **[PROJECT_STATUS.md](PROJECT_STATUS.md)**（项目进展与路线图）。`completed` 只表示脚本跑通，不表示论文级完整复现。
 
 每篇论文还配有一份**完整复现流程规范**：`reproduce/paper_like/workflows/<id>_reproduction_workflow.md`（论文身份与第一作者核验、完整算法管线、所需数据集与公开等价来源、对照基线、评价指标与论文报告数值、本仓库当前实现、差距分析、运行步骤、风险与代理说明）。这些文档描述的是 paper-level 目标流程而非已完成复现，复现报告页每张卡片均链接到对应文档。
 

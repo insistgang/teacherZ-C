@@ -36,8 +36,8 @@
 
 纪律红线：
 - **paper-level 在 15 篇中仍为 0/15。** 本篇也不例外。
-- 当前实现（`reproduce/experiments/map_uq_toy.py`）在 **32×32 合成 Fourier 欠采样反问题**上跑，用 **gradient step + Gaussian-filter** 作为 MAP 求解的轻量代理，并用一段 **Gaussian-perturbation 链**充当 "toy MCMC"。这**不是**论文的 forward-backward splitting（Algorithm 1/2），也**不是**论文的真实 HPD 近似公式。
-- `runMetrics` 中 `map_runtime_seconds≈0.0017`、`mcmc_runtime_seconds≈0.0041` 的**时间比约 2.4 倍**，**绝不可**等同或外推为论文 Table 1 报告的 **≈10⁵ 倍** 加速。后者来自 256×256 真实 RI 反问题上 Px-MALA（数千分钟）对比 MAP（百分之几分钟），与 toy 完全不同量级。dashboard 的 `notes` 字段已明确写明此点，复现时务必沿用该警告口径。
+- 当前实现（`reproduce/experiments/map_uq_toy.py`）在 **合成 Shepp-Logan Fourier 欠采样反问题**上，用**真实 ℓ1-wavelet(db8) MAP via forward-backward splitting（FISTA，Algorithm 1 风格）** + **真实 concentration-inequality HPD 阈值 Eq.(19)** + **superpixel 二分局部可信区间（Eq.26-28）**。这已是论文的优化/UQ 机制，但用的是标准测试图（非论文 M31/MRI 数据），且**无真实 RI 测量算子/NUFFT、无 Px-MALA/MCMC 采样器对照、无假设检验**。
+- 本篇当前**不实现 MCMC 采样器**，因此论文 Table 1 报告的 **≈10⁵ 倍** MAP-vs-MCMC 加速在此**无法对照、也绝不可外推**（该加速来自 256×256 真实 RI 反问题上 Px-MALA 对比 MAP）。runMetrics 中的 runtime 仅供参考、随运行波动。dashboard 的 `notes` 字段已写明此点，复现时务必沿用该警告口径。
 
 ---
 
@@ -228,8 +228,8 @@ a^{(i+1)} = soft_{λ^{(i)}μ}( a^{(i)} − λ^{(i)} Ψ†Φ†(ΦΨ a^{(i)} − 
   | `snr_gain_over_dirty_db` | 1.6766 | **MAP 优于 dirty 基线 +1.68 dB** |
   | `sampling_rate` | 0.0979 | Fourier 采样率（≈10%） |
   | `noise_sigma` | 0.019635 | SNR=30 dB 噪声标准差 |
-  | `map_runtime_seconds` | 0.0588 | forward-backward MAP 求解时间 |
-  | `lci_runtime_seconds` | 0.3156 | local credible interval 二分搜索时间 |
+  | `map_runtime_seconds` | 亚秒级 | forward-backward MAP 求解时间（wall-clock，随运行波动） |
+  | `lci_runtime_seconds` | 亚秒级 | local credible interval 二分搜索时间（wall-clock，随运行波动） |
   | `gamma_alpha_hpd` | 6180.6593 | **真实 Eq.19 HPD 阈值 γ'_α**（α=0.01） |
   | `mean_interval_length` | 0.3709 | 平均 superpixel 可信区间宽度 |
 
@@ -275,8 +275,8 @@ node docs/scripts/validate.mjs
 ```
 
 - **依赖**（来自 `reproStructured.dependencies`）：`numpy`、`scipy`、`scikit-image`、`matplotlib`。
-- **算力**：CPU 秒级（整段 runner `runtimeSeconds≈0.075`，MAP 代理本身 ≈0.0017 s）。
-- **数据**：合成 32×32 Fourier 反问题，**无需下载真实数据**。
+- **算力**：CPU 亚秒级（真实 FISTA MAP + 二分可信区间；wall-clock 随运行波动，不作复现指标）。
+- **数据**：合成 64×64 Shepp-Logan Fourier 反问题，**无需下载真实数据**。
 - 缺依赖时 runner 写 `skipped`（含 `skipped_reason`），**不伪造 completed**（遵守 CLAUDE.md 纪律）。
 
 ### 9.2 向 paper-like 扩展的步骤大纲

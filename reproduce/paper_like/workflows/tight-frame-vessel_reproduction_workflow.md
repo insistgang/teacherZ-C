@@ -125,7 +125,7 @@ paper-like 复现建议至少纳入：(a) Chan-Vese active contour（成熟开�
 | Table I (Example 3, 3D) | i=0:137330 → i=1:32760 → ... → i=8:3 → i=9:0 | PDF Table I |
 | 算力 | 2D：2.4GHz/4GB MacBook；3D：120GB RAM 集群节点 | Section IV |
 
-**禁止编造**：论文未给 Dice 数字，因此任何 Dice/IoU 数值（包括本仓库 toy 的 0.9981）都不能写成"论文报告值"。paper-like 阶段若在 DRIVE/STARE 上计算指标，须注明是"等价任务上的复现结果"。
+**禁止编造**：论文未给 Dice 数字，因此任何 Dice/IoU 数值（包括本仓库 partial 的 0.9863）都不能写成"论文报告值"。paper-like 阶段若在 DRIVE/STARE 上计算指标，须注明是"等价任务上的复现结果"。
 
 ## 7. 本仓库当前复现实现
 

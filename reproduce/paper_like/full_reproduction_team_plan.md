@@ -19,6 +19,8 @@ Per-paper complete-reproduction workflow specs live in `reproduce/paper_like/wor
 
 ## Priority Order
 
+> 各篇**当前真实等级**以 `PROJECT_STATUS.md` §二 与 `reproduce/results/repro_results.json` 为准（partial 9 / toy 6；paper-level 0/15）。9 个 runner 已从 Gaussian/Lab-like/rejection 等代理升级为真实算法，下面的「Current level」反映该升级后状态，「Paper-like target」是仍待补的数据/基线/规模缺口。
+
 1. `iterated-rof`
    - Current level: `partial`.
    - Why first: existing Chambolle-Pock ROF, Split-Bregman cross-check, threshold update, and paper-like readiness scaffold.
@@ -26,23 +28,23 @@ Per-paper complete-reproduction workflow specs live in `reproduce/paper_like/wor
 
 2. `slat-color`
    - Current level: `partial`.
-   - Why second: RGB plus Lab-like lifting is implemented but the current synthetic case shows weak metric gain.
-   - Paper-like target: degraded color image set, real Lab conversion, RGB-only and RGB+Lab comparisons.
+   - Done: real sRGB→CIELab conversion + RGB+Lab six-channel K-means now implemented (Lab-like proxy removed).
+   - Paper-like target: degraded color image set with stronger information-loss/blur regimes, paper baselines and table-level comparisons.
 
 3. `two-stage-classification` and `efficient-variational-classification`
    - Current level: `partial`.
-   - Why third: current graph smoothing demo is simple and stable, but missing graph TV / primal-dual solver and benchmarks.
-   - Paper-like target: public high-dimensional or point-cloud benchmark, graph TV solver, accuracy/runtime tables.
+   - Done: real graph TV (ℓ1) Chambolle-Pock primal-dual solver + SVM warm init on a Three-Moon set now implemented (was Laplacian-only smoothing).
+   - Paper-like target: public high-dimensional / point-cloud benchmarks (COIL/MNIST/Opt-Digits), paper baselines (CVM/GL/MBO/TVRF), accuracy/runtime tables.
 
 4. `segmentation-restoration`
-   - Current level: `toy`.
-   - Why fourth: toy effect is clear, but the joint variational model is not faithfully implemented.
-   - Paper-like target: implement a closer alternating minimization with documented fidelity terms.
+   - Current level: `partial`.
+   - Done: faithful coupled restoration+segmentation alternating minimization (true blur operator A, Fourier-domain Tikhonov g-update, Chambolle-Pock multiphase TV) now implemented.
+   - Paper-like target: paper-equivalent data (barcode/cameraman/MRI/colour), Poisson/impulsive fidelity, the paper baselines, and Table-level SA comparison.
 
-5. `framelet-tubular`, `tight-frame-vessel`, `sphere-wavelet`
-   - Current level: `toy`.
-   - Why later: require framelet/tight-frame or spherical wavelet stacks and domain data.
-   - Paper-like target: replace Gaussian proxy with actual transform stack or explicitly keep proxy status.
+5. `framelet-tubular`, `tight-frame-vessel` (partial) and `sphere-wavelet` (toy)
+   - Current level: `framelet-tubular`/`tight-frame-vessel` = `partial`; `sphere-wavelet` = `toy`.
+   - Done: real undecimated wavelet (pywt SWT) tight-frame soft-thresholding replaces the Gaussian proxy for all three; |Λ| now truly contracts to 0.
+   - Paper-like target: real 2D/3D MRA/CTA data for the vessel pair; the true spherical-harmonic wavelet stack (S2LET/SSHT/SO3) + real S² data for the sphere paper.
 
 6. `high-dimensional-uq`, `ri-uq-i`, `ri-uq-ii`, `online-ri`, `proximal-nested-sampling`
    - Current level: `toy`.

@@ -211,7 +211,7 @@ nested sampling 最难的一步是"从 prior 采样且满足硬似然约束 `L(x
   | `live_points` | 100 | N_live |
   | `iterations` | 1200 | 主循环步数 |
   | `myula_steps_per_draw` | 60 | 每次约束采样的 MYULA 步数 |
-  | `runtimeSeconds` | ≈3.9 | CPU 运行时间（秒级，< 8s 目标） |
+  | `runtime_seconds` | 亚秒级~数秒（随运行波动，不作复现指标） | CPU wall-clock，受机器负载影响，不 pin 具体小数 |
 
   > 真实算法**明显优于** raw 基线：在 d=10（rejection 已开始失效、每次约 250 个替换失败用 stale 点兜底）这一维度，proximal 约束采样把 `absolute_log_error` 从 1.21 压到 **0.025**。跨 6 个随机种子复测，proximal 平均误差 0.31（最大 0.71），rejection 平均 1.10（最大 1.26）——proximal 在**每个种子上都胜出**。这是真实机制带来的稳健改进，非单一幸运种子。
 - **resultFiles**：`assets/repro/nested_sampling_evidence_trace.png`。
@@ -258,7 +258,7 @@ node docs/scripts/validate.mjs
 ```
 
 - **依赖**（runner `require_modules`）：`numpy`、`scipy`、`matplotlib`。
-- **算力**：CPU，秒级（`runtimeSeconds≈3.9`，< 8s 目标）。
+- **算力**：CPU，wall-clock 亚秒级~数秒（随运行波动，不作复现指标，仅作量级提示）。
 - **数据**：纯合成 d=10 各向同性 Gaussian + uniform-box prior，**无需下载任何数据**。
 - 缺依赖时 runner 写 `skipped`，**不伪造 completed**（遵守 CLAUDE.md 纪律）。
 

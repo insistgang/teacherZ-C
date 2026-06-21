@@ -963,7 +963,7 @@ Chopin & Robert (2010) 证明误差渐近高斯、以 $\mathcal{O}(N^{-1/2})$ �
 | **runner 文件** | `reproduce/experiments/nested_sampling_toy.py` |
 | **实际复现了什么** | 在 **d=10** 各向同性 Gaussian likelihood + uniform-box prior（有闭式 evidence）上跑 nested sampling，**约束采样已用真实 proximal-Langevin (MYULA) 机制**：Moreau-Yosida 近似 characteristic function（L2 球投影 prox，Eq.(46)）+ Eq.(36) Langevin 更新 + Eq.(39) Metropolis-Hastings 校正——覆盖论文 Algorithm 2/4 在 Φ=I（去噪）下的核心机制 |
 | **关键缺失** | 仍缺 ℓ₁ 软阈值 prox（Eq.(43)）、重建型 primal-dual/ADMM 投影（Eq.(47)/Alg 5/6）、wavelet/Fourier 算子、d→10³–10⁶ 高维、Eq.(27) 熵误差棒、Cameraman/W28/M31 三组成像 model-selection 实验 |
-| **当前 toy 数值** | `dimension=10`，`estimated_log_evidence=-13.8614`，`reference_log_evidence=-13.8365`，`absolute_log_error=0.0250`（**小**），`rejection_baseline_log_error=1.2109`，`error_reduction_vs_rejection=1.1859`，`live_points=100`，`iterations=1200`，`myula_steps_per_draw=60`，`runtimeSeconds≈3.9` |
+| **当前 toy 数值** | `dimension=10`，`estimated_log_evidence=-13.8614`，`reference_log_evidence=-13.8365`，`absolute_log_error=0.0250`（**小**），`rejection_baseline_log_error=1.2109`，`error_reduction_vs_rejection=1.1859`，`live_points=100`，`iterations=1200`，`myula_steps_per_draw=60`；wall-clock runtime 亚秒级~数秒（随运行波动，不作复现指标） |
 | **约束采样实现** | **真实 MYULA proximal-Langevin + MH 校正**（`prox_sample_draw`），非纯 rejection；在 d=10（rejection 已开始失效、约 250 个替换 stale）这一维度明显优于 rejection 基线（误差 0.025 vs 1.21）。跨 6 个种子 proximal 在每个种子上都胜出 |
 | **结果文件** | `assets/repro/nested_sampling_evidence_trace.png` |
 | **可外推性** | 已实现 proximal NS 约束采样**核心机制（去噪情形）**，但**不得**外推为论文级高维证据估计精度、不得等同于论文 d=10⁶ 的 $2.3851\times10^5$、不得宣称验证了 Table 1/2/3 任何 model-selection 结论 |
@@ -979,4 +979,4 @@ Chopin & Robert (2010) 证明误差渐近高斯、以 $\mathcal{O}(N^{-1/2})$ �
 本篇的"完整复现流程 (Complete Reproduction Workflow)"规范文档（含论文身份核验、算法 step-by-step、所需数据集、基线、论文 Table 1/2/3 报告数值、当前 toy 实现、到 paper-like/paper-level 的差距清单、运行步骤与代理风险）见：
 [`../reproduce/paper_like/workflows/proximal-nested-sampling_reproduction_workflow.md`](../reproduce/paper_like/workflows/proximal-nested-sampling_reproduction_workflow.md)
 
-简述：当前仓库为 `toy` 等级（d=2 Gaussian nested sampling 骨架 + rejection sampling），尚未实现论文的 proximal constrained sampler；向 paper-like 推进需依次补齐 ℓ₁/ℓ₂ prox、MYULA+MH 约束采样（Algorithm 2-4）、中维 Gaussian 解析证据对照、再到 Cameraman/W28/M31 的 dictionary/正则参数/measurement model 选择实验。
+简述：当前仓库为 `toy` 等级——在 **d=10** 各向同性 Gaussian likelihood + uniform-box prior（有闭式 evidence）上跑 nested sampling 骨架，约束采样**已用真实 proximal-Langevin (MYULA) + MH 校正**（`prox_sample_draw`，L2 球投影 prox = Eq.(46) 去噪情形），相对同骨架纯 rejection 基线把 `absolute_log_error` 从 1.21 压到 0.025；但仍只到 d=10、只有解析 L2 球（Φ=I）约束、uniform prior。向 paper-like 推进需依次补齐 ℓ₁ 软阈值 prox（Eq.(43)）、重建型 primal-dual/ADMM 投影（Eq.(47)/Alg 5/6）、中维 Gaussian 解析证据对照 + Eq.(27) 熵误差棒、再到 Cameraman/W28/M31 的 dictionary/正则参数/measurement model 选择实验。

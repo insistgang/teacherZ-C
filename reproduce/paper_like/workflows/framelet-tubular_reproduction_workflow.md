@@ -184,7 +184,7 @@ generic framelet 算法形式：
   | lambda_final | 0 | **收敛到空集**（论文 Theorem 1 行为） |
   | iterations | 5 | 实测收敛迭代数（接近论文 Example 1 的 6 轮量级） |
   | converged_empty_lambda | 1 | 已真正达到 |Λ|=0 收敛准则 |
-  | runtimeSeconds | ≈0.19 | CPU < 8s |
+  | runtimeSeconds | 亚秒级（随运行波动，不作复现指标） | wall-clock，非确定性，仅供量级参考 |
 
   Λ 收缩序列 `[12416, 206, 42, 8, 0]` 单调非增并收敛到 0，形态与论文 Table 1（急剧下降后数轮内收敛）一致。
 - **结果图**：`docs/assets/repro/tubular_lambda_shrinkage.png`（dashboard `resultFiles`: `assets/repro/tubular_lambda_shrinkage.png`）。

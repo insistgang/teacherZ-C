@@ -143,7 +143,7 @@ $x$ 为 ground-truth，$x^*$ 为重建。Table 1 用相对差（式 54）$\mathr
   8. 输出五联图 `assets/repro/online_ri_storage_quality.png`（truth / dirty / offline FB / online FB / SNR-vs-FB-step 曲线）。
 - **参数**：$\mu=0.005$（小波 L1 权重，相对 dirty-image 尺度调得；$\mu=0$ 也收敛，$\mu>0$ 给小幅 SNR 增益），$\lambda=1.0$（步长，正交 FFT 下 $L=1$），$i_{\max}=50$，$B=8$，input SNR=30 dB。
 - **指标用论文口径 SNR（式 53）**：$\mathrm{SNR}=20\log_{10}(\|x\|_2/\|x-x^*\|_2)$ dB；并报存储比 $\eta_s=\max_k M_k/M$（式 50）。
-- **当前 runMetrics（确定性，跨次运行完全一致，CPU ~0.2 s）**：
+- **当前 runMetrics（下列指标均为确定性，跨次运行完全一致；wall-clock `runtime_seconds` 为亚秒级、随运行波动，不作复现指标）**：
 
 | 指标 | 值 | 含义 |
 |------|----|------|
@@ -194,7 +194,7 @@ cd reproduce && python run_all.py
 
 - 依赖：本 runner `online_ri_toy.py` 的 `require_modules` 现检查 `numpy`、`matplotlib`、`scikit-image`、`pywt`（PyWavelets，提供 Daubechies-8 小波 Ψ）；缺任一所需模块时 runner 返回 `status=skipped`（不伪造 completed），与项目纪律一致。
 - 产物：`docs/assets/repro/online_ri_storage_quality.png`（五联图：truth / dirty / offline FB / online FB / SNR-vs-FB-step），以及写回 dashboard 的 `runMetrics`。
-- 单篇调试：可在 `reproduce/experiments/online_ri_toy.py` 中调 `run()`（CPU 秒级，~0.2 s）。
+- 单篇调试：可在 `reproduce/experiments/online_ri_toy.py` 中调 `run()`（CPU 上亚秒级；wall-clock 随运行波动，不作复现指标）。
 
 **向 paper-like 扩展的步骤大纲**（已实现的标 ✅，仅设计未实现的不标）
 

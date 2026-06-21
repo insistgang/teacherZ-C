@@ -38,9 +38,9 @@
 
 纪律红线：
 - **paper-level 在 15 篇中仍为 0/15。** 本篇也不例外。
-- 当前实现（`reproduce/experiments/map_uq_toy.py`）使用 **gradient + Gaussian smoothing 迭代** 作为 ℓ1-MAP 凸优化求解器的轻量代理，并未实现真正的 forward-backward / Douglas-Rachford / primal-dual proximal splitting；HPD 阈值 `gamma_alpha_toy` 是教学化简化版，**不**校准真实 posterior coverage；"MCMC interval" 是一个随机游走平滑代理，**不是** Px-MALA。
-- `runMetrics` 中的 `map_psnr=18.7123`、`mean_interval_length=0.1739`、`gamma_alpha_toy=939.9229` 等均为 32×32 合成图上的 toy 结果，**不得**表述为论文级精度或论文 Table I 数值。
-- runner notes 已明确写明："Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim." 论文宣称的 **O(10^5) 相对 Px-MALA 的加速**只在大规模真实 pipeline 下成立，本仓库 toy 的 map/mcmc runtime 对比**不可外推**。
+- 当前实现（`reproduce/experiments/map_uq_toy.py`）已**从旧 Gaussian 平滑代理升级为论文真实方法的可运行实现**：用 **真实 ℓ1-wavelet（Daubechies-8）analysis-prior MAP via FISTA / forward-backward splitting**（闭式软阈值 prox）求解 `μ‖Ψ†x‖₁+‖y-Ax‖²/2σ²`；HPD 阈值用 **完整 Eq.(6)** `γ'_α=f(x*)+g(x*)+√(16log(3/α))√N+N`（concentration inequality，α=0.01）；局部可信区间用 **Eq.(7-9) superpixel 二分搜索**。但用的是 **64×64 标准 Shepp-Logan 测试图**（非论文 M31/BrainWeb），且无 SARA 字典、无自动 μ、无 Px-MALA/MCMC 采样器。
+- `runMetrics` 中的 `map_psnr=22.2878`、`map_snr=9.1586`、`gamma_alpha_hpd=6180.6593`、`mean_interval_length=0.3709` 等均为 **64×64 Shepp-Logan 标准测试图上的真实算法结果**，**不得**表述为论文级精度或论文 Table I 数值。
+- runner `fidelityWarning` 已明确写明指标与论文 **O(10^5) 相对 Px-MALA 的加速不可对照**；该加速只在大规模真实 RI pipeline 下成立，本仓库无 Px-MALA 基线、亦无 MAP-vs-MCMC 时间比，**不可外推**。wall-clock runtime（`map_runtime_seconds`/`lci_runtime_seconds` 等）为亚秒级且随运行波动，**不作复现指标**。
 
 ---
 
@@ -110,7 +110,7 @@
 | **M31 星系图** | RI imaging 测试图（Fig. 2 左，log10 尺度） | M31 是天文学常用 benchmark，PURIFY / RI 重建文献中广泛使用其干净图像作为 ground truth | 论文以其作为 RI 应用展示；为 paper-like 需取同一 256×256 M31 干净图并自建 `Φ = mask · FFT` |
 | **MRI brain image** | medical imaging 测试图（Fig. 2 右） | **BrainWeb** 模拟脑数据库（ref [30]，http://brainweb.bic.mni.mcgill.ca/brainweb），公开 | 论文明确引用 BrainWeb 作为 MRI 来源，可直接下载等价图像 |
 | **观测算子 Φ** | Fourier transform + downsampling mask，`M = N/10` | 可在代码中自建：随机/径向欠采样掩模 + FFT | 论文 RI/MRI 均用 Fourier + mask，采样率 10% |
-| **图像尺寸** | 256 × 256（Fig. 4 标注） | — | toy 仓库当前为 32×32 |
+| **图像尺寸** | 256 × 256（Fig. 4 标注） | — | 当前为 64×64 合成 Shepp-Logan 测试图 |
 | **噪声** | i.i.d. 高斯，`σ = ‖x*‖_∞ · 10^{-SNR/20}`，SNR = 30 | — | 与 g_y 中 σ 一致 |
 
 私有/受限数据说明：本篇**不依赖**私有医学或私有 RI 观测数据——M31 干净图与 BrainWeb 均为公开，观测是合成欠采样。因此 paper-like 在数据侧**可行**，主要门槛在求解器与 dictionary，而非数据获取。
@@ -179,11 +179,11 @@ SARA 字典定义（ref [13]，Carrillo-McEwen-Wiaux）：nine bases 的拼接 =
 | `snr_gain_over_dirty_db` | 1.6766 | **MAP 优于 dirty 基线 +1.68 dB**（验证真实先验有效） |
 | `sampling_rate` | 0.0979 | Fourier 采样率（≈10%，对齐论文） |
 | `noise_sigma` | 0.019635 | SNR=30 dB 对应噪声标准差 |
-| `map_runtime_seconds` | 0.0588 | FISTA MAP 求解时间 |
-| `lci_runtime_seconds` | 0.3156 | local credible interval 二分搜索时间 |
+| `map_runtime_seconds` | 亚秒级 | FISTA MAP 求解时间（wall-clock，随运行波动，不作复现指标） |
+| `lci_runtime_seconds` | 亚秒级 | local credible interval 二分搜索时间（wall-clock，随运行波动） |
 | `gamma_alpha_hpd` | 6180.6593 | 真实 HPD 阈值 γ'_α（完整 Eq.(6)，α=0.01） |
 | `mean_interval_length` | 0.3709 | 平均 superpixel 可信区间宽度 |
-| `runtimeSeconds`（整体） | ≈0.58 | runner 总耗时（< 8 s 目标） |
+| `runtime_seconds`（整体） | 亚秒级 | runner 总耗时（wall-clock，随运行波动，不作复现指标） |
 
 - **fidelityWarning（runner `extra` 字段已写）**：已实现真实 ℓ1-wavelet（db8）MAP + 真实局部可信区间方法，但用的是标准 Shepp-Logan 测试图而非论文 M31/BrainWeb 数据，且无真实射电干涉（NUFFT）算子、无 auto-μ、无 SARA 字典、无 Px-MALA/MCMC；指标与论文 Table I 及 O(10⁵) 加速**不可对照**。
 - **resultFiles**：`assets/repro/map_uq_reconstruction_uncertainty.png`。

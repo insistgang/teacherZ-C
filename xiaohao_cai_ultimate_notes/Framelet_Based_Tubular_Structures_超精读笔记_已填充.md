@@ -143,7 +143,7 @@ candidate boundary Λ_i = {x : α_i < f_i(x) < β_i}; framelet denoising on Λ_i
 - 比 [16][17] PDE anisotropic diffusion：本方法提取更多细节、去噪更干净（Fig. 3(e)–(g) vs (i)–(k) 放大对比）。
 - anisotropic vs isotropic：anisotropic 边界更紧、tips 处恢复更多像素、更好连接 coherence direction 上的小遮挡（Fig. 3(h)(l) superimposed boundaries 显示 anisotropic 更贴 tips）。
 
-> **重要诚实说明**：论文 **未报告 Dice / IoU / sensitivity 等重叠指标**，其量化证据集中在 Table 1 的 \|Λ^(i)\| 收缩与迭代数。本仓库 toy 用的 Dice 0.9981 是自定义合成评估，**不可与论文结果对等**。阅读时不要把论文说成"达到某 Dice"。
+> **重要诚实说明**：论文 **未报告 Dice / IoU / sensitivity 等重叠指标**，其量化证据集中在 Table 1 的 \|Λ^(i)\| 收缩与迭代数。本仓库 partial 用的 Dice 0.9863 是合成数据上的自定义内部评估，**不可与论文结果对等**。阅读时不要把论文说成"达到某 Dice"。
 
 ## 精读方式
 

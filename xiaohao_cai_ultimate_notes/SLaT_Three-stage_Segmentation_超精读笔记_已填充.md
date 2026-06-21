@@ -608,7 +608,7 @@ SLaT 三阶段彩色 (2015, 本文) → T-ROF / iterated thresholding (后续)
 - Stage 2：**真实 sRGB→CIELab**（`rgb2lab`），按名义范围 rescale 到 [0,1]，拼成 RGB+Lab 六维 $\bar g^*$；
 - Stage 3：RGB-only 与 RGB+Lab 各跑 K-means(K=4)，匈牙利匹配像素准确率。
 
-**当前指标（确定性可复现）**：`rgb_only_accuracy = 0.5418`、`rgb_lab_accuracy = 0.6951`、`accuracy_gain = 0.1533`、runtime ≈ 0.3s。因 RGB 高相关 + 强退化，RGB-only 接近崩溃(0.54)，真实 CIELab lifting 升到 0.70，清晰复现了论文"Lifting 在单一颜色空间失败时提供互补信息"的核心结论（旧 toy 仅 0.0053）。
+**当前指标（确定性可复现）**：`rgb_only_accuracy = 0.5418`、`rgb_lab_accuracy = 0.6951`、`accuracy_gain = 0.1533`；wall-clock `runtime_seconds` 为亚秒级（随运行波动，不作复现指标）。因 RGB 高相关 + 强退化，RGB-only 接近崩溃(0.54)，真实 CIELab lifting 升到 0.70，清晰复现了论文"Lifting 在单一颜色空间失败时提供互补信息"的核心结论（旧 toy 仅 0.0053）。
 
 | 维度 | 论文 (paper-level 目标) | 本仓库当前 (partial) | 差距 |
 |------|------------------------|----------------------|------|

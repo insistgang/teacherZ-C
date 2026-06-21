@@ -513,7 +513,7 @@ class OnlineRIReconstructor:
 | 复现等级 (`reproductionLevel`) | **toy** |
 | 真实性 (`reproductionTruthLevel`) | **toy-completed** |
 | paper-level 进度 | **0/15**，本篇亦为 0 |
-| runner | `reproduce/experiments/online_ri_toy.py`（experiment_id=`online_ri_toy`，CPU ~0.2 s，确定性） |
+| runner | `reproduce/experiments/online_ri_toy.py`（experiment_id=`online_ri_toy`，指标确定性；wall-clock 为亚秒级、随运行波动，不作复现指标） |
 | 当前实现 | **真实 online forward-backward（Algorithm 2, analysis form）**：$\Phi_k=M_k F$ 正交 masked-FFT + Daubechies-8 正交小波 Ψ（pywt）软阈值 prox + 按 B=8 块累加部分梯度 + 丢弃机制；并行 standard offline FB 基线 |
 | 当前指标 | offline_snr_db=24.6404，online_snr_db=24.5580，dirty_snr_db=15.1086，online_offline_rel_diff=0.003347，B=8，M=1229，peak_stored=154，$\eta_s$=0.1253(≈1/B) |
 | 用的 proxy（仍存在） | 64×64 synthetic 多结构图代替 M31/Cygnus A/W28/3C288；on-grid masked-FFT 代替真实 NUFFT/w-projection 算子；全平面 ~30% 覆盖代替半 Fourier 平面 10% 采样；数据项 $1/2\sigma^2$ 折进 $\mu$（$\mu=0.005$ 而非论文 $10^4$ 尺度）|

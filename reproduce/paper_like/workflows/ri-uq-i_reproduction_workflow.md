@@ -34,8 +34,8 @@
 | paper-level | 严格复现论文表格/图的数值，方法与数据均一致 | **0/15，本篇亦为 0** |
 
 - 本仓库 `reproductionLevel = toy`，`reproductionTruthLevel = toy-completed`。
-- 当前实现（`map_uq_toy.py`）在一个 32×32 的 Fourier 欠采样逆问题上，用**梯度下降 + Gaussian smoothing 作为 MAP/proxy**，再用一个**带 Gaussian 抖动 + 平滑的随机游走**冒充 proximal-MCMC 采样器，从样本经验分位数算 interval map。它**不含**：真实 RI measurement operator Φ（NUFFT/visibility 算子）、Daubechies 小波字典 Ψ、$\ell_1$ analysis/synthesis 后验、Moreau-Yosida envelope、真正的 MYULA / Px-MALA（无 Metropolis-Hastings 校正、无 Langevin 噪声尺度 $\sqrt{2\delta}$ 的正确实现）、HPD isocontour $\gamma_\alpha$ 计算与 hypothesis testing。因此它只能算"思路演示 toy"，**不能**作为对论文 MYULA/Px-MALA 算法的复现。
-- 纪律强调：本文档第 6 节引用的论文数值（Table 1 的 CPU 分钟数、Table 2/3 的 hypothesis test 值等）仅供对照，**当前实现不复现这些数值**。`notes` 字段已如实声明 "Toy runtime comparison is not comparable to the paper's large-scale 10^5 speedup claim"。任何把 toy 的 `mcmc_runtime_seconds=0.0041` 或 `map_psnr=18.7` 当作论文级证据的陈述都是错误的。
+- 当前实现（`reproduce/experiments/map_uq_toy.py`，#11/#12/#13 共用）在 **64×64 合成 Shepp-Logan Fourier 欠采样逆问题**上，用**真实 ℓ1-wavelet（Daubechies-8）MAP via FISTA / forward-backward splitting**（闭式软阈值 prox）求解，并计算**真实 HPD 阈值**（concentration inequality，完整 Eq.(6)/Eq.(19)，α=0.01）与 **superpixel 二分局部可信区间**（Eq.(7-9)）。关键诚实边界：它实现的是 **MAP 优化 + 后处理 UQ 机制（即本系列论文 II 的路线）**，**并未实现本篇（论文 I）的核心贡献——proximal-MCMC 采样器（MYULA / Px-MALA，含 Moreau-Yosida envelope 与 Metropolis-Hastings 校正）**；也无真实 RI measurement operator Φ（NUFFT/visibility 算子）与论文真实数据（M31 等）。因此**对本篇论文 I 而言仍是 toy**：真实 proximal-MCMC 采样器与 RI 算子是关键缺口。
+- 纪律强调：本文档第 6 节引用的论文数值（Table 1 的 CPU 分钟数、Table 2/3 的 hypothesis test 值等）仅供对照，**当前实现不复现这些数值**。任何把 toy 的 `map_snr=9.1586` / `map_psnr=22.2878` 等 64×64 标准测试图数值当作论文级证据，或外推论文 ≈10⁵× 的 MAP-vs-MCMC 加速，都是错误的（本实现无 MCMC 采样器对照、无法给出该加速比）。wall-clock runtime 为亚秒级且随运行波动，不作复现指标。
 
 ---
 
@@ -145,7 +145,7 @@ paper-level 复现还需匹配：$\ell_1$ 正则参数 $\mu=10^4$（visual cross
   4. **真实 $\ell_1$-wavelet MAP（forward-backward / FISTA）**：解 $\hat x=\arg\min_x\mu\|\Psi^\dagger x\|_1+\|y-Ax\|_2^2/2\sigma^2$，$\Psi=$ **Daubechies-8 正交小波（pywt）**，软阈值 prox 闭式（式 29，$\Psi^\dagger\Psi=I$），梯度步 $\nabla g=A^\dagger(Ax-y)/\sigma^2$（式 30），FISTA 动量，250 iters，初值 dirty image $A^\dagger y$，$\mu=3\sigma$。
   5. **真实 HPD 阈值**：$\gamma'_\alpha=f(\hat x)+g(\hat x)+\sqrt{16\log(3/\alpha)}\sqrt N+N$（concentration inequality，$\alpha=0.01$）。
   6. **真实 local credible interval（superpixel 二分搜索）**：8×8 superpixel，对每区域固定区外为 MAP、区内统一设常数 $\xi$，二分搜索使 $f+g\le\gamma'_\alpha$ 的最小/最大 $\xi$，输出区间宽度图。
-- **当前 runMetrics（真实算法，Shepp-Logan 测试图）**：`map_psnr = 22.2878`、`map_snr = 9.1586`、`dirty_snr = 7.4821`、`snr_gain_over_dirty_db = 1.6766`（**MAP 优于 dirty 基线 +1.68 dB**）、`sampling_rate = 0.0979`、`noise_sigma = 0.019635`、`map_runtime_seconds = 0.0588`、`lci_runtime_seconds = 0.3156`、`gamma_alpha_hpd = 6180.6593`、`mean_interval_length = 0.3709`；`status = completed`，`runtime_seconds ≈ 0.58`。
+- **当前 runMetrics（真实算法，Shepp-Logan 测试图）**：`map_psnr = 22.2878`、`map_snr = 9.1586`、`dirty_snr = 7.4821`、`snr_gain_over_dirty_db = 1.6766`（**MAP 优于 dirty 基线 +1.68 dB**）、`sampling_rate = 0.0979`、`noise_sigma = 0.019635`、`map_runtime_seconds`/`lci_runtime_seconds`（亚秒级，wall-clock 随运行波动、不作复现指标）、`gamma_alpha_hpd = 6180.6593`、`mean_interval_length = 0.3709`；`status = completed`。
 - **resultFiles**：`assets/repro/map_uq_reconstruction_uncertainty.png`（四联图：truth / dirty $A^\dagger y$ / $\ell_1$-wavelet MAP / LCI width）。
 - **重要说明**：本 runner 实现的是论文的**优化 + MAP-UQ 机制**（与配套 II 篇路线一致），**仍不含**论文 I 的核心采样器 MYULA/Px-MALA（无 Langevin 漂移、$\sqrt{2\delta}$ 噪声、MH 校正），也无 hypothesis testing。`notes` 与 `fidelityWarning` 字段已如实标注："implements the optimisation/UQ machinery but NOT the paper's proximal-MCMC samplers (MYULA/Px-MALA), nor a true RI measurement operator, nor M31/Cygnus A/W28/3C288 data. Runtime is not comparable to the paper's large-scale results."
 

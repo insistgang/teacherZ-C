@@ -167,7 +167,7 @@ $$
   | `rgb_only_accuracy` | 0.5418 |
   | `rgb_lab_accuracy` | 0.6951 |
   | `accuracy_gain` | **0.1533** |
-  | `runtime_seconds` | ~0.3（< 8 秒目标内）|
+  | `runtime_seconds` | 亚秒级（wall-clock，随运行波动，不作复现指标）|
 
 - **关键改进**：因 RGB 通道高度相关 + 强退化，RGB-only K-means 准确率仅 **0.5418**（接近随机崩溃），而真实 CIELab lifting 把感知色差展开为可分距离，RGB+Lab 升到 **0.6951**，带来 **+0.1533** 清晰且可复现的增益（旧 toy 仅 0.0053）。这定性复现了论文"Lifting 在 RGB 高相关/退化下显著优于单一颜色空间"的核心结论。
 - **当前 resultFiles**：`assets/repro/slat_rgb_vs_rgblab.png`
@@ -206,7 +206,7 @@ cd reproduce && python run_all.py
 
 - 缺依赖时 runner 写入 `skipped`（不伪造 completed）。本篇依赖：`numpy`, `scipy`, `matplotlib`。
 - 产物：指标写入复现结果 JSON，图写入 `docs/assets/repro/slat_rgb_vs_rgblab.png`。
-- 计算需求：CPU，约 0.1 秒内。
+- 计算需求：CPU，亚秒级（wall-clock 随运行波动，不作复现指标）。
 
 **向 paper-like 扩展的步骤大纲**（不在当前 runner 内，仅规划）：
 1. 实现 Stage 1 严格求解器（primal-dual + split-Bregman），加 $\mathcal{A}$ 与 $\omega_i$。
