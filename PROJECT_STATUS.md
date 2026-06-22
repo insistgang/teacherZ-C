@@ -38,8 +38,9 @@
 
 ### 5. 校验与测试（全绿）
 ```bash
-node docs/scripts/validate.mjs            # 15 篇数据/PDF/笔记/复现资产一致性
-node reproduce/sync_to_dashboard.mjs --check
+# iterated-rof 已晋升 paper-like，校验须显式放行（否则按设计拒绝 paper-like）
+ALLOW_PAPER_LIKE=1 node docs/scripts/validate.mjs            # 15 篇数据/PDF/笔记/复现资产一致性
+ALLOW_PAPER_LIKE=1 node reproduce/sync_to_dashboard.mjs --check
 python -m unittest discover -s reproduce/tests -p 'test_*.py'   # 165 通过
 node reproduce/tests/test_sync_to_dashboard.mjs                  # 75 通过
 node reproduce/tests/test_repro_promotion_guards.mjs             # 4 通过
@@ -55,7 +56,7 @@ node reproduce/tests/test_repro_promotion_guards.mjs             # 4 通过
 | --- | --- | --- | --- |
 | 1 | sat-overview | partial | partial-completed |
 | 2 | pcms-rof-linkage | partial | partial-completed |
-| 3 | iterated-rof | partial | partial-completed |
+| 3 | iterated-rof | **paper-like** | partial-completed |
 | 4 | segmentation-restoration | partial | partial-completed |
 | 5 | framelet-tubular | partial | partial-completed |
 | 6 | tight-frame-vessel | partial | partial-completed |
@@ -69,8 +70,11 @@ node reproduce/tests/test_repro_promotion_guards.mjs             # 4 通过
 | 14 | online-ri | toy | toy-completed |
 | 15 | proximal-nested-sampling | toy | toy-completed |
 
-**汇总：partial-completed 9 / toy-completed 6 / `paper-like 0 / 15` / `paper-level 0 / 15`。**
-真实算法已就位，但仍是合成/标准测试数据、缺论文真实数据与对照基线，因此严守 paper-level = 0/15。
+**汇总：`paper-like 1 / 15`（iterated-rof，真实数据-backed）/ partial-completed 9 / toy-completed 6（其中 iterated-rof 的 truthLevel 仍为 partial-completed）/ `paper-level 0 / 15`。**
+
+iterated-rof 已用**真实公开数据**（BSDS500 cartoon + USC-SIPI Brodatz texture + BrainWeb medical，各含 ground-truth mask）跑真实 T-ROF + raw K-means / Multi-Otsu 基线，并通过项目的数据-backed 门禁（source registry / manifest / audit 工件 / license review / SHA 证据 / dataset fingerprint / figure evidence），晋升为 `paper-like`。其余 14 篇仍为 partial/toy（合成或标准测试数据），`paper-level` 严守 0/15。
+
+> **校验注意**：iterated-rof 晋升后，`paper-like` 计数为 1，因此一致性校验必须显式放行：`ALLOW_PAPER_LIKE=1 node docs/scripts/validate.mjs`（默认不带该环境变量会按设计拒绝任何 paper-like，以防误晋升）。
 
 ---
 
@@ -94,8 +98,17 @@ node reproduce/tests/test_repro_promotion_guards.mjs             # 4 通过
 ### C 类：理论类（无法用代码"复现"，只能演示）
 - **#2 pcms-rof-linkage**：核心贡献是 Theorem 3.4/3.6/3.7 与收敛性证明；代码只能给一致性佐证，不能替代证明。
 
-### 旗舰路径：iterated-rof 数据-backed 晋升
-`reproduce/paper_like/iterated_rof_paper_like.py` 已搭好 paper-like 数据门禁（source registry / manifest / 审计 / mask / runner 交叉校验）。一旦放入真实/等价数据并通过门禁，可按 `reproduce/README.md` 的 promotion 流程用 `ALLOW_PAPER_LIKE=1` 进入晋升审查——这是把第一篇推到 paper-like 的最短路径。
+### 旗舰：iterated-rof 已晋升 paper-like（✅ 已完成）
+`reproduce/paper_like/iterated_rof_paper_like.py` 的 paper-like 数据门禁（source registry / manifest / audit 工件 / license review / mask / SHA / dataset fingerprint / figure evidence / runner 交叉校验）已通过**真实公开数据**晋升验证：
+
+- **数据（真实、已下载、含 ground-truth mask；本地保存、随仓库提交以便复核）**：
+  - cartoon = BSDS500 图像 100007 + 人工分割真值（BIDS/BSDS500 GitHub 镜像）。
+  - texture = USC-SIPI Brodatz 真实纹理拼成的 2×2 mosaic + 精确 tiling 真值（已加 `sipi-brodatz` 为 registry 源，因 Prague 仅有交互式生成器）。
+  - medical = BrainWeb subject04 真实 T1 切片 + 组织标签 mask（4 类：bg/CSF/GM/WM）。
+- **结果（真实 T-ROF clustering accuracy vs 基线）**：cartoon 0.716（T-ROF 优于 raw K-means 0.544 / Multi-Otsu 0.550）、texture 0.483（优于 ~0.40）、medical 0.633（低于 Multi-Otsu 0.778——真实 benchmark 的混合结果，诚实呈现，非论文 Table 数值）。
+- **晋升验证**：`--run --strict-paper-like` 门禁 passed → `ALLOW_PAPER_LIKE=1 ... sync --candidate --check` 通过 → 已把 patch 应用到 `docs/js/reading-data.js` 与 `docs/assets/repro/repro_results.json`。
+
+**到 paper-level 仍缺**（保持诚实分级）：论文同源原图、Li/Pock/Yuan/He/Cai 五个论文基线的原版实现、复刻论文 Table 1 的 μ/Ite./Time/SA 三块表与具体数值；medical 切片对齐为 stereotaxic 居中近似。
 
 ---
 

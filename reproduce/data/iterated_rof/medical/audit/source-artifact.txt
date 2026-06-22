@@ -1,0 +1,10 @@
+BrainWeb/BSDS/USC-SIPI source download record
+source_url=https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1
+downloaded_at=2026-06-22
+source_id=brainweb
+source_name=BrainWeb Simulated Brain Database (McGill BIC)
+citation=C.A. Cocosco, V. Kollokian, R.K.-S. Kwan, A.C. Evans. BrainWeb: Online Interface to a 3D MRI Simulated Brain Database. NeuroImage 1997. D.L. Collins et al., IEEE TMI 17(3):463-468, 1998.
+provenance=Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22.
+reviewer_note=Reviewed BrainWeb free-for-research terms; standard simulated MRI benchmark with ground-truth tissue labels; derived slice PNGs tracked for research reproduction. Derived PNGs were bilinear-downsized to longest side 120 px (masks nearest-neighbor) for tractable T-ROF; all sides remain >= 32.
+conversion_note=Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.
+local_file_mapping=brainweb images/masks under medical/, derived PNG pairs listed in dataset_manifest.json files[].

@@ -28,10 +28,14 @@
 
 | 维度 | 当前状态 |
 | --- | --- |
-| 本仓库复现等级 reproductionLevel | **partial** |
-| 真实性等级 reproductionTruthLevel | **partial-completed** |
+| 本仓库复现等级 reproductionLevel | **paper-like**（dashboard 官方等级，经数据-backed 门禁晋升） |
+| 真实性等级 reproductionTruthLevel | **partial-completed**（paper-like 但非 paper-level，truthLevel 保守保持 partial-completed） |
 
-**纪律声明**：截至本文档，15 篇论文 paper-level 复现仍为 **0/15**。本篇当前为 partial，已用真实 ROF 求解器替换 Gaussian proxy 主路径，并新增真实非迭代基线（raw K-means、raw Multi-Otsu、ROF+Multi-Otsu）按论文 SA 定义对照，但**不得**把 partial 结果（合成 4-phase 图上的 0.9463 SA、K=2 Dice 0.9976 等）解读为论文级复现，也不得与论文 Table 1 / Fig. 中的 SA 数值直接等同比较。
+> **两条复现路径并存**：
+> 1. **paper-like（dashboard 官方等级）**：`reproduce/experiments/iterated_rof_paper_like.py` 在**真实公开数据**（cartoon=BSDS500、texture=USC-SIPI Brodatz mosaic、medical=BrainWeb subject04 T1+组织标签，各含 ground-truth mask）上跑真实 T-ROF + raw K-means/Multi-Otsu 基线，并通过 source registry/manifest/audit/license/SHA/fingerprint/figure-evidence 数据门禁。真实结果：cartoon 0.716、texture 0.483、medical 0.633（clustering accuracy；T-ROF 在 cartoon/texture 优于基线、在该 medical 切片低于 Multi-Otsu，混合结果诚实呈现，非论文 Table 数值）。校验须 `ALLOW_PAPER_LIKE=1`。
+> 2. **partial（教学演示）**：下文 §7 描述的 `sat_rof_trof.py` 在 96×96 合成图上用真实 Chambolle-Pock ROF + Eq.(15) 阈值迭代的较简实现，仍保留作思想演示。
+
+**纪律声明**：15 篇论文 **paper-level 复现仍为 0/15**。本篇已晋升 paper-like（真实数据+门禁），但**不得**把任何 SA/accuracy（无论合成 0.9463 还是真实数据 0.716）解读为论文 Table 1 / Fig. 的 paper-level 数值；paper-level 仍需论文同源数据、五个论文基线原版与 Table 1 三块表复刻。
 
 ## 3. 算法完整流程
 

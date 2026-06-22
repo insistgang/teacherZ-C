@@ -1,0 +1,52 @@
+{
+  "baselines": {
+    "multi_otsu": {
+      "method": "skimage_multiotsu",
+      "thresholds": [
+        0.144753,
+        0.347664,
+        0.492992
+      ]
+    },
+    "raw_kmeans": {
+      "method": "simple_kmeans_on_raw_grayscale"
+    }
+  },
+  "family": "medical",
+  "figure_panels": [
+    "input",
+    "mask",
+    "ROF",
+    "T-ROF",
+    "raw K-means",
+    "multi-Otsu",
+    "T-ROF error",
+    "T-ROF vs Otsu"
+  ],
+  "figure_path": "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png",
+  "figure_sha256": "37482581b199ad4f4698457b16da28ad787270eb9cf55d16ff0afc914f7ac8a1",
+  "figure_size_bytes": 56351,
+  "generator": "iterated_rof_paper_like.figure_grid_v1",
+  "image_path": "reproduce/data/iterated_rof/medical/images/brainweb/subject04_t1w_slice090.png",
+  "image_sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76",
+  "mask_path": "reproduce/data/iterated_rof/medical/masks/brainweb/subject04_t1w_slice090.png",
+  "mask_sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2",
+  "metrics": {
+    "clustering_accuracy": 0.6331
+  },
+  "n_classes": 4,
+  "paper_id": "iterated-rof",
+  "parameters": {
+    "mu": 8.0,
+    "rof_n_iter": 160,
+    "trof_max_iter": 20
+  },
+  "qualitative_only": false,
+  "schema_version": 1,
+  "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+  "thresholds": [
+    0.137939,
+    0.360107,
+    0.513672
+  ]
+}

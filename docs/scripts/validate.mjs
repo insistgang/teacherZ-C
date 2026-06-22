@@ -182,7 +182,7 @@ if (data) {
           check(item.effectScore !== 5, "SLaT accuracy_gain < 0.02 时 effectScore 不能为 5");
         }
       }
-      if (["sat-overview", "pcms-rof-linkage", "iterated-rof"].includes(item.id) && satSource.includes("gaussian_filter")) {
+      if (["sat-overview", "pcms-rof-linkage", "iterated-rof"].includes(item.id) && item.experimentId === "sat_rof_trof" && satSource.includes("gaussian_filter")) {
         check(notesLower.includes("proxy smoothing") || (notesLower.includes("gaussian") && notesLower.includes("proxy")), `${item.id} 使用 gaussian_filter 但 notes 未说明 proxy smoothing / Gaussian proxy`);
       }
     });

@@ -1084,27 +1084,362 @@ const reproDetails = {
     notes: "rof_threshold_dice now comes from the real convex ROF solution (Chambolle-Pock) thresholded at (m0+m1)/2, not Gaussian smoothing; a Gaussian proxy baseline (gaussian_baseline_dice) is kept for comparison. Demonstrates ROF-thresholding segmentation on a synthetic toy two-phase image; does not prove Theorem 3.6.",
   },
   3: {
-    reproductionLevel: "partial",
-    difficultyScore: 3,
-    difficultyLabel: "中",
-    effectScore: 3,
-    effectLabel: "明显",
-    fullReproductionFeasibility: "偏难。paper-level 需要真实 cartoon / close-intensity / medical 数据、多组 mu 参数与 paper Table 1 / Fig. 1-6 baseline 完整对照（PDF 仅有 Table 1 即 stripe 图，无 Table 2）；当前 partial 已加入 Chambolle-Pock ROF solver 和 Split-Bregman 对照。",
-    minimalExperiment: "close-gray-value (差 0.04) 96x96 4-phase synthetic image + K=2 synthetic case；先解一次真实 Chambolle-Pock ROF，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)，其中 m_i := mean_f(Omega_i) per Eq. (15) on raw f，并做 Lemma 2/3 与 K=2 Proposition 2 proxy 检查。",
-    expectedOutcome: "iterated ROF T-ROF（真实 Chambolle-Pock）从 raw K-means 0.5650 提升到 rof_trof_accuracy 0.9463，并击败 raw Multi-Otsu 0.5642、ROF+Multi-Otsu 0.9460；Gaussian-proxy T-ROF 对照 0.9438，Split-Bregman 对照 0.9510；Lemma 2 单调性无违反、Lemma 3 sign changes 收敛到 0、K=2 lambda 推导为 7.7416。",
-    metrics: ["raw_kmeans_accuracy","raw_multiotsu_accuracy","rof_multiotsu_accuracy","gaussian_proxy_trof_accuracy","rof_trof_accuracy","split_bregman_trof_accuracy","threshold_iterations","max_threshold_drift","monotonicity_violated","sign_changes_final","sign_changes_nonincreasing","assumption_a_violations","rof_iterations_chambolle_pock","rof_iterations_split_bregman","k2_lambda_derived","k2_rof_threshold_dice","k2_chanvese_proxy_dice","k2_segmentation_disagreement","runtime_seconds_total","runtime_seconds_rof","runtime_seconds_threshold"],
-    dependencies: ["numpy", "scipy", "matplotlib", "scikit-image"],
-    dataRequirement: "synthetic close-gray-value 96x96 4-phase image + K=2 synthetic two-phase image；不需要下载真实数据。",
-    computeRequirement: "CPU，约 1 秒内（Chambolle-Pock 240 步 + Split-Bregman 70 步 + T-ROF ≤20 步）。",
-    implementationRisk: "现在主路径用真实 Chambolle-Pock ROF solver（另有 Split-Bregman 对照），并按 Eq. (15) 用 raw f 计算 mean_f(Omega_i)；仍存在的局限：单张 96x96 合成 close-gray 图、非论文 ADMM、无 FCM 初始化、无论文数据集（stripe/cartoon/brain MRI）或 Li/Pock/Yuan/He/Cai baselines，Lemma 2/3 检查是一致性测试而非 Theorem 1 证明。",
-    verificationPlan: "对比 raw K-means / Gaussian proxy T-ROF / Chambolle-Pock ROF T-ROF / Split-Bregman T-ROF；检查 Lemma 2 单调性、Lemma 3 sign changes、K=2 lambda 关系，并保存 convergence 与 Chan-Vese proxy 图。",
-    resultStatus: "completed",
-    experimentId: "sat_rof_trof",
-    runtimeSeconds: 0.7709,
-    runMetrics: {"raw_kmeans_accuracy":0.565,"raw_multiotsu_accuracy":0.5642,"rof_multiotsu_accuracy":0.946,"gaussian_proxy_trof_accuracy":0.9438,"rof_trof_accuracy":0.9463,"split_bregman_trof_accuracy":0.951,"threshold_iterations":3,"max_threshold_drift":0,"monotonicity_violated":false,"sign_changes_final":0,"sign_changes_nonincreasing":true,"assumption_a_violations":0,"rof_iterations_chambolle_pock":240,"rof_iterations_split_bregman":70,"k2_lambda_derived":7.7416,"k2_rof_threshold_dice":0.9976,"k2_chanvese_proxy_dice":0.8994,"k2_segmentation_disagreement":0.0476,"runtime_seconds_total":0.7709,"runtime_seconds_rof":0.0176,"runtime_seconds_threshold":0.0004},
-    resultFiles: ["assets/repro/sat_demo.png","assets/repro/trof_thresholds.png","assets/repro/iterated_rof_convergence.png","assets/repro/iterated_rof_chanvese.png"],
-    fidelityWarning: "Single 96x96 synthetic close-gray four-phase image; Chambolle-Pock/Split-Bregman ROF (not the paper's ADMM), no FCM initialization, no paper datasets (stripe/cartoon/brain MRI) or Li/Pock/Yuan/He/Cai baselines. Lemma 2/3 checks are consistency tests, not Theorem 1 proof.",
-    notes: "Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. Real non-iterative baselines (raw K-means, raw Multi-Otsu, ROF+Multi-Otsu) are reported with SA = correct/all pixels; the iterated ROF T-ROF beats them. A Gaussian-smoothing T-ROF baseline is kept for comparison; still partial, not paper-level.",
+    "difficultyScore": 3,
+    "difficultyLabel": "中",
+    "effectScore": 3,
+    "effectLabel": "明显",
+    "fullReproductionFeasibility": "已达 paper-like（数据-backed，门禁通过）。到 paper-level 仍需：论文同源数据、Li/Pock/Yuan/He/Cai 基线原版实现、复刻 Table 1 的 μ/Ite./Time/SA 三块表。",
+    "minimalExperiment": "close-gray-value (差 0.04) 96x96 4-phase synthetic image + K=2 synthetic case；先解一次真实 Chambolle-Pock ROF，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)，其中 m_i := mean_f(Omega_i) per Eq. (15) on raw f，并做 Lemma 2/3 与 K=2 Proposition 2 proxy 检查。",
+    "expectedOutcome": "paper-like：在三家族真实数据上跑真实 T-ROF + raw K-means/Multi-Otsu 基线，得每家族 clustering_accuracy（cartoon 0.716、texture 0.483、medical 0.633）。诚实结论：T-ROF 在 cartoon/texture 上优于基线，在该 medical 切片上低于 Multi-Otsu——真实 benchmark 的混合结果，非论文 Table 数值。",
+    "dependencies": [
+      "numpy",
+      "scipy",
+      "matplotlib",
+      "scikit-image"
+    ],
+    "dataRequirement": "真实公开数据（已下载）：cartoon=BSDS500（GitHub 镜像）、texture=USC-SIPI Brodatz 合成 mosaic、medical=BrainWeb subject04 T1 + 组织标签；三家族各含 image+ground-truth mask。原始数据本地保存、不入库（gitignore）。",
+    "computeRequirement": "CPU，约 1 秒内（Chambolle-Pock 240 步 + Split-Bregman 70 步 + T-ROF ≤20 步）。",
+    "implementationRisk": "已是真实数据 paper-like（非合成）：真实 BSDS/USC-SIPI/BrainWeb 数据 + ground-truth mask + 真实 ROF 阈值化 + raw K-means/Multi-Otsu 基线，并通过数据门禁（source registry/manifest/audit/license review/SHA 证据）。仍非 paper-level：未复现论文具体 Table 1 数值、未实现 Li/Pock/Yuan/He/Cai 五个论文基线、数据为公开等价而非论文原图、medical 切片对齐为 stereotaxic 居中近似。",
+    "verificationPlan": "对比 raw K-means / Gaussian proxy T-ROF / Chambolle-Pock ROF T-ROF / Split-Bregman T-ROF；检查 Lemma 2 单调性、Lemma 3 sign changes、K=2 lambda 关系，并保存 convergence 与 Chan-Vese proxy 图。",
+    "experimentId": "iterated_rof_paper_like",
+    "reproductionLevel": "paper-like",
+    "resultStatus": "completed",
+    "runtimeSeconds": 0.7565,
+    "runMetrics": {
+      "cartoon_clustering_accuracy": 0.7161,
+      "cartoon_multi_otsu_clustering_accuracy": 0.5495,
+      "cartoon_raw_kmeans_clustering_accuracy": 0.5444,
+      "texture_clustering_accuracy": 0.4826,
+      "texture_multi_otsu_clustering_accuracy": 0.3962,
+      "texture_raw_kmeans_clustering_accuracy": 0.3975,
+      "medical_clustering_accuracy": 0.6331,
+      "medical_multi_otsu_clustering_accuracy": 0.7783,
+      "medical_raw_kmeans_clustering_accuracy": 0.7824,
+      "image_count": 3,
+      "completed_image_count": 3,
+      "quantitative_image_count": 3
+    },
+    "resultFiles": [
+      "assets/repro/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png",
+      "assets/repro/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png",
+      "assets/repro/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png"
+    ],
+    "paper_like_gate": {
+      "passed": true,
+      "dashboard_level": "paper-like",
+      "checked_requirements": [
+        "all data families have completed quantitative local runner outputs",
+        "no readiness, runner, source, or license-review blockers remain",
+        "completed outputs include baselines, generated figure file evidence, file-level source claims, dataset fingerprint, and input/mask file evidence"
+      ],
+      "evidence_summary": {
+        "schema_version": 1,
+        "gate_id": "iterated_rof_paper_like_v1",
+        "canonical_data_root": "reproduce/data/iterated_rof",
+        "data_root": "reproduce/data/iterated_rof",
+        "dataset_fingerprint": {
+          "algorithm": "sha256",
+          "file_count": 6,
+          "image_count": 3,
+          "mask_count": 3,
+          "sha256": "86bfb2d21e5ae5a19f4e75f9c12d146ced8c8bc7c5eda7d857413f4f1814339b"
+        },
+        "image_count": 3,
+        "completed_image_count": 3,
+        "quantitative_image_count": 3,
+        "required_families": [
+          "cartoon",
+          "texture",
+          "medical"
+        ],
+        "completed_families": [
+          "cartoon",
+          "medical",
+          "texture"
+        ],
+        "quantitative_families": [
+          "cartoon",
+          "medical",
+          "texture"
+        ],
+        "source_claim_count": 3,
+        "figure_evidence_count": 3
+      },
+      "checklist": [
+        {
+          "id": "canonical_data_root",
+          "description": "canonical local data root",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "readiness_clean",
+          "description": "readiness, mask, source, and license blockers are clear",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "runner_outputs",
+          "description": "local runner completed quantitative outputs for every family",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "source_audit",
+          "description": "structured source audit artifacts, provenance, and license snapshots are reviewed",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "output_evidence",
+          "description": "completed outputs include baselines, figures, file hashes, dataset fingerprint, and file-level source claims",
+          "passed": true,
+          "reasons": []
+        }
+      ],
+      "reasons": []
+    },
+    "paper_like_verification": {
+      "schema_version": 1,
+      "generated_by": "iterated_rof_paper_like.dashboard_candidate_v1",
+      "recomputed_gate": true,
+      "can_promote": true,
+      "promotion_shape_blocker_count": 0,
+      "gate_id": "iterated_rof_paper_like_v1",
+      "dataset_fingerprint": {
+        "algorithm": "sha256",
+        "file_count": 6,
+        "image_count": 3,
+        "mask_count": 3,
+        "sha256": "86bfb2d21e5ae5a19f4e75f9c12d146ced8c8bc7c5eda7d857413f4f1814339b"
+      },
+      "source_summary_path": "reproduce/results/iterated_rof_paper_like_summary.json",
+      "source_summary_sha256": "06d9b1bcd72b6efa0be372b4c76a15cc2eb376e95e30d002fb433376b622b9f2"
+    },
+    "family_summaries": [
+      {
+        "family": "cartoon",
+        "status": "completed_quantitative",
+        "image_count": 1,
+        "mask_count": 1,
+        "matched_mask_count": 1,
+        "completed_image_count": 1,
+        "failed_image_count": 0,
+        "quantitative_image_count": 1,
+        "qualitative_image_count": 0,
+        "metrics_mean": {
+          "clustering_accuracy": 0.7161
+        },
+        "baseline_metrics_mean": {
+          "multi_otsu": {
+            "clustering_accuracy": 0.5495
+          },
+          "raw_kmeans": {
+            "clustering_accuracy": 0.5444
+          }
+        },
+        "figure_paths": [
+          "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png"
+        ],
+        "source_claims": [
+          {
+            "manifest_status": "present",
+            "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+            "claim_scope": "file",
+            "image": "bsds500/100007.png",
+            "mask": "bsds500/100007.png",
+            "sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7",
+            "mask_sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835",
+            "source_id": "bsds500",
+            "source_name": "Berkeley Segmentation Dataset and Benchmark (BSDS500)",
+            "license_reviewed": true,
+            "license_note": "BSDS500 is distributed by UC Berkeley for research and educational use. The BIDS/BSDS500 GitHub mirror redistributes the same data. Original archives kept local; only derived grayscale image and integer label PNGs are tracked.",
+            "citation": "D. Martin, C. Fowlkes, D. Tal, J. Malik. A Database of Human Segmented Natural Images and its Application to Evaluating Segmentation Algorithms and Measuring Ecological Statistics. ICCV 2001. BSDS500: Arbelaez, Maire, Fowlkes, Malik, PAMI 2011.",
+            "provenance_reviewed": true,
+            "provenance_note": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22.",
+            "synthetic_fixture": false,
+            "notes": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22. Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+            "source_audit": {
+              "source_url": "https://github.com/BIDS/BSDS500",
+              "downloaded_at": "2026-06-22",
+              "source_artifact_path": "reproduce/data/iterated_rof/cartoon/audit/source-artifact.txt",
+              "source_artifact_sha256": "a79a3a1741bd65dd9ed8a056a72e3b285e4c64e17a878bc14d547fee7d73a76e",
+              "license_snapshot_path": "reproduce/data/iterated_rof/cartoon/audit/license-snapshot.txt",
+              "license_snapshot_sha256": "d5d0ebdbabbdfcbd03a1f90b2161256b4736ccd2ac985c9f05f24a4ab113e002",
+              "conversion_notes": "Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+              "local_file_mapping_reviewed": true
+            }
+          }
+        ],
+        "errors": []
+      },
+      {
+        "family": "texture",
+        "status": "completed_quantitative",
+        "image_count": 1,
+        "mask_count": 1,
+        "matched_mask_count": 1,
+        "completed_image_count": 1,
+        "failed_image_count": 0,
+        "quantitative_image_count": 1,
+        "qualitative_image_count": 0,
+        "metrics_mean": {
+          "clustering_accuracy": 0.4826
+        },
+        "baseline_metrics_mean": {
+          "multi_otsu": {
+            "clustering_accuracy": 0.3962
+          },
+          "raw_kmeans": {
+            "clustering_accuracy": 0.3975
+          }
+        },
+        "figure_paths": [
+          "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png"
+        ],
+        "source_claims": [
+          {
+            "manifest_status": "present",
+            "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+            "claim_scope": "file",
+            "image": "sipi-brodatz/mosaic01.png",
+            "mask": "sipi-brodatz/mosaic01.png",
+            "sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312",
+            "mask_sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c",
+            "source_id": "sipi-brodatz",
+            "source_name": "USC-SIPI Image Database (Brodatz textures), composed segmentation mosaic",
+            "license_reviewed": true,
+            "license_note": "The USC-SIPI image database is provided for research and educational purposes; cite USC-SIPI. Original texture TIFFs kept local; only the derived composed mosaic and its label map are tracked.",
+            "citation": "USC-SIPI Image Database, University of Southern California, Signal and Image Processing Institute (textures volume, Brodatz). https://sipi.usc.edu/database/",
+            "provenance_reviewed": true,
+            "provenance_note": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22.",
+            "synthetic_fixture": false,
+            "notes": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22. Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+            "source_audit": {
+              "source_url": "https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01",
+              "downloaded_at": "2026-06-22",
+              "source_artifact_path": "reproduce/data/iterated_rof/texture/audit/source-artifact.txt",
+              "source_artifact_sha256": "fe58389505963fc01d9b7d9cf2c240d597ef81e1a80654bbc907b8dd1ce2ed13",
+              "license_snapshot_path": "reproduce/data/iterated_rof/texture/audit/license-snapshot.txt",
+              "license_snapshot_sha256": "36b4abc714e0965e98dd09734efa4a3ad01a72365e6f1ae8ad2920adeb78846a",
+              "conversion_notes": "Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+              "local_file_mapping_reviewed": true
+            }
+          }
+        ],
+        "errors": []
+      },
+      {
+        "family": "medical",
+        "status": "completed_quantitative",
+        "image_count": 1,
+        "mask_count": 1,
+        "matched_mask_count": 1,
+        "completed_image_count": 1,
+        "failed_image_count": 0,
+        "quantitative_image_count": 1,
+        "qualitative_image_count": 0,
+        "metrics_mean": {
+          "clustering_accuracy": 0.6331
+        },
+        "baseline_metrics_mean": {
+          "multi_otsu": {
+            "clustering_accuracy": 0.7783
+          },
+          "raw_kmeans": {
+            "clustering_accuracy": 0.7824
+          }
+        },
+        "figure_paths": [
+          "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png"
+        ],
+        "source_claims": [
+          {
+            "manifest_status": "present",
+            "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+            "claim_scope": "file",
+            "image": "brainweb/subject04_t1w_slice090.png",
+            "mask": "brainweb/subject04_t1w_slice090.png",
+            "sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76",
+            "mask_sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2",
+            "source_id": "brainweb",
+            "source_name": "BrainWeb Simulated Brain Database (McGill BIC)",
+            "license_reviewed": true,
+            "license_note": "BrainWeb simulated data from the McGill Brain Imaging Centre is freely available for research; cite the BrainWeb references. Raw volumes kept local; only the derived 2D slice image and label PNGs are tracked.",
+            "citation": "C.A. Cocosco, V. Kollokian, R.K.-S. Kwan, A.C. Evans. BrainWeb: Online Interface to a 3D MRI Simulated Brain Database. NeuroImage 1997. D.L. Collins et al., IEEE TMI 17(3):463-468, 1998.",
+            "provenance_reviewed": true,
+            "provenance_note": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22.",
+            "synthetic_fixture": false,
+            "notes": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22. Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+            "source_audit": {
+              "source_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+              "downloaded_at": "2026-06-22",
+              "source_artifact_path": "reproduce/data/iterated_rof/medical/audit/source-artifact.txt",
+              "source_artifact_sha256": "c00a0966b0520c53ef5a4117a8ddcf57fb8366ea2f23d7fe6965cd261c6b3711",
+              "license_snapshot_path": "reproduce/data/iterated_rof/medical/audit/license-snapshot.txt",
+              "license_snapshot_sha256": "e902e308d1ff24d74597a7b0ff7446bbb032ced3082a351a8c5e5e942d260db4",
+              "conversion_notes": "Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+              "local_file_mapping_reviewed": true
+            }
+          }
+        ],
+        "errors": []
+      }
+    ],
+    "dataset_fingerprint": {
+      "algorithm": "sha256",
+      "file_count": 6,
+      "image_count": 3,
+      "mask_count": 3,
+      "sha256": "86bfb2d21e5ae5a19f4e75f9c12d146ced8c8bc7c5eda7d857413f4f1814339b"
+    },
+    "run_protocol": {
+      "protocol_id": "iterated_rof_trof_local_data_v1",
+      "schema_version": 1,
+      "paper_id": "iterated-rof",
+      "algorithm": "ROF denoising followed by iterative multiclass thresholding",
+      "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+      "threshold_update": "tau_i = 0.5 * (mean_f(Omega_{i-1}) + mean_f(Omega_i))",
+      "threshold_mean_source": "raw input image f, not denoised ROF output u",
+      "baselines": [
+        "raw_kmeans",
+        "multi_otsu"
+      ],
+      "metrics": [
+        "clustering_accuracy",
+        "binary_dice_when_mask_has_two_labels"
+      ],
+      "parameters": {
+        "mu": 8,
+        "default_classes": 4,
+        "rof_n_iter": 160,
+        "trof_max_iter": 20,
+        "rof_tol": 0.00002,
+        "trof_tol": 0.0001,
+        "projection_bins": 4096,
+        "seed": 20260428
+      },
+      "data_layout": "reproduce/data/iterated_rof/{cartoon,texture,medical}/{images,masks}",
+      "figure_dir": "reproduce/results/figures/iterated_rof_paper_like",
+      "promotion_rule": "dashboard paper-like promotion requires paper_like_gate.passed=true"
+    },
+    "notes": "Paper-like candidate generated from local data-backed Iterated ROF runner. Review dataset provenance and figures before updating dashboard fields.",
+    "warning": "Paper-like candidate only; not paper-level. Original paper data/protocol may still differ.",
+    "fidelityWarning": "Paper-like candidate uses local reviewed cartoon/texture/medical data and the Iterated ROF thresholding runner; it is not paper-level until original or equivalently audited paper tables, baselines, and protocol details are independently reproduced.",
+    "metrics": [
+      "cartoon_clustering_accuracy",
+      "cartoon_multi_otsu_clustering_accuracy",
+      "cartoon_raw_kmeans_clustering_accuracy",
+      "texture_clustering_accuracy",
+      "texture_multi_otsu_clustering_accuracy",
+      "texture_raw_kmeans_clustering_accuracy",
+      "medical_clustering_accuracy",
+      "medical_multi_otsu_clustering_accuracy",
+      "medical_raw_kmeans_clustering_accuracy",
+      "image_count",
+      "completed_image_count",
+      "quantitative_image_count"
+    ]
   },
   4: {
     reproductionLevel: "partial",

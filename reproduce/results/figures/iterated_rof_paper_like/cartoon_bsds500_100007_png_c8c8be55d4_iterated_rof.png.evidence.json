@@ -1,0 +1,52 @@
+{
+  "baselines": {
+    "multi_otsu": {
+      "method": "skimage_multiotsu",
+      "thresholds": [
+        0.350521,
+        0.559896,
+        0.725521
+      ]
+    },
+    "raw_kmeans": {
+      "method": "simple_kmeans_on_raw_grayscale"
+    }
+  },
+  "family": "cartoon",
+  "figure_panels": [
+    "input",
+    "mask",
+    "ROF",
+    "T-ROF",
+    "raw K-means",
+    "multi-Otsu",
+    "T-ROF error",
+    "T-ROF vs Otsu"
+  ],
+  "figure_path": "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png",
+  "figure_sha256": "5a50916b01396d5848410c43d9cf589ebcdbd749f22cff0aa6fef5e4b48170bd",
+  "figure_size_bytes": 113683,
+  "generator": "iterated_rof_paper_like.figure_grid_v1",
+  "image_path": "reproduce/data/iterated_rof/cartoon/images/bsds500/100007.png",
+  "image_sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7",
+  "mask_path": "reproduce/data/iterated_rof/cartoon/masks/bsds500/100007.png",
+  "mask_sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835",
+  "metrics": {
+    "clustering_accuracy": 0.7161
+  },
+  "n_classes": 4,
+  "paper_id": "iterated-rof",
+  "parameters": {
+    "mu": 8.0,
+    "rof_n_iter": 160,
+    "trof_max_iter": 20
+  },
+  "qualitative_only": false,
+  "schema_version": 1,
+  "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+  "thresholds": [
+    0.47168,
+    0.68042,
+    0.790039
+  ]
+}

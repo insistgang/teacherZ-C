@@ -1,0 +1,52 @@
+{
+  "baselines": {
+    "multi_otsu": {
+      "method": "skimage_multiotsu",
+      "thresholds": [
+        0.39519,
+        0.548315,
+        0.671415
+      ]
+    },
+    "raw_kmeans": {
+      "method": "simple_kmeans_on_raw_grayscale"
+    }
+  },
+  "family": "texture",
+  "figure_panels": [
+    "input",
+    "mask",
+    "ROF",
+    "T-ROF",
+    "raw K-means",
+    "multi-Otsu",
+    "T-ROF error",
+    "T-ROF vs Otsu"
+  ],
+  "figure_path": "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png",
+  "figure_sha256": "159bb71fdd03919a135a25478d5f0b0dfb8fc39cf025c36455884ae7ae4739bd",
+  "figure_size_bytes": 475978,
+  "generator": "iterated_rof_paper_like.figure_grid_v1",
+  "image_path": "reproduce/data/iterated_rof/texture/images/sipi-brodatz/mosaic01.png",
+  "image_sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312",
+  "mask_path": "reproduce/data/iterated_rof/texture/masks/sipi-brodatz/mosaic01.png",
+  "mask_sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c",
+  "metrics": {
+    "clustering_accuracy": 0.4826
+  },
+  "n_classes": 4,
+  "paper_id": "iterated-rof",
+  "parameters": {
+    "mu": 8.0,
+    "rof_n_iter": 160,
+    "trof_max_iter": 20
+  },
+  "qualitative_only": false,
+  "schema_version": 1,
+  "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+  "thresholds": [
+    0.343994,
+    0.564209,
+    0.710938
+  ]
+}

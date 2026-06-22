@@ -89,10 +89,13 @@ test("promotion guard labels run-result promotion failures separately", () => {
 
 test("validate CLI rejects forged paper-like run results even when promotion count is allowed", () => {
   const sourceResults = JSON.parse(fs.readFileSync("docs/assets/repro/repro_results.json", "utf8"));
-  const forgedResults = sourceResults.map((item) => item.id === "iterated-rof"
-    ? { ...item, reproductionLevel: "paper-like" }
-    : item
-  );
+  // Forge a SHALLOW paper-like: declare paper-like but strip the data-backed gate/verification
+  // evidence (iterated-rof may already be a legitimately promoted paper-like in the source).
+  const forgedResults = sourceResults.map((item) => {
+    if (item.id !== "iterated-rof") return item;
+    const { paper_like_gate, paper_like_verification, ...rest } = item;
+    return { ...rest, reproductionLevel: "paper-like" };
+  });
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "teacherz-validate-forged-repro-"));
   const fixturePath = path.join(tempDir, "repro_results.json");
   fs.writeFileSync(fixturePath, `${JSON.stringify(forgedResults, null, 2)}\n`);

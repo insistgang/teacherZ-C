@@ -1,0 +1,91 @@
+{
+  "families": {
+    "cartoon": {
+      "source_id": "bsds500",
+      "source_name": "Berkeley Segmentation Dataset and Benchmark (BSDS500)",
+      "license_reviewed": true,
+      "license_note": "BSDS500 is distributed by UC Berkeley for research and educational use. The BIDS/BSDS500 GitHub mirror redistributes the same data. Original archives kept local; only derived grayscale image and integer label PNGs are tracked.",
+      "citation": "D. Martin, C. Fowlkes, D. Tal, J. Malik. A Database of Human Segmented Natural Images and its Application to Evaluating Segmentation Algorithms and Measuring Ecological Statistics. ICCV 2001. BSDS500: Arbelaez, Maire, Fowlkes, Malik, PAMI 2011.",
+      "provenance_reviewed": true,
+      "provenance_note": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22.",
+      "synthetic_fixture": false,
+      "source_audit": {
+        "source_url": "https://github.com/BIDS/BSDS500",
+        "downloaded_at": "2026-06-22",
+        "source_artifact_path": "reproduce/data/iterated_rof/cartoon/audit/source-artifact.txt",
+        "source_artifact_sha256": "a79a3a1741bd65dd9ed8a056a72e3b285e4c64e17a878bc14d547fee7d73a76e",
+        "license_snapshot_path": "reproduce/data/iterated_rof/cartoon/audit/license-snapshot.txt",
+        "license_snapshot_sha256": "d5d0ebdbabbdfcbd03a1f90b2161256b4736ccd2ac985c9f05f24a4ab113e002",
+        "conversion_notes": "Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+        "local_file_mapping_reviewed": true
+      },
+      "notes": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22. Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+      "files": [
+        {
+          "image": "bsds500/100007.png",
+          "sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7",
+          "mask": "bsds500/100007.png",
+          "mask_sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835"
+        }
+      ]
+    },
+    "texture": {
+      "source_id": "sipi-brodatz",
+      "source_name": "USC-SIPI Image Database (Brodatz textures), composed segmentation mosaic",
+      "license_reviewed": true,
+      "license_note": "The USC-SIPI image database is provided for research and educational purposes; cite USC-SIPI. Original texture TIFFs kept local; only the derived composed mosaic and its label map are tracked.",
+      "citation": "USC-SIPI Image Database, University of Southern California, Signal and Image Processing Institute (textures volume, Brodatz). https://sipi.usc.edu/database/",
+      "provenance_reviewed": true,
+      "provenance_note": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22.",
+      "synthetic_fixture": false,
+      "source_audit": {
+        "source_url": "https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01",
+        "downloaded_at": "2026-06-22",
+        "source_artifact_path": "reproduce/data/iterated_rof/texture/audit/source-artifact.txt",
+        "source_artifact_sha256": "fe58389505963fc01d9b7d9cf2c240d597ef81e1a80654bbc907b8dd1ce2ed13",
+        "license_snapshot_path": "reproduce/data/iterated_rof/texture/audit/license-snapshot.txt",
+        "license_snapshot_sha256": "36b4abc714e0965e98dd09734efa4a3ad01a72365e6f1ae8ad2920adeb78846a",
+        "conversion_notes": "Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+        "local_file_mapping_reviewed": true
+      },
+      "notes": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22. Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+      "files": [
+        {
+          "image": "sipi-brodatz/mosaic01.png",
+          "sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312",
+          "mask": "sipi-brodatz/mosaic01.png",
+          "mask_sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c"
+        }
+      ]
+    },
+    "medical": {
+      "source_id": "brainweb",
+      "source_name": "BrainWeb Simulated Brain Database (McGill BIC)",
+      "license_reviewed": true,
+      "license_note": "BrainWeb simulated data from the McGill Brain Imaging Centre is freely available for research; cite the BrainWeb references. Raw volumes kept local; only the derived 2D slice image and label PNGs are tracked.",
+      "citation": "C.A. Cocosco, V. Kollokian, R.K.-S. Kwan, A.C. Evans. BrainWeb: Online Interface to a 3D MRI Simulated Brain Database. NeuroImage 1997. D.L. Collins et al., IEEE TMI 17(3):463-468, 1998.",
+      "provenance_reviewed": true,
+      "provenance_note": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22.",
+      "synthetic_fixture": false,
+      "source_audit": {
+        "source_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+        "downloaded_at": "2026-06-22",
+        "source_artifact_path": "reproduce/data/iterated_rof/medical/audit/source-artifact.txt",
+        "source_artifact_sha256": "c00a0966b0520c53ef5a4117a8ddcf57fb8366ea2f23d7fe6965cd261c6b3711",
+        "license_snapshot_path": "reproduce/data/iterated_rof/medical/audit/license-snapshot.txt",
+        "license_snapshot_sha256": "e902e308d1ff24d74597a7b0ff7446bbb032ced3082a351a8c5e5e942d260db4",
+        "conversion_notes": "Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+        "local_file_mapping_reviewed": true
+      },
+      "notes": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22. Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+      "files": [
+        {
+          "image": "brainweb/subject04_t1w_slice090.png",
+          "sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76",
+          "mask": "brainweb/subject04_t1w_slice090.png",
+          "mask_sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2"
+        }
+      ]
+    }
+  }
+}

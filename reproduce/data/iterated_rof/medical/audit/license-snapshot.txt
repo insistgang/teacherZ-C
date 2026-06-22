@@ -1,0 +1,6 @@
+License / terms snapshot (medical)
+source_url=https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1
+reviewed_at=2026-06-22
+license=BrainWeb simulated data from the McGill Brain Imaging Centre is freely available for research; cite the BrainWeb references. Raw volumes kept local; only the derived 2D slice image and label PNGs are tracked.
+reviewer_note=Reviewed BrainWeb free-for-research terms; standard simulated MRI benchmark with ground-truth tissue labels; derived slice PNGs tracked for research reproduction. Derived PNGs were bilinear-downsized to longest side 120 px (masks nearest-neighbor) for tractable T-ROF; all sides remain >= 32.
+conversion_note=Only derived grayscale/label PNGs are tracked in-repo; raw originals kept local per terms.

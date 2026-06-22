@@ -1,0 +1,6 @@
+License / terms snapshot (cartoon)
+source_url=https://github.com/BIDS/BSDS500
+reviewed_at=2026-06-22
+license=BSDS500 is distributed by UC Berkeley for research and educational use. The BIDS/BSDS500 GitHub mirror redistributes the same data. Original archives kept local; only derived grayscale image and integer label PNGs are tracked.
+reviewer_note=Reviewed BSDS500 research/educational-use terms; public dataset widely used as a segmentation benchmark; redistribution of derived grayscale/label PNGs for research is consistent with the terms.
+conversion_note=Only derived grayscale/label PNGs are tracked in-repo; raw originals kept local per terms.

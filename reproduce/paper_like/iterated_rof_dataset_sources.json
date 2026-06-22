@@ -21,6 +21,27 @@
       "download_policy": "manual_or_site_form",
       "license_note": "Use only files allowed by the benchmark terms; keep downloaded archives local unless license-safe.",
       "paper_like_role": "Primary texture source"
+    },
+    {
+      "source_id": "sipi-brodatz",
+      "name": "USC-SIPI Texture Database (Brodatz) composed segmentation mosaic",
+      "url": "https://sipi.usc.edu/database/database.php?volume=textures",
+      "download_url": "https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01",
+      "target_family": "texture",
+      "priority": 2,
+      "fit": "Directly-downloadable real Brodatz texture images. Texture-segmentation mosaics are composed by tiling real texture patches with exact known-boundary ground truth, which is the standard texture-segmentation benchmark construction (same principle as Prague). Added as a direct-download alternative because the Prague benchmark only offers an interactive on-demand generator.",
+      "local_layout": "texture/images and texture/masks",
+      "image_selection_rule": "Download real Brodatz texture images from USC-SIPI and compose a mosaic by tiling fixed-size patches; the exact tiling defines the ground-truth label map.",
+      "mask_mapping_rule": "Write the tiling layout as an integer label PNG (one label per source-texture region) with the same shape as the mosaic.",
+      "conversion_checklist": [
+        "Keep the source texture file list and download URLs under texture/audit/.",
+        "Compose the mosaic from real texture patches and record patch sources and tiling in conversion_notes.",
+        "Write the tiling label map as an integer PNG with the same shape as the mosaic and verify at least two labels."
+      ],
+      "final_naming_example": "texture/images/sipi-brodatz/<case>.png with texture/masks/sipi-brodatz/<case>.png",
+      "download_policy": "direct_download",
+      "license_note": "USC-SIPI image database is distributed for research and educational use; cite USC-SIPI. Keep original texture files local.",
+      "paper_like_role": "Directly-downloadable real texture source (alternative to Prague)"
     }
   ],
   "medical": [
@@ -74,7 +95,7 @@
       "source_id": "bsds500",
       "name": "Berkeley Segmentation Dataset and Benchmark",
       "url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/",
-      "download_url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/",
+      "download_url": "https://github.com/BIDS/BSDS500",
       "target_family": "cartoon",
       "priority": 1,
       "fit": "Natural-image public substitute with human segmentations; useful for smooth-region / cartoon-like qualitative checks, but not the original paper cartoon data.",

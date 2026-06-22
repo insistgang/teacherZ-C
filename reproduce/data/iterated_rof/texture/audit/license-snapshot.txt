@@ -1,0 +1,6 @@
+License / terms snapshot (texture)
+source_url=https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01
+reviewed_at=2026-06-22
+license=The USC-SIPI image database is provided for research and educational purposes; cite USC-SIPI. Original texture TIFFs kept local; only the derived composed mosaic and its label map are tracked.
+reviewer_note=Reviewed USC-SIPI research/educational-use terms; mosaic composed only from USC-SIPI Brodatz textures; derived mosaic+labels tracked for research reproduction. Derived PNGs were bilinear-downsized to longest side 120 px (masks nearest-neighbor) for tractable T-ROF; all sides remain >= 32.
+conversion_note=Only derived grayscale/label PNGs are tracked in-repo; raw originals kept local per terms.

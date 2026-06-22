@@ -1,0 +1,10 @@
+BrainWeb/BSDS/USC-SIPI source download record
+source_url=https://github.com/BIDS/BSDS500
+downloaded_at=2026-06-22
+source_id=bsds500
+source_name=Berkeley Segmentation Dataset and Benchmark (BSDS500)
+citation=D. Martin, C. Fowlkes, D. Tal, J. Malik. A Database of Human Segmented Natural Images and its Application to Evaluating Segmentation Algorithms and Measuring Ecological Statistics. ICCV 2001. BSDS500: Arbelaez, Maire, Fowlkes, Malik, PAMI 2011.
+provenance=Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22.
+reviewer_note=Reviewed BSDS500 research/educational-use terms; public dataset widely used as a segmentation benchmark; redistribution of derived grayscale/label PNGs for research is consistent with the terms.
+conversion_note=Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.
+local_file_mapping=bsds500 images/masks under cartoon/, derived PNG pairs listed in dataset_manifest.json files[].

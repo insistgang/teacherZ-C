@@ -29,7 +29,7 @@
       "direct_dice": 0.8989,
       "gaussian_baseline_dice": 0.9962,
       "rof_threshold_dice": 0.9983,
-      "pcms_like_energy": 205.0
+      "pcms_like_energy": 205
     },
     "resultFiles": [
       "assets/repro/sat_demo.png"
@@ -40,41 +40,124 @@
   {
     "priority": 3,
     "id": "iterated-rof",
-    "experiment_id": "sat_rof_trof",
-    "reproductionLevel": "partial",
+    "experiment_id": "iterated_rof_paper_like",
+    "reproductionLevel": "paper-like",
     "status": "completed",
-    "runtime_seconds": 0.7709,
+    "runtime_seconds": 0.7565,
     "metrics": {
-      "raw_kmeans_accuracy": 0.565,
-      "raw_multiotsu_accuracy": 0.5642,
-      "rof_multiotsu_accuracy": 0.946,
-      "gaussian_proxy_trof_accuracy": 0.9438,
-      "rof_trof_accuracy": 0.9463,
-      "split_bregman_trof_accuracy": 0.951,
-      "threshold_iterations": 3,
-      "max_threshold_drift": 0.0,
-      "monotonicity_violated": false,
-      "sign_changes_final": 0,
-      "sign_changes_nonincreasing": true,
-      "assumption_a_violations": 0,
-      "rof_iterations_chambolle_pock": 240,
-      "rof_iterations_split_bregman": 70,
-      "k2_lambda_derived": 7.7416,
-      "k2_rof_threshold_dice": 0.9976,
-      "k2_chanvese_proxy_dice": 0.8994,
-      "k2_segmentation_disagreement": 0.0476,
-      "runtime_seconds_total": 0.7709,
-      "runtime_seconds_rof": 0.0176,
-      "runtime_seconds_threshold": 0.0004
+      "cartoon_clustering_accuracy": 0.7161,
+      "cartoon_multi_otsu_clustering_accuracy": 0.5495,
+      "cartoon_raw_kmeans_clustering_accuracy": 0.5444,
+      "texture_clustering_accuracy": 0.4826,
+      "texture_multi_otsu_clustering_accuracy": 0.3962,
+      "texture_raw_kmeans_clustering_accuracy": 0.3975,
+      "medical_clustering_accuracy": 0.6331,
+      "medical_multi_otsu_clustering_accuracy": 0.7783,
+      "medical_raw_kmeans_clustering_accuracy": 0.7824,
+      "image_count": 3,
+      "completed_image_count": 3,
+      "quantitative_image_count": 3
     },
     "resultFiles": [
-      "assets/repro/sat_demo.png",
-      "assets/repro/trof_thresholds.png",
-      "assets/repro/iterated_rof_convergence.png",
-      "assets/repro/iterated_rof_chanvese.png"
+      "assets/repro/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png",
+      "assets/repro/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png",
+      "assets/repro/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png"
     ],
-    "notes": "Partial reproduction: Chambolle-Pock ROF + iterative threshold update with raw-image mean_f(Omega_i) per Eq. (15), Lemma 2/3 checks, and a K=2 Proposition 2 proxy check. Real non-iterative baselines (raw K-means, raw Multi-Otsu, ROF+Multi-Otsu) are reported with SA = correct/all pixels; the iterated ROF T-ROF beats them. A Gaussian-smoothing T-ROF baseline is kept for comparison; still partial, not paper-level.",
-    "fidelityWarning": "Single 96x96 synthetic close-gray four-phase image; Chambolle-Pock/Split-Bregman ROF (not the paper's ADMM), no FCM initialization, no paper datasets (stripe/cartoon/brain MRI) or Li/Pock/Yuan/He/Cai baselines. Lemma 2/3 checks are consistency tests, not Theorem 1 proof."
+    "notes": "Paper-like candidate generated from local data-backed Iterated ROF runner. Review dataset provenance and figures before updating dashboard fields.",
+    "fidelityWarning": "Paper-like candidate uses local reviewed cartoon/texture/medical data and the Iterated ROF thresholding runner; it is not paper-level until original or equivalently audited paper tables, baselines, and protocol details are independently reproduced.",
+    "warning": "Paper-like candidate only; not paper-level. Original paper data/protocol may still differ.",
+    "paper_like_gate": {
+      "passed": true,
+      "dashboard_level": "paper-like",
+      "checked_requirements": [
+        "all data families have completed quantitative local runner outputs",
+        "no readiness, runner, source, or license-review blockers remain",
+        "completed outputs include baselines, generated figure file evidence, file-level source claims, dataset fingerprint, and input/mask file evidence"
+      ],
+      "evidence_summary": {
+        "schema_version": 1,
+        "gate_id": "iterated_rof_paper_like_v1",
+        "canonical_data_root": "reproduce/data/iterated_rof",
+        "data_root": "reproduce/data/iterated_rof",
+        "dataset_fingerprint": {
+          "algorithm": "sha256",
+          "file_count": 6,
+          "image_count": 3,
+          "mask_count": 3,
+          "sha256": "86bfb2d21e5ae5a19f4e75f9c12d146ced8c8bc7c5eda7d857413f4f1814339b"
+        },
+        "image_count": 3,
+        "completed_image_count": 3,
+        "quantitative_image_count": 3,
+        "required_families": [
+          "cartoon",
+          "texture",
+          "medical"
+        ],
+        "completed_families": [
+          "cartoon",
+          "medical",
+          "texture"
+        ],
+        "quantitative_families": [
+          "cartoon",
+          "medical",
+          "texture"
+        ],
+        "source_claim_count": 3,
+        "figure_evidence_count": 3
+      },
+      "checklist": [
+        {
+          "id": "canonical_data_root",
+          "description": "canonical local data root",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "readiness_clean",
+          "description": "readiness, mask, source, and license blockers are clear",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "runner_outputs",
+          "description": "local runner completed quantitative outputs for every family",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "source_audit",
+          "description": "structured source audit artifacts, provenance, and license snapshots are reviewed",
+          "passed": true,
+          "reasons": []
+        },
+        {
+          "id": "output_evidence",
+          "description": "completed outputs include baselines, figures, file hashes, dataset fingerprint, and file-level source claims",
+          "passed": true,
+          "reasons": []
+        }
+      ],
+      "reasons": []
+    },
+    "paper_like_verification": {
+      "schema_version": 1,
+      "generated_by": "iterated_rof_paper_like.dashboard_candidate_v1",
+      "recomputed_gate": true,
+      "can_promote": true,
+      "promotion_shape_blocker_count": 0,
+      "gate_id": "iterated_rof_paper_like_v1",
+      "dataset_fingerprint": {
+        "algorithm": "sha256",
+        "file_count": 6,
+        "image_count": 3,
+        "mask_count": 3,
+        "sha256": "86bfb2d21e5ae5a19f4e75f9c12d146ced8c8bc7c5eda7d857413f4f1814339b"
+      },
+      "source_summary_path": "reproduce/results/iterated_rof_paper_like_summary.json",
+      "source_summary_sha256": "06d9b1bcd72b6efa0be372b4c76a15cc2eb376e95e30d002fb433376b622b9f2"
+    }
   },
   {
     "priority": 4,
@@ -169,14 +252,14 @@
     "runtime_seconds": 0.0953,
     "metrics": {
       "dice": 0.9529,
-      "kmeans_dice": 1.0,
+      "kmeans_dice": 1,
       "denoise_gain_db": 3.3291,
       "lambda_initial": 8226,
       "lambda_final": 0,
-      "lambda_shrink_ratio": 0.0,
+      "lambda_shrink_ratio": 0,
       "interval_halving_ratio": 0.8132,
       "wssa_iterations": 5,
-      "snr_db": 30.0,
+      "snr_db": 30,
       "epsilon": 0.02
     },
     "resultFiles": [

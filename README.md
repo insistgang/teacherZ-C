@@ -132,7 +132,7 @@ node docs/scripts/validate.mjs
 
 ## 📈 复现效果
 
-9 个 runner 已从 toy 代理升级为真实算法（真实 ROF / 小波 tight-frame / CIELab / graph-TV / wavelet-MAP 等）。**当前真实性：partial-completed 9 / toy-completed 6 / `paper-level-completed = 0 / 15`。**
+9 个 runner 已从 toy 代理升级为真实算法（真实 ROF / 小波 tight-frame / CIELab / graph-TV / wavelet-MAP 等），其中 **iterated-rof 已用真实公开数据（BSDS500 / USC-SIPI Brodatz / BrainWeb，含 ground-truth mask）通过数据-backed 门禁晋升为 `paper-like`**。**当前：`paper-like 1 / 15`（iterated-rof）/ partial-completed 9 / toy-completed 6 / `paper-level 0 / 15`。** 校验须 `ALLOW_PAPER_LIKE=1 node docs/scripts/validate.mjs`。
 
 逐篇等级、9 个 runner 的真实算法、以及到 paper-level 的剩余步骤，统一见 **[PROJECT_STATUS.md](PROJECT_STATUS.md)**（项目进展与路线图）。`completed` 只表示脚本跑通，不表示论文级完整复现。
 

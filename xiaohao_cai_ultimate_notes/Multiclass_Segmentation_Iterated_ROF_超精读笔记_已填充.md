@@ -204,8 +204,8 @@ Initialization: τ^(0) = (τ_i^(0))_{i=1}^{K-1}, 0 < τ_1^(0) < ... < τ_{K-1}^(
 
 | 字段 | 内容 |
 | --- | --- |
-| 复现等级 | partial |
-| 真实性等级 | partial-completed |
+| 复现等级 | **paper-like**（dashboard 官方等级，真实数据-backed 门禁晋升：BSDS500/USC-SIPI Brodatz/BrainWeb，详见 workflow §2）；另有 §7 的 partial 合成演示 |
+| 真实性等级 | partial-completed（paper-like 但非 paper-level，paper-level 仍 0/15） |
 | 难度 | 中 |
 | 效果 | 明显 |
 | 最小实验 | close-gray-value (差 0.04) 4-phase synthetic image + K=2 synthetic case；先解一次 Chambolle-Pock ROF，再迭代更新 tau_i = 1/2(m_{i-1}+m_i)，其中 m_i := mean_f(Omega_i) on raw f；并对照真实非迭代基线 raw K-means / raw Multi-Otsu / ROF+Multi-Otsu。 |

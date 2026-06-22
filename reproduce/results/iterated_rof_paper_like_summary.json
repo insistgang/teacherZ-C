@@ -1,0 +1,1546 @@
+{
+  "paper_id": "iterated-rof",
+  "target_level": "paper-like",
+  "readiness_status": "ready_for_paper_like_runner",
+  "status": "completed_local_runner",
+  "data_root": "reproduce/data/iterated_rof",
+  "dataset_fingerprint": {
+    "algorithm": "sha256",
+    "file_count": 6,
+    "image_count": 3,
+    "mask_count": 3,
+    "sha256": "86bfb2d21e5ae5a19f4e75f9c12d146ced8c8bc7c5eda7d857413f4f1814339b"
+  },
+  "run_protocol": {
+    "protocol_id": "iterated_rof_trof_local_data_v1",
+    "schema_version": 1,
+    "paper_id": "iterated-rof",
+    "algorithm": "ROF denoising followed by iterative multiclass thresholding",
+    "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+    "threshold_update": "tau_i = 0.5 * (mean_f(Omega_{i-1}) + mean_f(Omega_i))",
+    "threshold_mean_source": "raw input image f, not denoised ROF output u",
+    "baselines": [
+      "raw_kmeans",
+      "multi_otsu"
+    ],
+    "metrics": [
+      "clustering_accuracy",
+      "binary_dice_when_mask_has_two_labels"
+    ],
+    "parameters": {
+      "mu": 8.0,
+      "default_classes": 4,
+      "rof_n_iter": 160,
+      "trof_max_iter": 20,
+      "rof_tol": 2e-05,
+      "trof_tol": 0.0001,
+      "projection_bins": 4096,
+      "seed": 20260428
+    },
+    "data_layout": "reproduce/data/iterated_rof/{cartoon,texture,medical}/{images,masks}",
+    "figure_dir": "reproduce/results/figures/iterated_rof_paper_like",
+    "promotion_rule": "dashboard paper-like promotion requires paper_like_gate.passed=true"
+  },
+  "image_count": 3,
+  "completed_image_count": 3,
+  "quantitative_image_count": 3,
+  "families": [
+    {
+      "family": "cartoon",
+      "description": "cartoon or smooth-region image used to test missing-pixel / piecewise-smooth behavior",
+      "image_count": 1,
+      "mask_count": 1,
+      "matched_mask_count": 1,
+      "mask_warning_count": 0,
+      "status": "ready_quantitative",
+      "path": "reproduce/data/iterated_rof/cartoon",
+      "images": [
+        {
+          "image_path": "reproduce/data/iterated_rof/cartoon/images/bsds500/100007.png",
+          "image_relative_path": "bsds500/100007.png",
+          "mask_path": "reproduce/data/iterated_rof/cartoon/masks/bsds500/100007.png",
+          "mask_warning": null,
+          "image_file": {
+            "path": "reproduce/data/iterated_rof/cartoon/images/bsds500/100007.png",
+            "size_bytes": 3357,
+            "sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7"
+          },
+          "mask_file": {
+            "path": "reproduce/data/iterated_rof/cartoon/masks/bsds500/100007.png",
+            "size_bytes": 239,
+            "sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835"
+          }
+        }
+      ]
+    },
+    {
+      "family": "texture",
+      "description": "close-intensity texture or stripe image used to test texture separation",
+      "image_count": 1,
+      "mask_count": 1,
+      "matched_mask_count": 1,
+      "mask_warning_count": 0,
+      "status": "ready_quantitative",
+      "path": "reproduce/data/iterated_rof/texture",
+      "images": [
+        {
+          "image_path": "reproduce/data/iterated_rof/texture/images/sipi-brodatz/mosaic01.png",
+          "image_relative_path": "sipi-brodatz/mosaic01.png",
+          "mask_path": "reproduce/data/iterated_rof/texture/masks/sipi-brodatz/mosaic01.png",
+          "mask_warning": null,
+          "image_file": {
+            "path": "reproduce/data/iterated_rof/texture/images/sipi-brodatz/mosaic01.png",
+            "size_bytes": 7643,
+            "sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312"
+          },
+          "mask_file": {
+            "path": "reproduce/data/iterated_rof/texture/masks/sipi-brodatz/mosaic01.png",
+            "size_bytes": 160,
+            "sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c"
+          }
+        }
+      ]
+    },
+    {
+      "family": "medical",
+      "description": "medical grayscale image, preferably MRI-like, used to test medical segmentation behavior",
+      "image_count": 1,
+      "mask_count": 1,
+      "matched_mask_count": 1,
+      "mask_warning_count": 0,
+      "status": "ready_quantitative",
+      "path": "reproduce/data/iterated_rof/medical",
+      "images": [
+        {
+          "image_path": "reproduce/data/iterated_rof/medical/images/brainweb/subject04_t1w_slice090.png",
+          "image_relative_path": "brainweb/subject04_t1w_slice090.png",
+          "mask_path": "reproduce/data/iterated_rof/medical/masks/brainweb/subject04_t1w_slice090.png",
+          "mask_warning": null,
+          "image_file": {
+            "path": "reproduce/data/iterated_rof/medical/images/brainweb/subject04_t1w_slice090.png",
+            "size_bytes": 5282,
+            "sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76"
+          },
+          "mask_file": {
+            "path": "reproduce/data/iterated_rof/medical/masks/brainweb/subject04_t1w_slice090.png",
+            "size_bytes": 1151,
+            "sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2"
+          }
+        }
+      ]
+    }
+  ],
+  "family_summaries": [
+    {
+      "family": "cartoon",
+      "status": "completed_quantitative",
+      "image_count": 1,
+      "mask_count": 1,
+      "matched_mask_count": 1,
+      "completed_image_count": 1,
+      "failed_image_count": 0,
+      "quantitative_image_count": 1,
+      "qualitative_image_count": 0,
+      "metrics_mean": {
+        "clustering_accuracy": 0.7161
+      },
+      "baseline_metrics_mean": {
+        "multi_otsu": {
+          "clustering_accuracy": 0.5495
+        },
+        "raw_kmeans": {
+          "clustering_accuracy": 0.5444
+        }
+      },
+      "figure_paths": [
+        "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png"
+      ],
+      "source_claims": [
+        {
+          "manifest_status": "present",
+          "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+          "claim_scope": "file",
+          "image": "bsds500/100007.png",
+          "mask": "bsds500/100007.png",
+          "sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7",
+          "mask_sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835",
+          "source_id": "bsds500",
+          "source_name": "Berkeley Segmentation Dataset and Benchmark (BSDS500)",
+          "license_reviewed": true,
+          "license_note": "BSDS500 is distributed by UC Berkeley for research and educational use. The BIDS/BSDS500 GitHub mirror redistributes the same data. Original archives kept local; only derived grayscale image and integer label PNGs are tracked.",
+          "citation": "D. Martin, C. Fowlkes, D. Tal, J. Malik. A Database of Human Segmented Natural Images and its Application to Evaluating Segmentation Algorithms and Measuring Ecological Statistics. ICCV 2001. BSDS500: Arbelaez, Maire, Fowlkes, Malik, PAMI 2011.",
+          "provenance_reviewed": true,
+          "provenance_note": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22.",
+          "synthetic_fixture": false,
+          "notes": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22. Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+          "source_audit": {
+            "source_url": "https://github.com/BIDS/BSDS500",
+            "downloaded_at": "2026-06-22",
+            "source_artifact_path": "reproduce/data/iterated_rof/cartoon/audit/source-artifact.txt",
+            "source_artifact_sha256": "a79a3a1741bd65dd9ed8a056a72e3b285e4c64e17a878bc14d547fee7d73a76e",
+            "license_snapshot_path": "reproduce/data/iterated_rof/cartoon/audit/license-snapshot.txt",
+            "license_snapshot_sha256": "d5d0ebdbabbdfcbd03a1f90b2161256b4736ccd2ac985c9f05f24a4ab113e002",
+            "conversion_notes": "Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+            "local_file_mapping_reviewed": true
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "family": "texture",
+      "status": "completed_quantitative",
+      "image_count": 1,
+      "mask_count": 1,
+      "matched_mask_count": 1,
+      "completed_image_count": 1,
+      "failed_image_count": 0,
+      "quantitative_image_count": 1,
+      "qualitative_image_count": 0,
+      "metrics_mean": {
+        "clustering_accuracy": 0.4826
+      },
+      "baseline_metrics_mean": {
+        "multi_otsu": {
+          "clustering_accuracy": 0.3962
+        },
+        "raw_kmeans": {
+          "clustering_accuracy": 0.3975
+        }
+      },
+      "figure_paths": [
+        "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png"
+      ],
+      "source_claims": [
+        {
+          "manifest_status": "present",
+          "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+          "claim_scope": "file",
+          "image": "sipi-brodatz/mosaic01.png",
+          "mask": "sipi-brodatz/mosaic01.png",
+          "sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312",
+          "mask_sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c",
+          "source_id": "sipi-brodatz",
+          "source_name": "USC-SIPI Image Database (Brodatz textures), composed segmentation mosaic",
+          "license_reviewed": true,
+          "license_note": "The USC-SIPI image database is provided for research and educational purposes; cite USC-SIPI. Original texture TIFFs kept local; only the derived composed mosaic and its label map are tracked.",
+          "citation": "USC-SIPI Image Database, University of Southern California, Signal and Image Processing Institute (textures volume, Brodatz). https://sipi.usc.edu/database/",
+          "provenance_reviewed": true,
+          "provenance_note": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22.",
+          "synthetic_fixture": false,
+          "notes": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22. Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+          "source_audit": {
+            "source_url": "https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01",
+            "downloaded_at": "2026-06-22",
+            "source_artifact_path": "reproduce/data/iterated_rof/texture/audit/source-artifact.txt",
+            "source_artifact_sha256": "fe58389505963fc01d9b7d9cf2c240d597ef81e1a80654bbc907b8dd1ce2ed13",
+            "license_snapshot_path": "reproduce/data/iterated_rof/texture/audit/license-snapshot.txt",
+            "license_snapshot_sha256": "36b4abc714e0965e98dd09734efa4a3ad01a72365e6f1ae8ad2920adeb78846a",
+            "conversion_notes": "Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+            "local_file_mapping_reviewed": true
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "family": "medical",
+      "status": "completed_quantitative",
+      "image_count": 1,
+      "mask_count": 1,
+      "matched_mask_count": 1,
+      "completed_image_count": 1,
+      "failed_image_count": 0,
+      "quantitative_image_count": 1,
+      "qualitative_image_count": 0,
+      "metrics_mean": {
+        "clustering_accuracy": 0.6331
+      },
+      "baseline_metrics_mean": {
+        "multi_otsu": {
+          "clustering_accuracy": 0.7783
+        },
+        "raw_kmeans": {
+          "clustering_accuracy": 0.7824
+        }
+      },
+      "figure_paths": [
+        "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png"
+      ],
+      "source_claims": [
+        {
+          "manifest_status": "present",
+          "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+          "claim_scope": "file",
+          "image": "brainweb/subject04_t1w_slice090.png",
+          "mask": "brainweb/subject04_t1w_slice090.png",
+          "sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76",
+          "mask_sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2",
+          "source_id": "brainweb",
+          "source_name": "BrainWeb Simulated Brain Database (McGill BIC)",
+          "license_reviewed": true,
+          "license_note": "BrainWeb simulated data from the McGill Brain Imaging Centre is freely available for research; cite the BrainWeb references. Raw volumes kept local; only the derived 2D slice image and label PNGs are tracked.",
+          "citation": "C.A. Cocosco, V. Kollokian, R.K.-S. Kwan, A.C. Evans. BrainWeb: Online Interface to a 3D MRI Simulated Brain Database. NeuroImage 1997. D.L. Collins et al., IEEE TMI 17(3):463-468, 1998.",
+          "provenance_reviewed": true,
+          "provenance_note": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22.",
+          "synthetic_fixture": false,
+          "notes": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22. Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+          "source_audit": {
+            "source_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+            "downloaded_at": "2026-06-22",
+            "source_artifact_path": "reproduce/data/iterated_rof/medical/audit/source-artifact.txt",
+            "source_artifact_sha256": "c00a0966b0520c53ef5a4117a8ddcf57fb8366ea2f23d7fe6965cd261c6b3711",
+            "license_snapshot_path": "reproduce/data/iterated_rof/medical/audit/license-snapshot.txt",
+            "license_snapshot_sha256": "e902e308d1ff24d74597a7b0ff7446bbb032ced3082a351a8c5e5e942d260db4",
+            "conversion_notes": "Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+            "local_file_mapping_reviewed": true
+          }
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "images": [
+    {
+      "family": "cartoon",
+      "image_path": "reproduce/data/iterated_rof/cartoon/images/bsds500/100007.png",
+      "mask_path": "reproduce/data/iterated_rof/cartoon/masks/bsds500/100007.png",
+      "mask_warning": null,
+      "source_claim": {
+        "manifest_status": "present",
+        "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+        "claim_scope": "file",
+        "image": "bsds500/100007.png",
+        "mask": "bsds500/100007.png",
+        "sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7",
+        "mask_sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835",
+        "source_id": "bsds500",
+        "source_name": "Berkeley Segmentation Dataset and Benchmark (BSDS500)",
+        "license_reviewed": true,
+        "license_note": "BSDS500 is distributed by UC Berkeley for research and educational use. The BIDS/BSDS500 GitHub mirror redistributes the same data. Original archives kept local; only derived grayscale image and integer label PNGs are tracked.",
+        "citation": "D. Martin, C. Fowlkes, D. Tal, J. Malik. A Database of Human Segmented Natural Images and its Application to Evaluating Segmentation Algorithms and Measuring Ecological Statistics. ICCV 2001. BSDS500: Arbelaez, Maire, Fowlkes, Malik, PAMI 2011.",
+        "provenance_reviewed": true,
+        "provenance_note": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22.",
+        "synthetic_fixture": false,
+        "notes": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22. Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+        "source_audit": {
+          "source_url": "https://github.com/BIDS/BSDS500",
+          "downloaded_at": "2026-06-22",
+          "source_artifact_path": "reproduce/data/iterated_rof/cartoon/audit/source-artifact.txt",
+          "source_artifact_sha256": "a79a3a1741bd65dd9ed8a056a72e3b285e4c64e17a878bc14d547fee7d73a76e",
+          "license_snapshot_path": "reproduce/data/iterated_rof/cartoon/audit/license-snapshot.txt",
+          "license_snapshot_sha256": "d5d0ebdbabbdfcbd03a1f90b2161256b4736ccd2ac985c9f05f24a4ab113e002",
+          "conversion_notes": "Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+          "local_file_mapping_reviewed": true
+        }
+      },
+      "image_file": {
+        "path": "reproduce/data/iterated_rof/cartoon/images/bsds500/100007.png",
+        "size_bytes": 3357,
+        "sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7"
+      },
+      "mask_file": {
+        "path": "reproduce/data/iterated_rof/cartoon/masks/bsds500/100007.png",
+        "size_bytes": 239,
+        "sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835"
+      },
+      "status": "completed",
+      "qualitative_only": false,
+      "image_shape": [
+        64,
+        96
+      ],
+      "n_classes": 4,
+      "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+      "parameters": {
+        "mu": 8.0,
+        "rof_n_iter": 160,
+        "trof_max_iter": 20
+      },
+      "thresholds": [
+        0.47168,
+        0.68042,
+        0.790039
+      ],
+      "threshold_iterations": 20,
+      "rof_iterations": 160,
+      "rof_final_residual": 8.831647688271974e-05,
+      "metrics": {
+        "clustering_accuracy": 0.7161
+      },
+      "baselines": {
+        "raw_kmeans": {
+          "method": "simple_kmeans_on_raw_grayscale",
+          "metrics": {
+            "clustering_accuracy": 0.5444
+          }
+        },
+        "multi_otsu": {
+          "method": "skimage_multiotsu",
+          "thresholds": [
+            0.350521,
+            0.559896,
+            0.725521
+          ],
+          "metrics": {
+            "clustering_accuracy": 0.5495
+          }
+        }
+      },
+      "figure_path": "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png",
+      "figure_file": {
+        "path": "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png",
+        "size_bytes": 113683,
+        "sha256": "5a50916b01396d5848410c43d9cf589ebcdbd749f22cff0aa6fef5e4b48170bd"
+      },
+      "figure_panels": [
+        "input",
+        "mask",
+        "ROF",
+        "T-ROF",
+        "raw K-means",
+        "multi-Otsu",
+        "T-ROF error",
+        "T-ROF vs Otsu"
+      ],
+      "runtime_seconds": 0.4866,
+      "figure_evidence": {
+        "schema_version": 1,
+        "paper_id": "iterated-rof",
+        "generator": "iterated_rof_paper_like.figure_grid_v1",
+        "family": "cartoon",
+        "image_path": "reproduce/data/iterated_rof/cartoon/images/bsds500/100007.png",
+        "mask_path": "reproduce/data/iterated_rof/cartoon/masks/bsds500/100007.png",
+        "figure_path": "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png",
+        "qualitative_only": false,
+        "image_sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7",
+        "mask_sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835",
+        "figure_sha256": "5a50916b01396d5848410c43d9cf589ebcdbd749f22cff0aa6fef5e4b48170bd",
+        "figure_size_bytes": 113683,
+        "figure_panels": [
+          "input",
+          "mask",
+          "ROF",
+          "T-ROF",
+          "raw K-means",
+          "multi-Otsu",
+          "T-ROF error",
+          "T-ROF vs Otsu"
+        ],
+        "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+        "parameters": {
+          "mu": 8.0,
+          "rof_n_iter": 160,
+          "trof_max_iter": 20
+        },
+        "thresholds": [
+          0.47168,
+          0.68042,
+          0.790039
+        ],
+        "n_classes": 4,
+        "metrics": {
+          "clustering_accuracy": 0.7161
+        },
+        "baselines": {
+          "multi_otsu": {
+            "method": "skimage_multiotsu",
+            "thresholds": [
+              0.350521,
+              0.559896,
+              0.725521
+            ]
+          },
+          "raw_kmeans": {
+            "method": "simple_kmeans_on_raw_grayscale"
+          }
+        }
+      },
+      "figure_evidence_path": "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png.evidence.json",
+      "figure_evidence_file": {
+        "path": "reproduce/results/figures/iterated_rof_paper_like/cartoon_bsds500_100007_png_c8c8be55d4_iterated_rof.png.evidence.json",
+        "size_bytes": 1435,
+        "sha256": "2c0d62f8a7a945901b7164bd02d7b82abbf94c60ed1aa44d04e0fcb52aeef823"
+      }
+    },
+    {
+      "family": "texture",
+      "image_path": "reproduce/data/iterated_rof/texture/images/sipi-brodatz/mosaic01.png",
+      "mask_path": "reproduce/data/iterated_rof/texture/masks/sipi-brodatz/mosaic01.png",
+      "mask_warning": null,
+      "source_claim": {
+        "manifest_status": "present",
+        "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+        "claim_scope": "file",
+        "image": "sipi-brodatz/mosaic01.png",
+        "mask": "sipi-brodatz/mosaic01.png",
+        "sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312",
+        "mask_sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c",
+        "source_id": "sipi-brodatz",
+        "source_name": "USC-SIPI Image Database (Brodatz textures), composed segmentation mosaic",
+        "license_reviewed": true,
+        "license_note": "The USC-SIPI image database is provided for research and educational purposes; cite USC-SIPI. Original texture TIFFs kept local; only the derived composed mosaic and its label map are tracked.",
+        "citation": "USC-SIPI Image Database, University of Southern California, Signal and Image Processing Institute (textures volume, Brodatz). https://sipi.usc.edu/database/",
+        "provenance_reviewed": true,
+        "provenance_note": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22.",
+        "synthetic_fixture": false,
+        "notes": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22. Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+        "source_audit": {
+          "source_url": "https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01",
+          "downloaded_at": "2026-06-22",
+          "source_artifact_path": "reproduce/data/iterated_rof/texture/audit/source-artifact.txt",
+          "source_artifact_sha256": "fe58389505963fc01d9b7d9cf2c240d597ef81e1a80654bbc907b8dd1ce2ed13",
+          "license_snapshot_path": "reproduce/data/iterated_rof/texture/audit/license-snapshot.txt",
+          "license_snapshot_sha256": "36b4abc714e0965e98dd09734efa4a3ad01a72365e6f1ae8ad2920adeb78846a",
+          "conversion_notes": "Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+          "local_file_mapping_reviewed": true
+        }
+      },
+      "image_file": {
+        "path": "reproduce/data/iterated_rof/texture/images/sipi-brodatz/mosaic01.png",
+        "size_bytes": 7643,
+        "sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312"
+      },
+      "mask_file": {
+        "path": "reproduce/data/iterated_rof/texture/masks/sipi-brodatz/mosaic01.png",
+        "size_bytes": 160,
+        "sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c"
+      },
+      "status": "completed",
+      "qualitative_only": false,
+      "image_shape": [
+        96,
+        96
+      ],
+      "n_classes": 4,
+      "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+      "parameters": {
+        "mu": 8.0,
+        "rof_n_iter": 160,
+        "trof_max_iter": 20
+      },
+      "thresholds": [
+        0.343994,
+        0.564209,
+        0.710938
+      ],
+      "threshold_iterations": 20,
+      "rof_iterations": 160,
+      "rof_final_residual": 0.00010668893185227031,
+      "metrics": {
+        "clustering_accuracy": 0.4826
+      },
+      "baselines": {
+        "raw_kmeans": {
+          "method": "simple_kmeans_on_raw_grayscale",
+          "metrics": {
+            "clustering_accuracy": 0.3975
+          }
+        },
+        "multi_otsu": {
+          "method": "skimage_multiotsu",
+          "thresholds": [
+            0.39519,
+            0.548315,
+            0.671415
+          ],
+          "metrics": {
+            "clustering_accuracy": 0.3962
+          }
+        }
+      },
+      "figure_path": "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png",
+      "figure_file": {
+        "path": "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png",
+        "size_bytes": 475978,
+        "sha256": "159bb71fdd03919a135a25478d5f0b0dfb8fc39cf025c36455884ae7ae4739bd"
+      },
+      "figure_panels": [
+        "input",
+        "mask",
+        "ROF",
+        "T-ROF",
+        "raw K-means",
+        "multi-Otsu",
+        "T-ROF error",
+        "T-ROF vs Otsu"
+      ],
+      "runtime_seconds": 0.154,
+      "figure_evidence": {
+        "schema_version": 1,
+        "paper_id": "iterated-rof",
+        "generator": "iterated_rof_paper_like.figure_grid_v1",
+        "family": "texture",
+        "image_path": "reproduce/data/iterated_rof/texture/images/sipi-brodatz/mosaic01.png",
+        "mask_path": "reproduce/data/iterated_rof/texture/masks/sipi-brodatz/mosaic01.png",
+        "figure_path": "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png",
+        "qualitative_only": false,
+        "image_sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312",
+        "mask_sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c",
+        "figure_sha256": "159bb71fdd03919a135a25478d5f0b0dfb8fc39cf025c36455884ae7ae4739bd",
+        "figure_size_bytes": 475978,
+        "figure_panels": [
+          "input",
+          "mask",
+          "ROF",
+          "T-ROF",
+          "raw K-means",
+          "multi-Otsu",
+          "T-ROF error",
+          "T-ROF vs Otsu"
+        ],
+        "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+        "parameters": {
+          "mu": 8.0,
+          "rof_n_iter": 160,
+          "trof_max_iter": 20
+        },
+        "thresholds": [
+          0.343994,
+          0.564209,
+          0.710938
+        ],
+        "n_classes": 4,
+        "metrics": {
+          "clustering_accuracy": 0.4826
+        },
+        "baselines": {
+          "multi_otsu": {
+            "method": "skimage_multiotsu",
+            "thresholds": [
+              0.39519,
+              0.548315,
+              0.671415
+            ]
+          },
+          "raw_kmeans": {
+            "method": "simple_kmeans_on_raw_grayscale"
+          }
+        }
+      },
+      "figure_evidence_path": "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png.evidence.json",
+      "figure_evidence_file": {
+        "path": "reproduce/results/figures/iterated_rof_paper_like/texture_sipi-brodatz_mosaic01_png_8b612986f4_iterated_rof.png.evidence.json",
+        "size_bytes": 1457,
+        "sha256": "c8b77a909ae8a587b02fcec6a3f5f6b7daaa4a4f22ac48f5dbaa8b03e4da5407"
+      }
+    },
+    {
+      "family": "medical",
+      "image_path": "reproduce/data/iterated_rof/medical/images/brainweb/subject04_t1w_slice090.png",
+      "mask_path": "reproduce/data/iterated_rof/medical/masks/brainweb/subject04_t1w_slice090.png",
+      "mask_warning": null,
+      "source_claim": {
+        "manifest_status": "present",
+        "manifest_path": "reproduce/data/iterated_rof/dataset_manifest.json",
+        "claim_scope": "file",
+        "image": "brainweb/subject04_t1w_slice090.png",
+        "mask": "brainweb/subject04_t1w_slice090.png",
+        "sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76",
+        "mask_sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2",
+        "source_id": "brainweb",
+        "source_name": "BrainWeb Simulated Brain Database (McGill BIC)",
+        "license_reviewed": true,
+        "license_note": "BrainWeb simulated data from the McGill Brain Imaging Centre is freely available for research; cite the BrainWeb references. Raw volumes kept local; only the derived 2D slice image and label PNGs are tracked.",
+        "citation": "C.A. Cocosco, V. Kollokian, R.K.-S. Kwan, A.C. Evans. BrainWeb: Online Interface to a 3D MRI Simulated Brain Database. NeuroImage 1997. D.L. Collins et al., IEEE TMI 17(3):463-468, 1998.",
+        "provenance_reviewed": true,
+        "provenance_note": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22.",
+        "synthetic_fixture": false,
+        "notes": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22. Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+        "source_audit": {
+          "source_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+          "downloaded_at": "2026-06-22",
+          "source_artifact_path": "reproduce/data/iterated_rof/medical/audit/source-artifact.txt",
+          "source_artifact_sha256": "c00a0966b0520c53ef5a4117a8ddcf57fb8366ea2f23d7fe6965cd261c6b3711",
+          "license_snapshot_path": "reproduce/data/iterated_rof/medical/audit/license-snapshot.txt",
+          "license_snapshot_sha256": "e902e308d1ff24d74597a7b0ff7446bbb032ced3082a351a8c5e5e942d260db4",
+          "conversion_notes": "Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+          "local_file_mapping_reviewed": true
+        }
+      },
+      "image_file": {
+        "path": "reproduce/data/iterated_rof/medical/images/brainweb/subject04_t1w_slice090.png",
+        "size_bytes": 5282,
+        "sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76"
+      },
+      "mask_file": {
+        "path": "reproduce/data/iterated_rof/medical/masks/brainweb/subject04_t1w_slice090.png",
+        "size_bytes": 1151,
+        "sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2"
+      },
+      "status": "completed",
+      "qualitative_only": false,
+      "image_shape": [
+        96,
+        80
+      ],
+      "n_classes": 4,
+      "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+      "parameters": {
+        "mu": 8.0,
+        "rof_n_iter": 160,
+        "trof_max_iter": 20
+      },
+      "thresholds": [
+        0.137939,
+        0.360107,
+        0.513672
+      ],
+      "threshold_iterations": 20,
+      "rof_iterations": 160,
+      "rof_final_residual": 0.00022325484036467877,
+      "metrics": {
+        "clustering_accuracy": 0.6331
+      },
+      "baselines": {
+        "raw_kmeans": {
+          "method": "simple_kmeans_on_raw_grayscale",
+          "metrics": {
+            "clustering_accuracy": 0.7824
+          }
+        },
+        "multi_otsu": {
+          "method": "skimage_multiotsu",
+          "thresholds": [
+            0.144753,
+            0.347664,
+            0.492992
+          ],
+          "metrics": {
+            "clustering_accuracy": 0.7783
+          }
+        }
+      },
+      "figure_path": "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png",
+      "figure_file": {
+        "path": "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png",
+        "size_bytes": 56351,
+        "sha256": "37482581b199ad4f4698457b16da28ad787270eb9cf55d16ff0afc914f7ac8a1"
+      },
+      "figure_panels": [
+        "input",
+        "mask",
+        "ROF",
+        "T-ROF",
+        "raw K-means",
+        "multi-Otsu",
+        "T-ROF error",
+        "T-ROF vs Otsu"
+      ],
+      "runtime_seconds": 0.1159,
+      "figure_evidence": {
+        "schema_version": 1,
+        "paper_id": "iterated-rof",
+        "generator": "iterated_rof_paper_like.figure_grid_v1",
+        "family": "medical",
+        "image_path": "reproduce/data/iterated_rof/medical/images/brainweb/subject04_t1w_slice090.png",
+        "mask_path": "reproduce/data/iterated_rof/medical/masks/brainweb/subject04_t1w_slice090.png",
+        "figure_path": "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png",
+        "qualitative_only": false,
+        "image_sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76",
+        "mask_sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2",
+        "figure_sha256": "37482581b199ad4f4698457b16da28ad787270eb9cf55d16ff0afc914f7ac8a1",
+        "figure_size_bytes": 56351,
+        "figure_panels": [
+          "input",
+          "mask",
+          "ROF",
+          "T-ROF",
+          "raw K-means",
+          "multi-Otsu",
+          "T-ROF error",
+          "T-ROF vs Otsu"
+        ],
+        "solver": "sat_rof_trof.rof_chambolle_pock + sat_rof_trof.run_trof_thresholds",
+        "parameters": {
+          "mu": 8.0,
+          "rof_n_iter": 160,
+          "trof_max_iter": 20
+        },
+        "thresholds": [
+          0.137939,
+          0.360107,
+          0.513672
+        ],
+        "n_classes": 4,
+        "metrics": {
+          "clustering_accuracy": 0.6331
+        },
+        "baselines": {
+          "multi_otsu": {
+            "method": "skimage_multiotsu",
+            "thresholds": [
+              0.144753,
+              0.347664,
+              0.492992
+            ]
+          },
+          "raw_kmeans": {
+            "method": "simple_kmeans_on_raw_grayscale"
+          }
+        }
+      },
+      "figure_evidence_path": "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png.evidence.json",
+      "figure_evidence_file": {
+        "path": "reproduce/results/figures/iterated_rof_paper_like/medical_brainweb_subject04_t1w_slice090_png_c24e156657_iterated_rof.png.evidence.json",
+        "size_bytes": 1487,
+        "sha256": "ac94474a8f6ee62e26320b1ccfeb544787a74c192fd8f8058e70747319533894"
+      }
+    }
+  ],
+  "blockers": [],
+  "claim_blockers": [],
+  "paper_like_gate": {
+    "passed": true,
+    "dashboard_level": "paper-like",
+    "checked_requirements": [
+      "all data families have completed quantitative local runner outputs",
+      "no readiness, runner, source, or license-review blockers remain",
+      "completed outputs include baselines, generated figure file evidence, file-level source claims, dataset fingerprint, and input/mask file evidence"
+    ],
+    "evidence_summary": {
+      "schema_version": 1,
+      "gate_id": "iterated_rof_paper_like_v1",
+      "canonical_data_root": "reproduce/data/iterated_rof",
+      "data_root": "reproduce/data/iterated_rof",
+      "dataset_fingerprint": {
+        "algorithm": "sha256",
+        "file_count": 6,
+        "image_count": 3,
+        "mask_count": 3,
+        "sha256": "86bfb2d21e5ae5a19f4e75f9c12d146ced8c8bc7c5eda7d857413f4f1814339b"
+      },
+      "image_count": 3,
+      "completed_image_count": 3,
+      "quantitative_image_count": 3,
+      "required_families": [
+        "cartoon",
+        "texture",
+        "medical"
+      ],
+      "completed_families": [
+        "cartoon",
+        "medical",
+        "texture"
+      ],
+      "quantitative_families": [
+        "cartoon",
+        "medical",
+        "texture"
+      ],
+      "source_claim_count": 3,
+      "figure_evidence_count": 3
+    },
+    "checklist": [
+      {
+        "id": "canonical_data_root",
+        "description": "canonical local data root",
+        "passed": true,
+        "reasons": []
+      },
+      {
+        "id": "readiness_clean",
+        "description": "readiness, mask, source, and license blockers are clear",
+        "passed": true,
+        "reasons": []
+      },
+      {
+        "id": "runner_outputs",
+        "description": "local runner completed quantitative outputs for every family",
+        "passed": true,
+        "reasons": []
+      },
+      {
+        "id": "source_audit",
+        "description": "structured source audit artifacts, provenance, and license snapshots are reviewed",
+        "passed": true,
+        "reasons": []
+      },
+      {
+        "id": "output_evidence",
+        "description": "completed outputs include baselines, figures, file hashes, dataset fingerprint, and file-level source claims",
+        "passed": true,
+        "reasons": []
+      }
+    ],
+    "reasons": []
+  },
+  "local_dataset_manifest": {
+    "status": "present",
+    "path": "reproduce/data/iterated_rof/dataset_manifest.json",
+    "families": {
+      "cartoon": {
+        "source_id": "bsds500",
+        "source_name": "Berkeley Segmentation Dataset and Benchmark (BSDS500)",
+        "license_reviewed": true,
+        "license_note": "BSDS500 is distributed by UC Berkeley for research and educational use. The BIDS/BSDS500 GitHub mirror redistributes the same data. Original archives kept local; only derived grayscale image and integer label PNGs are tracked.",
+        "citation": "D. Martin, C. Fowlkes, D. Tal, J. Malik. A Database of Human Segmented Natural Images and its Application to Evaluating Segmentation Algorithms and Measuring Ecological Statistics. ICCV 2001. BSDS500: Arbelaez, Maire, Fowlkes, Malik, PAMI 2011.",
+        "provenance_reviewed": true,
+        "provenance_note": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22.",
+        "synthetic_fixture": false,
+        "source_audit": {
+          "source_url": "https://github.com/BIDS/BSDS500",
+          "downloaded_at": "2026-06-22",
+          "source_artifact_path": "reproduce/data/iterated_rof/cartoon/audit/source-artifact.txt",
+          "source_artifact_sha256": "a79a3a1741bd65dd9ed8a056a72e3b285e4c64e17a878bc14d547fee7d73a76e",
+          "license_snapshot_path": "reproduce/data/iterated_rof/cartoon/audit/license-snapshot.txt",
+          "license_snapshot_sha256": "d5d0ebdbabbdfcbd03a1f90b2161256b4736ccd2ac985c9f05f24a4ab113e002",
+          "conversion_notes": "Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+          "local_file_mapping_reviewed": true
+        },
+        "notes": "Downloaded image data/images/test/100007.jpg and ground truth data/groundTruth/test/100007.mat from the BIDS/BSDS500 GitHub mirror (raw.githubusercontent.com/BIDS/BSDS500) on 2026-06-22. Converted 100007.jpg to grayscale PNG (321x481). Took groundTruth[0,0].Segmentation (first human annotator), relabeled to compact 0..4 integers, saved as integer label PNG with identical shape (5 labels). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+        "files": [
+          {
+            "image": "bsds500/100007.png",
+            "sha256": "f19950b8f4cc0015730fd6288c8579519e02e7be5c2ec2768f05e46c89ac8eb7",
+            "mask": "bsds500/100007.png",
+            "mask_sha256": "4a58d932280fad7ab18a49b77c1c2ff54dab56e12cfa2572372f537c0e13d835"
+          }
+        ]
+      },
+      "texture": {
+        "source_id": "sipi-brodatz",
+        "source_name": "USC-SIPI Image Database (Brodatz textures), composed segmentation mosaic",
+        "license_reviewed": true,
+        "license_note": "The USC-SIPI image database is provided for research and educational purposes; cite USC-SIPI. Original texture TIFFs kept local; only the derived composed mosaic and its label map are tracked.",
+        "citation": "USC-SIPI Image Database, University of Southern California, Signal and Image Processing Institute (textures volume, Brodatz). https://sipi.usc.edu/database/",
+        "provenance_reviewed": true,
+        "provenance_note": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22.",
+        "synthetic_fixture": false,
+        "source_audit": {
+          "source_url": "https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01",
+          "downloaded_at": "2026-06-22",
+          "source_artifact_path": "reproduce/data/iterated_rof/texture/audit/source-artifact.txt",
+          "source_artifact_sha256": "fe58389505963fc01d9b7d9cf2c240d597ef81e1a80654bbc907b8dd1ce2ed13",
+          "license_snapshot_path": "reproduce/data/iterated_rof/texture/audit/license-snapshot.txt",
+          "license_snapshot_sha256": "36b4abc714e0965e98dd09734efa4a3ad01a72365e6f1ae8ad2920adeb78846a",
+          "conversion_notes": "Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+          "local_file_mapping_reviewed": true
+        },
+        "notes": "Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22. Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.",
+        "files": [
+          {
+            "image": "sipi-brodatz/mosaic01.png",
+            "sha256": "2e9e8e1618a31199dc01035504b4d60d48957c695d1a0a0025e60826dfe42312",
+            "mask": "sipi-brodatz/mosaic01.png",
+            "mask_sha256": "5a3deb953ed17634fdca565437bd60033206f3ae245ad4371d924f1f4bf0af4c"
+          }
+        ]
+      },
+      "medical": {
+        "source_id": "brainweb",
+        "source_name": "BrainWeb Simulated Brain Database (McGill BIC)",
+        "license_reviewed": true,
+        "license_note": "BrainWeb simulated data from the McGill Brain Imaging Centre is freely available for research; cite the BrainWeb references. Raw volumes kept local; only the derived 2D slice image and label PNGs are tracked.",
+        "citation": "C.A. Cocosco, V. Kollokian, R.K.-S. Kwan, A.C. Evans. BrainWeb: Online Interface to a 3D MRI Simulated Brain Database. NeuroImage 1997. D.L. Collins et al., IEEE TMI 17(3):463-468, 1998.",
+        "provenance_reviewed": true,
+        "provenance_note": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22.",
+        "synthetic_fixture": false,
+        "source_audit": {
+          "source_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+          "downloaded_at": "2026-06-22",
+          "source_artifact_path": "reproduce/data/iterated_rof/medical/audit/source-artifact.txt",
+          "source_artifact_sha256": "c00a0966b0520c53ef5a4117a8ddcf57fb8366ea2f23d7fe6965cd261c6b3711",
+          "license_snapshot_path": "reproduce/data/iterated_rof/medical/audit/license-snapshot.txt",
+          "license_snapshot_sha256": "e902e308d1ff24d74597a7b0ff7446bbb032ced3082a351a8c5e5e942d260db4",
+          "conversion_notes": "Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+          "local_file_mapping_reviewed": true
+        },
+        "notes": "Downloaded subject04 T1w volume (alias subject04_t1w, 256x256x181 uint8) and subject04 discrete anatomical model (alias subject04_crisp, 362x434x362 uint8, 0.5mm) via the cgi/brainweb1 download interface on 2026-06-22. Extracted axial slice z=90. Center-cropped the T1w slice (256x256) to the central 181x217 (standard stereotaxic FOV, brain-centered) as the grayscale MRI image. Took the matching 0.5mm crisp slice (z=180) and downsampled 2x (every other voxel) to 181x217 (1mm) as the integer tissue-label mask (labels 0-11). Image and mask share identical 217x181 shape and the same axial z-level; alignment is by stereotaxic centering (documented; small residual offset possible). Derived PNGs bilinear-downsized to longest side 120 px (mask nearest-neighbor) for tractable T-ROF; sides >= 32.",
+        "files": [
+          {
+            "image": "brainweb/subject04_t1w_slice090.png",
+            "sha256": "49c3f39e7edbe5dae1e1c58a6f03f7a22cdea38a36dbe373cc325b3ff6133d76",
+            "mask": "brainweb/subject04_t1w_slice090.png",
+            "mask_sha256": "74b5b058f816cdf12d93f7aeea2e5767b647e856aa6b95d2f0998e73bbc39cf2"
+          }
+        ]
+      }
+    }
+  },
+  "claim_boundary": "Do not promote dashboard level beyond partial until real/local images, baselines, metrics, and generated figures exist.",
+  "data_gap_checklist": {
+    "schema_version": 1,
+    "paper_id": "iterated-rof",
+    "target_level": "paper-like",
+    "ready_for_local_runner": true,
+    "ready_for_paper_like_runner_outputs": true,
+    "ready_for_paper_like": false,
+    "ready_for_dashboard_promotion": false,
+    "promotion_readiness_note": "Data-gap reports only describe local data and runner-output readiness; dashboard promotion requires a promotable dashboard candidate or promotion audit with a bound source summary artifact.",
+    "current_status": "completed_local_runner",
+    "data_root": "reproduce/data/iterated_rof",
+    "remaining_family_count": 0,
+    "source_audit_status_counts": {
+      "complete": 3
+    },
+    "families": [
+      {
+        "family": "cartoon",
+        "status": "ready_quantitative",
+        "image_count": 1,
+        "matched_mask_count": 1,
+        "content_issue_count": 0,
+        "content_issues": [],
+        "paths": {
+          "images": "cartoon/images",
+          "masks": "cartoon/masks"
+        },
+        "primary_source": {
+          "source_id": "bsds500",
+          "name": "Berkeley Segmentation Dataset and Benchmark",
+          "url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/",
+          "download_url": "https://github.com/BIDS/BSDS500",
+          "priority": 1,
+          "fit": "Natural-image public substitute with human segmentations; useful for smooth-region / cartoon-like qualitative checks, but not the original paper cartoon data.",
+          "download_policy": "manual_download",
+          "license_note": "Use according to Berkeley dataset terms; keep original archives local unless redistribution is permitted.",
+          "local_layout": "cartoon/images and cartoon/masks",
+          "image_selection_rule": "After terms review, choose a small subset of BSDS images with smooth/cartoon-like regions and available human segmentation ground truth.",
+          "mask_mapping_rule": "Convert one reviewed human segmentation for each image into an integer label PNG with the same relative path and extension as the grayscale input image.",
+          "conversion_checklist": [
+            "Keep the original image and ground-truth source bundle or manifest snapshot under cartoon/audit/.",
+            "Convert RGB images to grayscale PNG and record the conversion formula.",
+            "Convert the selected human segmentation labels to PNG and verify at least two labels and matching image shape.",
+            "Record the original BSDS image id and selected annotator/ground-truth id in conversion_notes."
+          ],
+          "final_naming_example": "cartoon/images/bsds500/<image_id>.png with cartoon/masks/bsds500/<image_id>.png"
+        },
+        "source_candidates": [
+          {
+            "source_id": "bsds500",
+            "name": "Berkeley Segmentation Dataset and Benchmark",
+            "url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/",
+            "download_url": "https://github.com/BIDS/BSDS500",
+            "priority": 1,
+            "fit": "Natural-image public substitute with human segmentations; useful for smooth-region / cartoon-like qualitative checks, but not the original paper cartoon data.",
+            "download_policy": "manual_download",
+            "license_note": "Use according to Berkeley dataset terms; keep original archives local unless redistribution is permitted.",
+            "local_layout": "cartoon/images and cartoon/masks",
+            "image_selection_rule": "After terms review, choose a small subset of BSDS images with smooth/cartoon-like regions and available human segmentation ground truth.",
+            "mask_mapping_rule": "Convert one reviewed human segmentation for each image into an integer label PNG with the same relative path and extension as the grayscale input image.",
+            "conversion_checklist": [
+              "Keep the original image and ground-truth source bundle or manifest snapshot under cartoon/audit/.",
+              "Convert RGB images to grayscale PNG and record the conversion formula.",
+              "Convert the selected human segmentation labels to PNG and verify at least two labels and matching image shape.",
+              "Record the original BSDS image id and selected annotator/ground-truth id in conversion_notes."
+            ],
+            "final_naming_example": "cartoon/images/bsds500/<image_id>.png with cartoon/masks/bsds500/<image_id>.png"
+          },
+          {
+            "source_id": "weizmann-segmentation-db",
+            "name": "Weizmann Segmentation Evaluation Database",
+            "url": "https://www.wisdom.weizmann.ac.il/~vision/Seg_Evaluation_DB/dl.html",
+            "download_url": "https://www.wisdom.weizmann.ac.il/~vision/Seg_Evaluation_DB/dl.html",
+            "priority": 2,
+            "fit": "Small natural-image segmentation database with ground truth; useful as backup if BSDS setup is inconvenient.",
+            "download_policy": "manual_download_research_only",
+            "license_note": "Research-use disclaimer and image-source terms are restrictive; do not commit images without review.",
+            "local_layout": "cartoon/images and cartoon/masks",
+            "image_selection_rule": "After research-use terms review, choose reviewed image/ground-truth pairs as a backup cartoon-like natural-image source.",
+            "mask_mapping_rule": "Convert each reviewed ground-truth segmentation to a label PNG with the same relative path as the grayscale image.",
+            "conversion_checklist": [
+              "Save the download page, terms, and selected file list under cartoon/audit/.",
+              "Convert the input image to grayscale PNG and document the source filename.",
+              "Convert the matching segmentation to an integer label PNG with identical dimensions.",
+              "Use file-level source_audit overrides if images in one family come from mixed sources."
+            ],
+            "final_naming_example": "cartoon/images/weizmann/<case>.png with cartoon/masks/weizmann/<case>.png"
+          }
+        ],
+        "acquisition_plan": {
+          "recommended_source_id": "bsds500",
+          "recommended_source_name": "Berkeley Segmentation Dataset and Benchmark",
+          "download_url": "https://github.com/BIDS/BSDS500",
+          "download_policy": "manual_download",
+          "license_note": "Use according to Berkeley dataset terms; keep original archives local unless redistribution is permitted.",
+          "image_selection_rule": "After terms review, choose a small subset of BSDS images with smooth/cartoon-like regions and available human segmentation ground truth.",
+          "mask_mapping_rule": "Convert one reviewed human segmentation for each image into an integer label PNG with the same relative path and extension as the grayscale input image.",
+          "conversion_checklist": [
+            "Keep the original image and ground-truth source bundle or manifest snapshot under cartoon/audit/.",
+            "Convert RGB images to grayscale PNG and record the conversion formula.",
+            "Convert the selected human segmentation labels to PNG and verify at least two labels and matching image shape.",
+            "Record the original BSDS image id and selected annotator/ground-truth id in conversion_notes."
+          ],
+          "final_naming_example": "cartoon/images/bsds500/<image_id>.png with cartoon/masks/bsds500/<image_id>.png",
+          "target_paths": {
+            "images": "cartoon/images",
+            "masks": "cartoon/masks",
+            "audit": "cartoon/audit",
+            "source_audit": "cartoon/audit/source-artifact",
+            "license_snapshot": "cartoon/audit/license-snapshot",
+            "manifest": "dataset_manifest.json"
+          },
+          "required_manifest_fields": [
+            "source_id",
+            "source_name",
+            "license_reviewed",
+            "license_note",
+            "citation",
+            "provenance_reviewed",
+            "provenance_note",
+            "synthetic_fixture",
+            "source_audit",
+            "source_url",
+            "downloaded_at",
+            "source_artifact_path",
+            "source_artifact_sha256",
+            "license_snapshot_path",
+            "license_snapshot_sha256",
+            "conversion_notes",
+            "local_file_mapping_reviewed",
+            "files[].image",
+            "files[].sha256",
+            "files[].mask",
+            "files[].mask_sha256"
+          ],
+          "post_download_commands": [
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --refresh-manifest-file-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --refresh-source-audit-artifact-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --check-source-audit-artifact-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --check-manifest-file-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --data-gap-output /tmp/iterated_rof_data_gap.json",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --strict-data-ready",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --run --strict-paper-like"
+          ]
+        },
+        "source_audit": {
+          "status": "complete",
+          "expected_root": "reproduce/data/iterated_rof/cartoon/audit",
+          "audit_root_exists": true,
+          "fields": {
+            "source_url": "present",
+            "downloaded_at": "present",
+            "source_artifact_path": "present",
+            "license_snapshot_path": "present",
+            "conversion_notes": "present",
+            "local_file_mapping_reviewed": "reviewed"
+          },
+          "artifacts": {
+            "source_artifact": {
+              "path": "reproduce/data/iterated_rof/cartoon/audit/source-artifact.txt",
+              "path_status": "present",
+              "sha256_status": "matched",
+              "content_status": "review_evidence_present",
+              "content_size_bytes": 1308,
+              "min_content_size_bytes": 128,
+              "content_issue_codes": [],
+              "content_issues": [],
+              "placeholder_pattern_hits": [],
+              "ready": true,
+              "resolved_path": "reproduce/data/iterated_rof/cartoon/audit/source-artifact.txt",
+              "actual_sha256": "a79a3a1741bd65dd9ed8a056a72e3b285e4c64e17a878bc14d547fee7d73a76e"
+            },
+            "license_snapshot": {
+              "path": "reproduce/data/iterated_rof/cartoon/audit/license-snapshot.txt",
+              "path_status": "present",
+              "sha256_status": "matched",
+              "content_status": "review_evidence_present",
+              "content_size_bytes": 652,
+              "min_content_size_bytes": 128,
+              "content_issue_codes": [],
+              "content_issues": [],
+              "placeholder_pattern_hits": [],
+              "ready": true,
+              "resolved_path": "reproduce/data/iterated_rof/cartoon/audit/license-snapshot.txt",
+              "actual_sha256": "d5d0ebdbabbdfcbd03a1f90b2161256b4736ccd2ac985c9f05f24a4ab113e002"
+            }
+          },
+          "file_overrides": [],
+          "issue_count": 0,
+          "issues": [],
+          "ready": true
+        },
+        "missing": [],
+        "next_actions": [
+          "refresh files[] SHA-256 claims after files are placed",
+          "refresh source_audit artifact SHA-256 claims after audit files are placed"
+        ]
+      },
+      {
+        "family": "texture",
+        "status": "ready_quantitative",
+        "image_count": 1,
+        "matched_mask_count": 1,
+        "content_issue_count": 0,
+        "content_issues": [],
+        "paths": {
+          "images": "texture/images",
+          "masks": "texture/masks"
+        },
+        "primary_source": {
+          "source_id": "prague-texture",
+          "name": "Prague Texture Segmentation Benchmark",
+          "url": "https://mosaic.utia.cas.cz/",
+          "download_url": "https://mosaic.utia.cas.cz/index.php?act=bench_form",
+          "priority": 1,
+          "fit": "Best match for the paper's texture experiments: benchmark texture mosaics with corresponding ground-truth and mask images.",
+          "download_policy": "manual_or_site_form",
+          "license_note": "Use only files allowed by the benchmark terms; keep downloaded archives local unless license-safe.",
+          "local_layout": "texture/images and texture/masks",
+          "image_selection_rule": "After terms review, choose a small reviewed subset of benchmark texture mosaics that have corresponding ground-truth segmentation labels.",
+          "mask_mapping_rule": "Convert each matching ground-truth label or mask image to a label PNG with the same relative path and extension as the input mosaic.",
+          "conversion_checklist": [
+            "Save the raw downloaded archive or source-file bundle under texture/audit/ and record it as source_artifact_path.",
+            "Convert the texture mosaic to grayscale or single-channel PNG without resizing unless the conversion notes explicitly record the change.",
+            "Convert the paired ground-truth labels to an integer-valued PNG and verify that it has at least two labels and the same shape as the image.",
+            "Run --refresh-manifest-file-claims and --refresh-source-audit-artifact-claims after placing the PNG and audit files."
+          ],
+          "final_naming_example": "texture/images/<source_id>/<case>.png with texture/masks/<source_id>/<case>.png"
+        },
+        "source_candidates": [
+          {
+            "source_id": "prague-texture",
+            "name": "Prague Texture Segmentation Benchmark",
+            "url": "https://mosaic.utia.cas.cz/",
+            "download_url": "https://mosaic.utia.cas.cz/index.php?act=bench_form",
+            "priority": 1,
+            "fit": "Best match for the paper's texture experiments: benchmark texture mosaics with corresponding ground-truth and mask images.",
+            "download_policy": "manual_or_site_form",
+            "license_note": "Use only files allowed by the benchmark terms; keep downloaded archives local unless license-safe.",
+            "local_layout": "texture/images and texture/masks",
+            "image_selection_rule": "After terms review, choose a small reviewed subset of benchmark texture mosaics that have corresponding ground-truth segmentation labels.",
+            "mask_mapping_rule": "Convert each matching ground-truth label or mask image to a label PNG with the same relative path and extension as the input mosaic.",
+            "conversion_checklist": [
+              "Save the raw downloaded archive or source-file bundle under texture/audit/ and record it as source_artifact_path.",
+              "Convert the texture mosaic to grayscale or single-channel PNG without resizing unless the conversion notes explicitly record the change.",
+              "Convert the paired ground-truth labels to an integer-valued PNG and verify that it has at least two labels and the same shape as the image.",
+              "Run --refresh-manifest-file-claims and --refresh-source-audit-artifact-claims after placing the PNG and audit files."
+            ],
+            "final_naming_example": "texture/images/<source_id>/<case>.png with texture/masks/<source_id>/<case>.png"
+          },
+          {
+            "source_id": "sipi-brodatz",
+            "name": "USC-SIPI Texture Database (Brodatz) composed segmentation mosaic",
+            "url": "https://sipi.usc.edu/database/database.php?volume=textures",
+            "download_url": "https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01",
+            "priority": 2,
+            "fit": "Directly-downloadable real Brodatz texture images. Texture-segmentation mosaics are composed by tiling real texture patches with exact known-boundary ground truth, which is the standard texture-segmentation benchmark construction (same principle as Prague). Added as a direct-download alternative because the Prague benchmark only offers an interactive on-demand generator.",
+            "download_policy": "direct_download",
+            "license_note": "USC-SIPI image database is distributed for research and educational use; cite USC-SIPI. Keep original texture files local.",
+            "local_layout": "texture/images and texture/masks",
+            "image_selection_rule": "Download real Brodatz texture images from USC-SIPI and compose a mosaic by tiling fixed-size patches; the exact tiling defines the ground-truth label map.",
+            "mask_mapping_rule": "Write the tiling layout as an integer label PNG (one label per source-texture region) with the same shape as the mosaic.",
+            "conversion_checklist": [
+              "Keep the source texture file list and download URLs under texture/audit/.",
+              "Compose the mosaic from real texture patches and record patch sources and tiling in conversion_notes.",
+              "Write the tiling label map as an integer PNG with the same shape as the mosaic and verify at least two labels."
+            ],
+            "final_naming_example": "texture/images/sipi-brodatz/<case>.png with texture/masks/sipi-brodatz/<case>.png"
+          }
+        ],
+        "acquisition_plan": {
+          "recommended_source_id": "prague-texture",
+          "recommended_source_name": "Prague Texture Segmentation Benchmark",
+          "download_url": "https://mosaic.utia.cas.cz/index.php?act=bench_form",
+          "download_policy": "manual_or_site_form",
+          "license_note": "Use only files allowed by the benchmark terms; keep downloaded archives local unless license-safe.",
+          "image_selection_rule": "After terms review, choose a small reviewed subset of benchmark texture mosaics that have corresponding ground-truth segmentation labels.",
+          "mask_mapping_rule": "Convert each matching ground-truth label or mask image to a label PNG with the same relative path and extension as the input mosaic.",
+          "conversion_checklist": [
+            "Save the raw downloaded archive or source-file bundle under texture/audit/ and record it as source_artifact_path.",
+            "Convert the texture mosaic to grayscale or single-channel PNG without resizing unless the conversion notes explicitly record the change.",
+            "Convert the paired ground-truth labels to an integer-valued PNG and verify that it has at least two labels and the same shape as the image.",
+            "Run --refresh-manifest-file-claims and --refresh-source-audit-artifact-claims after placing the PNG and audit files."
+          ],
+          "final_naming_example": "texture/images/<source_id>/<case>.png with texture/masks/<source_id>/<case>.png",
+          "target_paths": {
+            "images": "texture/images",
+            "masks": "texture/masks",
+            "audit": "texture/audit",
+            "source_audit": "texture/audit/source-artifact",
+            "license_snapshot": "texture/audit/license-snapshot",
+            "manifest": "dataset_manifest.json"
+          },
+          "required_manifest_fields": [
+            "source_id",
+            "source_name",
+            "license_reviewed",
+            "license_note",
+            "citation",
+            "provenance_reviewed",
+            "provenance_note",
+            "synthetic_fixture",
+            "source_audit",
+            "source_url",
+            "downloaded_at",
+            "source_artifact_path",
+            "source_artifact_sha256",
+            "license_snapshot_path",
+            "license_snapshot_sha256",
+            "conversion_notes",
+            "local_file_mapping_reviewed",
+            "files[].image",
+            "files[].sha256",
+            "files[].mask",
+            "files[].mask_sha256"
+          ],
+          "post_download_commands": [
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --refresh-manifest-file-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --refresh-source-audit-artifact-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --check-source-audit-artifact-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --check-manifest-file-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --data-gap-output /tmp/iterated_rof_data_gap.json",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --strict-data-ready",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --run --strict-paper-like"
+          ]
+        },
+        "source_audit": {
+          "status": "complete",
+          "expected_root": "reproduce/data/iterated_rof/texture/audit",
+          "audit_root_exists": true,
+          "fields": {
+            "source_url": "present",
+            "downloaded_at": "present",
+            "source_artifact_path": "present",
+            "license_snapshot_path": "present",
+            "conversion_notes": "present",
+            "local_file_mapping_reviewed": "reviewed"
+          },
+          "artifacts": {
+            "source_artifact": {
+              "path": "reproduce/data/iterated_rof/texture/audit/source-artifact.txt",
+              "path_status": "present",
+              "sha256_status": "matched",
+              "content_status": "review_evidence_present",
+              "content_size_bytes": 1493,
+              "min_content_size_bytes": 128,
+              "content_issue_codes": [],
+              "content_issues": [],
+              "placeholder_pattern_hits": [],
+              "ready": true,
+              "resolved_path": "reproduce/data/iterated_rof/texture/audit/source-artifact.txt",
+              "actual_sha256": "fe58389505963fc01d9b7d9cf2c240d597ef81e1a80654bbc907b8dd1ce2ed13"
+            },
+            "license_snapshot": {
+              "path": "reproduce/data/iterated_rof/texture/audit/license-snapshot.txt",
+              "path_status": "present",
+              "sha256_status": "matched",
+              "content_status": "review_evidence_present",
+              "content_size_bytes": 748,
+              "min_content_size_bytes": 128,
+              "content_issue_codes": [],
+              "content_issues": [],
+              "placeholder_pattern_hits": [],
+              "ready": true,
+              "resolved_path": "reproduce/data/iterated_rof/texture/audit/license-snapshot.txt",
+              "actual_sha256": "36b4abc714e0965e98dd09734efa4a3ad01a72365e6f1ae8ad2920adeb78846a"
+            }
+          },
+          "file_overrides": [],
+          "issue_count": 0,
+          "issues": [],
+          "ready": true
+        },
+        "missing": [],
+        "next_actions": [
+          "refresh files[] SHA-256 claims after files are placed",
+          "refresh source_audit artifact SHA-256 claims after audit files are placed"
+        ]
+      },
+      {
+        "family": "medical",
+        "status": "ready_quantitative",
+        "image_count": 1,
+        "matched_mask_count": 1,
+        "content_issue_count": 0,
+        "content_issues": [],
+        "paths": {
+          "images": "medical/images",
+          "masks": "medical/masks"
+        },
+        "primary_source": {
+          "source_id": "brainweb",
+          "name": "BrainWeb Simulated Brain MRI Database",
+          "url": "https://brainweb.bic.mni.mcgill.ca/brainweb/",
+          "download_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+          "priority": 1,
+          "fit": "Stable MRI-like source with simulated volumes and anatomical labels; suitable for grayscale multiclass segmentation before using heavier clinical datasets.",
+          "download_policy": "manual_form_or_script_after_terms_check",
+          "license_note": "Verify BrainWeb terms before redistributing; prefer keeping raw volumes local.",
+          "local_layout": "medical/images and medical/masks",
+          "image_selection_rule": "After terms review, download one simulated MRI volume and its matching anatomical/label volume, then select representative 2D slices.",
+          "mask_mapping_rule": "For each selected MRI slice, export the matching anatomical label slice to the same relative PNG path under medical/masks.",
+          "conversion_checklist": [
+            "Keep the raw BrainWeb volume or downloaded payload under medical/audit/ and record its hash.",
+            "Normalize each selected MRI slice to grayscale PNG while recording modality, noise, slice index, and scaling in conversion_notes.",
+            "Export the corresponding anatomical labels as integer-valued PNG masks with identical dimensions.",
+            "Verify image/mask shape equality before running --strict-data-ready."
+          ],
+          "final_naming_example": "medical/images/brainweb/<volume>_slice_<index>.png with medical/masks/brainweb/<volume>_slice_<index>.png"
+        },
+        "source_candidates": [
+          {
+            "source_id": "brainweb",
+            "name": "BrainWeb Simulated Brain MRI Database",
+            "url": "https://brainweb.bic.mni.mcgill.ca/brainweb/",
+            "download_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+            "priority": 1,
+            "fit": "Stable MRI-like source with simulated volumes and anatomical labels; suitable for grayscale multiclass segmentation before using heavier clinical datasets.",
+            "download_policy": "manual_form_or_script_after_terms_check",
+            "license_note": "Verify BrainWeb terms before redistributing; prefer keeping raw volumes local.",
+            "local_layout": "medical/images and medical/masks",
+            "image_selection_rule": "After terms review, download one simulated MRI volume and its matching anatomical/label volume, then select representative 2D slices.",
+            "mask_mapping_rule": "For each selected MRI slice, export the matching anatomical label slice to the same relative PNG path under medical/masks.",
+            "conversion_checklist": [
+              "Keep the raw BrainWeb volume or downloaded payload under medical/audit/ and record its hash.",
+              "Normalize each selected MRI slice to grayscale PNG while recording modality, noise, slice index, and scaling in conversion_notes.",
+              "Export the corresponding anatomical labels as integer-valued PNG masks with identical dimensions.",
+              "Verify image/mask shape equality before running --strict-data-ready."
+            ],
+            "final_naming_example": "medical/images/brainweb/<volume>_slice_<index>.png with medical/masks/brainweb/<volume>_slice_<index>.png"
+          },
+          {
+            "source_id": "tcia-pretreat-metstobrain-masks",
+            "name": "TCIA Pretreat-MetsToBrain-Masks",
+            "url": "https://www.cancerimagingarchive.net/collection/pretreat-metstobrain-masks/",
+            "download_url": "https://www.cancerimagingarchive.net/collection/pretreat-metstobrain-masks/",
+            "priority": 2,
+            "fit": "Real brain MRI segmentations, but much larger and tumor/metastasis-specific; useful after BrainWeb.",
+            "download_policy": "manual_large_dataset",
+            "license_note": "Large clinical archive; check TCIA usage and citation requirements before committing derived assets.",
+            "local_layout": "medical/images and medical/masks",
+            "image_selection_rule": "After TCIA terms and citation review, select a small matched image/segmentation case pair that can be converted locally.",
+            "mask_mapping_rule": "Export the selected segmentation mask to the same relative path and extension as the converted MRI slice.",
+            "conversion_checklist": [
+              "Keep collection metadata, case id, and license/citation snapshots under medical/audit/.",
+              "Convert a matched DICOM/NIfTI image slice to grayscale PNG and record the tool, slice, windowing, and anonymized case id.",
+              "Convert the corresponding segmentation to an integer-valued PNG mask with the same shape.",
+              "Do not commit clinical image data unless redistribution terms are explicitly approved."
+            ],
+            "final_naming_example": "medical/images/tcia/<case>_slice_<index>.png with medical/masks/tcia/<case>_slice_<index>.png"
+          }
+        ],
+        "acquisition_plan": {
+          "recommended_source_id": "brainweb",
+          "recommended_source_name": "BrainWeb Simulated Brain MRI Database",
+          "download_url": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+          "download_policy": "manual_form_or_script_after_terms_check",
+          "license_note": "Verify BrainWeb terms before redistributing; prefer keeping raw volumes local.",
+          "image_selection_rule": "After terms review, download one simulated MRI volume and its matching anatomical/label volume, then select representative 2D slices.",
+          "mask_mapping_rule": "For each selected MRI slice, export the matching anatomical label slice to the same relative PNG path under medical/masks.",
+          "conversion_checklist": [
+            "Keep the raw BrainWeb volume or downloaded payload under medical/audit/ and record its hash.",
+            "Normalize each selected MRI slice to grayscale PNG while recording modality, noise, slice index, and scaling in conversion_notes.",
+            "Export the corresponding anatomical labels as integer-valued PNG masks with identical dimensions.",
+            "Verify image/mask shape equality before running --strict-data-ready."
+          ],
+          "final_naming_example": "medical/images/brainweb/<volume>_slice_<index>.png with medical/masks/brainweb/<volume>_slice_<index>.png",
+          "target_paths": {
+            "images": "medical/images",
+            "masks": "medical/masks",
+            "audit": "medical/audit",
+            "source_audit": "medical/audit/source-artifact",
+            "license_snapshot": "medical/audit/license-snapshot",
+            "manifest": "dataset_manifest.json"
+          },
+          "required_manifest_fields": [
+            "source_id",
+            "source_name",
+            "license_reviewed",
+            "license_note",
+            "citation",
+            "provenance_reviewed",
+            "provenance_note",
+            "synthetic_fixture",
+            "source_audit",
+            "source_url",
+            "downloaded_at",
+            "source_artifact_path",
+            "source_artifact_sha256",
+            "license_snapshot_path",
+            "license_snapshot_sha256",
+            "conversion_notes",
+            "local_file_mapping_reviewed",
+            "files[].image",
+            "files[].sha256",
+            "files[].mask",
+            "files[].mask_sha256"
+          ],
+          "post_download_commands": [
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --refresh-manifest-file-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --refresh-source-audit-artifact-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --check-source-audit-artifact-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --check-manifest-file-claims",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --data-gap-output /tmp/iterated_rof_data_gap.json",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --strict-data-ready",
+            "python3 reproduce/experiments/iterated_rof_paper_like.py --run --strict-paper-like"
+          ]
+        },
+        "source_audit": {
+          "status": "complete",
+          "expected_root": "reproduce/data/iterated_rof/medical/audit",
+          "audit_root_exists": true,
+          "fields": {
+            "source_url": "present",
+            "downloaded_at": "present",
+            "source_artifact_path": "present",
+            "license_snapshot_path": "present",
+            "conversion_notes": "present",
+            "local_file_mapping_reviewed": "reviewed"
+          },
+          "artifacts": {
+            "source_artifact": {
+              "path": "reproduce/data/iterated_rof/medical/audit/source-artifact.txt",
+              "path_status": "present",
+              "sha256_status": "matched",
+              "content_status": "review_evidence_present",
+              "content_size_bytes": 1653,
+              "min_content_size_bytes": 128,
+              "content_issue_codes": [],
+              "content_issues": [],
+              "placeholder_pattern_hits": [],
+              "ready": true,
+              "resolved_path": "reproduce/data/iterated_rof/medical/audit/source-artifact.txt",
+              "actual_sha256": "c00a0966b0520c53ef5a4117a8ddcf57fb8366ea2f23d7fe6965cd261c6b3711"
+            },
+            "license_snapshot": {
+              "path": "reproduce/data/iterated_rof/medical/audit/license-snapshot.txt",
+              "path_status": "present",
+              "sha256_status": "matched",
+              "content_status": "review_evidence_present",
+              "content_size_bytes": 749,
+              "min_content_size_bytes": 128,
+              "content_issue_codes": [],
+              "content_issues": [],
+              "placeholder_pattern_hits": [],
+              "ready": true,
+              "resolved_path": "reproduce/data/iterated_rof/medical/audit/license-snapshot.txt",
+              "actual_sha256": "e902e308d1ff24d74597a7b0ff7446bbb032ced3082a351a8c5e5e942d260db4"
+            }
+          },
+          "file_overrides": [],
+          "issue_count": 0,
+          "issues": [],
+          "ready": true
+        },
+        "missing": [],
+        "next_actions": [
+          "refresh files[] SHA-256 claims after files are placed",
+          "refresh source_audit artifact SHA-256 claims after audit files are placed"
+        ]
+      }
+    ],
+    "manifest": {
+      "status": "present",
+      "path": "reproduce/data/iterated_rof/dataset_manifest.json",
+      "claim_blocker_count": 0,
+      "claim_blockers": []
+    },
+    "data_ready_blocker_count": 0,
+    "data_ready_blockers": [],
+    "paper_like_gate": {
+      "passed": true,
+      "reason_count": 0,
+      "reasons": []
+    },
+    "global_next_actions": [
+      "run --refresh-manifest-file-claims after placing local files",
+      "run --refresh-source-audit-artifact-claims after placing audit files",
+      "run --check-source-audit-artifact-claims before strict-data-ready",
+      "run --run plus --strict-paper-like only after the gap checklist is clean"
+    ]
+  },
+  "data_ready_status": "ready_for_local_runner",
+  "data_ready_blocker_count": 0
+}

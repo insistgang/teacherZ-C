@@ -16,7 +16,8 @@ cd reproduce && python run_all.py
 python -m http.server 8080
 
 # 校验15篇数据、PDF、笔记和静态复现资产
-node docs/scripts/validate.mjs
+# 注意：iterated-rof 已晋升 paper-like，校验须显式放行（否则按设计拒绝 paper-like，防误晋升）
+ALLOW_PAPER_LIKE=1 node docs/scripts/validate.mjs
 ```
 
 ## 依赖安装

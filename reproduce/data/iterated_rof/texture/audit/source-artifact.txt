@@ -1,0 +1,10 @@
+BrainWeb/BSDS/USC-SIPI source download record
+source_url=https://sipi.usc.edu/database/download.php?vol=textures&img=1.1.01
+downloaded_at=2026-06-22
+source_id=sipi-brodatz
+source_name=USC-SIPI Image Database (Brodatz textures), composed segmentation mosaic
+citation=USC-SIPI Image Database, University of Southern California, Signal and Image Processing Institute (textures volume, Brodatz). https://sipi.usc.edu/database/
+provenance=Downloaded real Brodatz textures 1.1.01-1.1.04 (512x512 8-bit TIFF) from the USC-SIPI textures volume on 2026-06-22.
+reviewer_note=Reviewed USC-SIPI research/educational-use terms; mosaic composed only from USC-SIPI Brodatz textures; derived mosaic+labels tracked for research reproduction. Derived PNGs were bilinear-downsized to longest side 120 px (masks nearest-neighbor) for tractable T-ROF; all sides remain >= 32.
+conversion_note=Composed a 256x256 mosaic from 128x128 patches of the four real Brodatz textures arranged 2x2; the tiling layout is the exact integer ground-truth label map (labels 0-3), identical shape. Derived PNGs downsized to longest side 120 px for tractable T-ROF; sides >= 32. This is the standard texture-segmentation benchmark construction (real texture content, exact boundaries). Added as a direct-download texture source because the registry-primary Prague benchmark only exposes an interactive generator.
+local_file_mapping=sipi-brodatz images/masks under texture/, derived PNG pairs listed in dataset_manifest.json files[].
